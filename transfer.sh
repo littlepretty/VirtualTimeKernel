@@ -16,7 +16,7 @@ fi
 # generate patch file
 PATCH=VirtualTime.patch
 echo "Step 0. patch file written to ${PATCH}"
-diff -rup ../../OriginLinux-3.16.3/linux-3.16.3/ ./ > ${PATCH}
+diff -rup $DST ./ > ${PATCH}
 echo ""
 
 
@@ -49,8 +49,8 @@ done
 
 echo ""
 
-echo "Step 2. install syscall wrapper"
-cp -v syscall_wrapper/* ../test_vt_kernel/syscall.wrap/
-cp -v syscall_wrapper/* ../mininet/
+#echo "Step 2. install syscall wrapper"
+#cp -v syscall_wrapper/* ../test_vt_kernel/syscall.wrap/
+#cp -v syscall_wrapper/* ../mininet/
 # no need to wrap applications like iperf3
 

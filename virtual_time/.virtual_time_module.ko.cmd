@@ -1,0 +1,1 @@
+cmd_/home/kd/VirtualTimeKernel/virtual_time/virtual_time_module.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/kd/VirtualTimeKernel/virtual_time/virtual_time_module.ko /home/kd/VirtualTimeKernel/virtual_time/virtual_time_module.o /home/kd/VirtualTimeKernel/virtual_time/virtual_time_module.mod.o

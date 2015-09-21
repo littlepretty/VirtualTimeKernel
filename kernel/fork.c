@@ -148,10 +148,10 @@ void __weak arch_release_thread_info(struct thread_info *ti)
  */
 # if THREAD_SIZE >= PAGE_SIZE
 static struct thread_info *alloc_thread_info_node(struct task_struct *tsk,
-						  int node)
+		int node)
 {
 	struct page *page = alloc_kmem_pages_node(node, THREADINFO_GFP,
-						  THREAD_SIZE_ORDER);
+			THREAD_SIZE_ORDER);
 
 	return page ? page_address(page) : NULL;
 }
@@ -164,7 +164,7 @@ static inline void free_thread_info(struct thread_info *ti)
 static struct kmem_cache *thread_info_cache;
 
 static struct thread_info *alloc_thread_info_node(struct task_struct *tsk,
-						  int node)
+		int node)
 {
 	return kmem_cache_alloc_node(thread_info_cache, THREADINFO_GFP, node);
 }
@@ -177,7 +177,7 @@ static void free_thread_info(struct thread_info *ti)
 void thread_info_cache_init(void)
 {
 	thread_info_cache = kmem_cache_create("thread_info", THREAD_SIZE,
-					      THREAD_SIZE, 0, NULL);
+			THREAD_SIZE, 0, NULL);
 	BUG_ON(thread_info_cache == NULL);
 }
 # endif
@@ -262,7 +262,7 @@ void __init fork_init(unsigned long mempages)
 	/* create a slab on which task_structs can be allocated */
 	task_struct_cachep =
 		kmem_cache_create("task_struct", sizeof(struct task_struct),
-			ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
+				ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
 #endif
 
 	/* do the arch specific task caches init */
@@ -288,7 +288,7 @@ void __init fork_init(unsigned long mempages)
 }
 
 int __weak arch_dup_task_struct(struct task_struct *dst,
-					       struct task_struct *src)
+		struct task_struct *src)
 {
 	*dst = *src;
 	return 0;
@@ -387,7 +387,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 
 		if (mpnt->vm_flags & VM_DONTCOPY) {
 			vm_stat_account(mm, mpnt->vm_flags, mpnt->vm_file,
-							-vma_pages(mpnt));
+					-vma_pages(mpnt));
 			continue;
 		}
 		charge = 0;
@@ -429,7 +429,7 @@ static int dup_mmap(struct mm_struct *mm, struct mm_struct *oldmm)
 						&mapping->i_mmap_nonlinear);
 			else
 				vma_interval_tree_insert_after(tmp, mpnt,
-							&mapping->i_mmap);
+						&mapping->i_mmap);
 			flush_dcache_mmap_unlock(mapping);
 			mutex_unlock(&mapping->i_mmap_mutex);
 		}
@@ -567,7 +567,7 @@ static void check_mm(struct mm_struct *mm)
 
 		if (unlikely(x))
 			printk(KERN_ALERT "BUG: Bad rss-counter state "
-					  "mm:%p idx:%d val:%ld\n", mm, i, x);
+					"mm:%p idx:%d val:%ld\n", mm, i, x);
 	}
 
 #if defined(CONFIG_TRANSPARENT_HUGEPAGE) && !USE_SPLIT_PMD_PTLOCKS
@@ -722,7 +722,7 @@ static void complete_vfork_done(struct task_struct *tsk)
 }
 
 static int wait_for_vfork_done(struct task_struct *child,
-				struct completion *vfork)
+		struct completion *vfork)
 {
 	int killed;
 
@@ -785,7 +785,7 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 	 */
 	if (tsk->clear_child_tid) {
 		if (!(tsk->flags & PF_SIGNALED) &&
-		    atomic_read(&mm->mm_users) > 1) {
+				atomic_read(&mm->mm_users) > 1) {
 			/*
 			 * We don't check the error code - if userspace has
 			 * not set up a proper pointer then tough luck.
@@ -1074,7 +1074,7 @@ static int copy_signal(unsigned long clone_flags, struct task_struct *tsk)
 	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
 
 	sig->has_child_subreaper = current->signal->has_child_subreaper ||
-				   current->signal->is_child_subreaper;
+		current->signal->is_child_subreaper;
 
 	mutex_init(&sig->cred_guard_mutex);
 
@@ -1119,10 +1119,10 @@ static void posix_cpu_timers_init(struct task_struct *tsk)
 	INIT_LIST_HEAD(&tsk->cpu_timers[2]);
 }
 
-static inline void
+	static inline void
 init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
 {
-	 task->pids[type].pid = pid;
+	task->pids[type].pid = pid;
 }
 
 /*
@@ -1134,11 +1134,11 @@ init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
  * flags). The actual kick-off is left to the caller.
  */
 static struct task_struct *copy_process(unsigned long clone_flags,
-					unsigned long stack_start,
-					unsigned long stack_size,
-					int __user *child_tidptr,
-					struct pid *pid,
-					int trace)
+		unsigned long stack_start,
+		unsigned long stack_size,
+		int __user *child_tidptr,
+		struct pid *pid,
+		int trace)
 {
 	int retval;
 	struct task_struct *p;
@@ -1171,7 +1171,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 * from creating siblings.
 	 */
 	if ((clone_flags & CLONE_PARENT) &&
-				current->signal->flags & SIGNAL_UNKILLABLE)
+			current->signal->flags & SIGNAL_UNKILLABLE)
 		return ERR_PTR(-EINVAL);
 
 	/*
@@ -1181,8 +1181,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 */
 	if (clone_flags & CLONE_SIGHAND) {
 		if ((clone_flags & (CLONE_NEWUSER | CLONE_NEWPID)) ||
-		    (task_active_pid_ns(current) !=
-				current->nsproxy->pid_ns_for_children))
+				(task_active_pid_ns(current) !=
+				 current->nsproxy->pid_ns_for_children))
 			return ERR_PTR(-EINVAL);
 	}
 
@@ -1208,7 +1208,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	if (atomic_read(&p->real_cred->user->processes) >=
 			task_rlimit(p, RLIMIT_NPROC)) {
 		if (p->real_cred->user != INIT_USER &&
-		    !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
+				!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
 			goto bad_fork_free;
 	}
 	current->flags &= ~PF_NPROC_EXCEEDED;
@@ -1443,7 +1443,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	 * it's process group.
 	 * A fatal signal pending means that current will exit, so the new
 	 * thread can't slip out of an OOM kill (or normal SIGKILL).
-	*/
+	 */
 	recalc_sigpending();
 	if (signal_pending(current)) {
 		spin_unlock(&current->sighand->siglock);
@@ -1477,9 +1477,9 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 			atomic_inc(&current->signal->live);
 			atomic_inc(&current->signal->sigcnt);
 			list_add_tail_rcu(&p->thread_group,
-					  &p->group_leader->thread_group);
+					&p->group_leader->thread_group);
 			list_add_tail_rcu(&p->thread_node,
-					  &p->signal->thread_head);
+					&p->signal->thread_head);
 		}
 		attach_pid(p, PIDTYPE_PID);
 		nr_threads++;
@@ -1567,53 +1567,44 @@ struct task_struct *fork_idle(int cpu)
 }
 
 /*
- *	Initialize virtual start time as this moment
+ * Initialize virtual start time as this moment
  */
 static int init_virtual_start_time(struct task_struct *task, int dilation)
 {
 	// if(likely(dilation != 0))
 	if(dilation > 0) {
-
-	    /* just make sure further get(ns)timeofday return original time */
-	    // task->virtual_start_time = 0;
-	    task->virtual_start_nsec = 0;
+		/* must make sure further get(ns)timeofday return original time */
+		task->virtual_start_nsec = 0;
 		task->dilation = 0;
-	    /* initialize fields of time, old version virtual time */
-	    // struct timeval now;
-	    // do_gettimeofday(&now);
-	    // task->virtual_start_time = timeval_to_ns(&now);
-	    // task->physical_past_time = 0;
-	    // task->virtual_past_time = 0;
-	    // printk("[info] [process %d] created and started at %ld\n", task->pid, task->virtual_start_time);
 
-	    /* method 1: will return nano seconds since Epoch 1970 */
-	    struct timespec ts;
-	    getnstimeofday(&ts);
+		/* method 1: will return nano seconds since Epoch 1970 */
+		struct timespec ts;
+		__getnstimeofday(&ts);
 		s64 getnstimeofday_nsec= timespec_to_ns(&ts);
-	    // printk("[info] [process %d] getnstimeofday virtual start time = %lld nano secs\n", task->pid, getnstimeofday_nsec);
+		/* printk("[info] [process %d] getnstimeofday virtual start time = %lld nano secs\n", task->pid, getnstimeofday_nsec); */
 
-	    /* method 2: will return nano seconds since system boot
-	    s64 ktime_nsec = ktime_to_ns(ktime_get());
-	    printk("[info] [process %d] ktime_get virtual start time = %lld nano secs\n", task->pid, ktime_nsec);
-		*/
+		/* method 2: will return nano seconds since system boot
+		   s64 ktime_nsec = ktime_to_ns(ktime_get());
+		   printk("[info] [process %d] ktime_get virtual start time = %lld nano secs\n", task->pid, ktime_nsec);
+		 */
 
-	    /* method 3: as the same as method 1
-	    struct timeval tv;
-		do_gettimeofday(&tv);
-	    s64 do_gettimeofday_nsec = timeval_to_ns(&tv);
-	    printk("[info] [process %d] do_gettimeofday virtual start time = %lld\n", task->pid, do_gettimeofday_nsec);
-		*/
+		/* method 3: as the same as method 1
+		   struct timeval tv;
+		   do_gettimeofday(&tv);
+		   s64 do_gettimeofday_nsec = timeval_to_ns(&tv);
+		   printk("[info] [process %d] do_gettimeofday virtual start time = %lld\n", task->pid, do_gettimeofday_nsec);
+		 */
 
-	    /* initialize fields of nsec */
+		/* initialize fields of nsec */
 		task->virtual_start_nsec = getnstimeofday_nsec;
 		// task->virtual_start_nsec = ktime_nsec;
 		// task->virtual_start_nsec = do_gettimeofday_nsec;
-	    task->physical_past_nsec = 0;
-	    task->virtual_past_nsec = 0;
-	    task->dilation = dilation;
-    } else {
-         return -EINVAL;
-    }
+		task->physical_past_nsec = 0;
+		task->virtual_past_nsec = 0;
+		task->dilation = dilation;
+	} else {
+		return -EINVAL;
+	}
 }
 
 /*
@@ -1623,10 +1614,10 @@ static int init_virtual_start_time(struct task_struct *task, int dilation)
  * it and waits for it to finish using the VM if required.
  */
 long do_fork(unsigned long clone_flags,
-	      unsigned long stack_start,
-	      unsigned long stack_size,
-	      int __user *parent_tidptr,
-	      int __user *child_tidptr)
+		unsigned long stack_start,
+		unsigned long stack_size,
+		int __user *parent_tidptr,
+		int __user *child_tidptr)
 {
 	struct task_struct *p;
 	int trace = 0;
@@ -1651,10 +1642,10 @@ long do_fork(unsigned long clone_flags,
 	}
 
 	p = copy_process(clone_flags, stack_start, stack_size,
-			 child_tidptr, NULL, trace);
-    init_virtual_start_time(p, current->dilation);
+			child_tidptr, NULL, trace);
+	init_virtual_start_time(p, current->dilation);
 
-    /*
+	/*
 	 * Do this prior waking up the new thread - the thread pointer
 	 * might get invalid after that point, if the thread exits quickly.
 	 */
@@ -1700,7 +1691,7 @@ long do_fork(unsigned long clone_flags,
 pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
 {
 	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
-		(unsigned long)arg, NULL, NULL);
+			(unsigned long)arg, NULL, NULL);
 }
 
 #ifdef __ARCH_WANT_SYS_FORK
@@ -1726,14 +1717,14 @@ SYSCALL_DEFINE0(vfork)
 #ifdef __ARCH_WANT_SYS_CLONE
 #ifdef CONFIG_CLONE_BACKWARDS
 SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
-		 int __user *, parent_tidptr,
-		 int, tls_val,
-		 int __user *, child_tidptr)
+		int __user *, parent_tidptr,
+		int, tls_val,
+		int __user *, child_tidptr)
 #elif defined(CONFIG_CLONE_BACKWARDS2)
 SYSCALL_DEFINE5(clone, unsigned long, newsp, unsigned long, clone_flags,
-		 int __user *, parent_tidptr,
-		 int __user *, child_tidptr,
-		 int, tls_val)
+		int __user *, parent_tidptr,
+		int __user *, child_tidptr,
+		int, tls_val)
 #elif defined(CONFIG_CLONE_BACKWARDS3)
 SYSCALL_DEFINE6(clone, unsigned long, clone_flags, unsigned long, newsp,
 		int, stack_size,
@@ -1742,9 +1733,9 @@ SYSCALL_DEFINE6(clone, unsigned long, clone_flags, unsigned long, newsp,
 		int, tls_val)
 #else
 SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
-		 int __user *, parent_tidptr,
-		 int __user *, child_tidptr,
-		 int, tls_val)
+		int __user *, parent_tidptr,
+		int __user *, child_tidptr,
+		int, tls_val)
 #endif
 {
 	return do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr);
@@ -1847,7 +1838,7 @@ static int unshare_fd(unsigned long unshare_flags, struct files_struct **new_fdp
 	int error = 0;
 
 	if ((unshare_flags & CLONE_FILES) &&
-	    (fd && atomic_read(&fd->count) > 1)) {
+			(fd && atomic_read(&fd->count) > 1)) {
 		*new_fdp = dup_fd(fd, &error);
 		if (!*new_fdp)
 			return error;
@@ -1858,16 +1849,16 @@ static int unshare_fd(unsigned long unshare_flags, struct files_struct **new_fdp
 
 static int unshare_virtual_time(unsigned long unshare_flags)
 {
-    /* if pack virtual time info into a struct "virtual_time"
-     * then every process have a pointer to a NULL object
-     * here we should allocate it, which may fail
-     * also, init allocated object may fail due to "dilation"
-     */
-    int error = 0;
-    if (unshare_flags & CLONE_NEWTIME) {
-        error = init_virtual_start_time(current, 1);
-    }
-    return error;
+	/* if pack virtual time info into a struct "virtual_time"
+	 * then every process have a pointer to a NULL object
+	 * here we should allocate it, which may fail
+	 * also, init allocated object may fail due to "dilation"
+	 */
+	int error = 0;
+	if (unshare_flags & CLONE_NEWTIME) {
+		error = init_virtual_start_time(current, 1);
+	}
+	return error;
 }
 
 /*
@@ -1928,10 +1919,12 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 	if (err)
 		goto bad_unshare_cleanup_fd;
 	err = unshare_nsproxy_namespaces(unshare_flags, &new_nsproxy,
-					 new_cred, new_fs);
+			new_cred, new_fs);
 	if (err)
 		goto bad_unshare_cleanup_cred;
-    err = unshare_virtual_time(unshare_flags);
+	err = unshare_virtual_time(unshare_flags);
+	if (err)
+		goto bad_unshare_cleanup_vt;		 
 	if (new_fs || new_fd || do_sysvsem || new_cred || new_nsproxy) {
 		if (do_sysvsem) {
 			/*
@@ -1970,7 +1963,8 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 			new_cred = NULL;
 		}
 	}
-
+bad_unshare_cleanup_vt:
+	{/* for now, now resource need to be freed */}
 bad_unshare_cleanup_cred:
 	if (new_cred)
 		put_cred(new_cred);

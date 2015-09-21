@@ -75,7 +75,7 @@ static void tk_set_wall_to_mono(struct timekeeper *tk, struct timespec wtm)
 	 * before modifying anything
 	 */
 	set_normalized_timespec(&tmp, -tk->wall_to_monotonic.tv_sec,
-					-tk->wall_to_monotonic.tv_nsec);
+			-tk->wall_to_monotonic.tv_nsec);
 	WARN_ON_ONCE(tk->offs_real.tv64 != timespec_to_ktime(tmp).tv64);
 	tk->wall_to_monotonic = wtm;
 	set_normalized_timespec(&tmp, -wtm.tv_sec, -wtm.tv_nsec);
@@ -131,7 +131,7 @@ static void tk_setup_internals(struct timekeeper *tk, struct clocksource *clock)
 	tk->raw_interval =
 		((u64) interval * clock->mult) >> clock->shift;
 
-	 /* if changing clocks, convert xtime_nsec shift units */
+	/* if changing clocks, convert xtime_nsec shift units */
 	if (old_clock) {
 		int shift_change = clock->shift - old_clock->shift;
 		if (shift_change < 0)
@@ -295,47 +295,56 @@ static void timekeeping_forward_now(struct timekeeper *tk)
 /* Delta virtual time = delta physical time / TDF */
 static void do_dilatetimeofday(struct timespec *ts)
 {
-	int dilation;
-    dilation = current->dilation;
-    if( dilation > 0 && current->virtual_start_nsec > 0 ){
+	int tdf;
+	struct timespec dilated_ts;
+	s64 now;
+	s64 physical_past_nsec;
+	s64 virtual_past_nsec;
+	s64 dividend;
+	s64 quotient;
+	s64 dilated_now;
+	struct task_struct *leader; // current's group leader
+
+	tdf = current->dilation;
+	leader = current->group_leader;
+	// make sure vt has been inited && dilation in the range of (0,1000]
+	if( current->virtual_start_nsec > 0 && tdf > 0 && tdf <= 1000 ) {
 		// if dilation is one, do not go through following calculations
-		if ( dilation == 1 ) {
-            return;
+		if ( tdf == 1 ) {
+			return;
 		}
 
-    	s64 now;
-    	struct timespec dilated_ts;
-    	s64 physical_past_nsec;
-    	s64 virtual_past_nsec;
+		now = timespec_to_ns(ts);
+		physical_past_nsec = now - current->virtual_start_nsec;
+		if ( current->freeze_past_nsec != 0 ) {
+			physical_past_nsec -= current->freeze_past_nsec;
+		} else {
+			// only READ group leader's fields
+			if ( leader->freeze_past_nsec != 0 ) {
+				physical_past_nsec -= leader->freeze_past_nsec;
+			}	
+		}
+		dividend = physical_past_nsec - current->physical_past_nsec; // delta physical time
 
-		if( dilation < 1000 ){ // tdf should not be unreasonably large
+		quotient = dividend / tdf; // delta virtual time
+		virtual_past_nsec = current->virtual_past_nsec + quotient;
 
-	        now = timespec_to_ns(ts);
-	        physical_past_nsec = now - current->virtual_start_nsec;
+		dilated_now = current->virtual_start_nsec + virtual_past_nsec;
 
-	        s64 dividend = physical_past_nsec - current->physical_past_nsec; // delta physical time
+		if ( tdf > 1 && dilated_now > now ) {
+			printk("[panic: process %d] VT(dilated_now = %lld) > RT (now = %lld) when tdf = %d\n", current->pid, dilated_now, now, tdf);
+			printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, quotient, physical_past_nsec, dividend);
+			printk("[return normal time(%lld:%lld)\n", ts->tv_sec, ts->tv_nsec);
+			return;
+		}
 
-			s64 divisor = dividend / dilation; // delta virtual time
-	        virtual_past_nsec = divisor + current->virtual_past_nsec;
+		dilated_ts = ns_to_timespec(dilated_now);
 
-	        s64 dilated_now = virtual_past_nsec + current->virtual_start_nsec;
-
-	        if (dilation > 1 && dilated_now > now)
-	        {
-				printk("[panic: process %d] VT(dilated_now = %lld) > RT (now = %lld) when dilation = %d\n", current->pid, dilated_now, now, dilation);
-                printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, divisor, physical_past_nsec, dividend);
-                printk("[return normal time(%lld:%lld)\n", ts->tv_sec, ts->tv_nsec);
-				return;
-	        }
-
-			dilated_ts = ns_to_timespec(dilated_now);
-
-	        ts->tv_sec = dilated_ts.tv_sec;
-	        ts->tv_nsec = dilated_ts.tv_nsec;
-			current->physical_past_nsec = physical_past_nsec;
-	    	current->virtual_past_nsec = virtual_past_nsec;
-        }
-    }
+		ts->tv_sec = dilated_ts.tv_sec;
+		ts->tv_nsec = dilated_ts.tv_nsec;
+		current->physical_past_nsec = physical_past_nsec;
+		current->virtual_past_nsec = virtual_past_nsec;
+	}
 }
 
 /**
@@ -370,11 +379,6 @@ int __getnstimeofday(struct timespec *ts)
 		return -EAGAIN;
 
 	/* Dilate time */
-	// s64 now = timespec_to_ns(ts);
-	// printk("[info] getnstimeofday before do_dilatetimeofday: %ld nano seconds\n", now);
-
-    // now = timespec_to_ns(ts);
-	// printk("[info] getnstimeofday after do_dilatetimeofday: %ld nano seconds\n", now);
 	do_dilatetimeofday(ts);
 
 	return 0;
@@ -413,17 +417,17 @@ ktime_t ktime_get(void)
 	 */
 	return ktime_add_ns(ktime_set(secs, 0), nsecs);
 
-    /* Dilated time
-    struct timespec ts = ktime_to_timespec(ktime_add_ns(ktime_set(secs, 0), nsecs));
+	/* Dilated time
+	   struct timespec ts = ktime_to_timespec(ktime_add_ns(ktime_set(secs, 0), nsecs));
 
 	// s64 now = timespec_to_ns(&ts);
 	// printk("[info] ktime_get before do_dilatetimeofday: %ld nano seconds\n", now);
-    // do_dilatetimeofday(&ts);
-    // now = timespec_to_ns(&ts);
+	// do_dilatetimeofday(&ts);
+	// now = timespec_to_ns(&ts);
 	// printk("[info] ktime_get after do_dilatetimeofday: %ld nano seconds\n", now);
 
-    return timespec_to_ktime(ts);
-    */
+	return timespec_to_ktime(ts);
+	 */
 }
 EXPORT_SYMBOL_GPL(ktime_get);
 
@@ -865,7 +869,7 @@ void __init timekeeping_init(void)
 
 	if (!timespec_valid_strict(&now)) {
 		pr_warn("WARNING: Persistent clock returned invalid value!\n"
-			"         Check your CMOS/BIOS settings.\n");
+				"         Check your CMOS/BIOS settings.\n");
 		now.tv_sec = 0;
 		now.tv_nsec = 0;
 	} else if (now.tv_sec || now.tv_nsec)
@@ -874,7 +878,7 @@ void __init timekeeping_init(void)
 	read_boot_clock(&boot);
 	if (!timespec_valid_strict(&boot)) {
 		pr_warn("WARNING: Boot clock returned invalid value!\n"
-			"         Check your CMOS/BIOS settings.\n");
+				"         Check your CMOS/BIOS settings.\n");
 		boot.tv_sec = 0;
 		boot.tv_nsec = 0;
 	}
@@ -918,7 +922,7 @@ static struct timespec timekeeping_suspend_time;
  * adds the sleep offset to the timekeeping variables.
  */
 static void __timekeeping_inject_sleeptime(struct timekeeper *tk,
-							struct timespec *delta)
+		struct timespec *delta)
 {
 	if (!timespec_valid_strict(delta)) {
 		printk_deferred(KERN_WARNING
@@ -1008,7 +1012,7 @@ static void timekeeping_resume(void)
 	 */
 	cycle_now = clock->read(clock);
 	if ((clock->flags & CLOCK_SOURCE_SUSPEND_NONSTOP) &&
-		cycle_now > clock->cycle_last) {
+			cycle_now > clock->cycle_last) {
 		u64 num, max = ULLONG_MAX;
 		u32 mult = clock->mult;
 		u32 shift = clock->shift;
@@ -1127,8 +1131,8 @@ device_initcall(timekeeping_init_ops);
  * to compensate for late or lost adjustments.
  */
 static __always_inline int timekeeping_bigadjust(struct timekeeper *tk,
-						 s64 error, s64 *interval,
-						 s64 *offset)
+		s64 error, s64 *interval,
+		s64 *offset)
 {
 	s64 tick_error, i;
 	u32 look_ahead, adj;
@@ -1226,11 +1230,11 @@ static void timekeeping_adjust(struct timekeeper *tk, s64 offset)
 	}
 
 	if (unlikely(tk->clock->maxadj &&
-		(tk->mult + adj > tk->clock->mult + tk->clock->maxadj))) {
+				(tk->mult + adj > tk->clock->mult + tk->clock->maxadj))) {
 		printk_deferred_once(KERN_WARNING
-			"Adjusting %s more than 11%% (%ld vs %ld)\n",
-			tk->clock->name, (long)tk->mult + adj,
-			(long)tk->clock->mult + tk->clock->maxadj);
+				"Adjusting %s more than 11%% (%ld vs %ld)\n",
+				tk->clock->name, (long)tk->mult + adj,
+				(long)tk->clock->mult + tk->clock->maxadj);
 	}
 	/*
 	 * So the following can be confusing.
@@ -1338,7 +1342,7 @@ static inline unsigned int accumulate_nsecs_to_secs(struct timekeeper *tk)
 			ts.tv_sec = leap;
 			ts.tv_nsec = 0;
 			tk_set_wall_to_mono(tk,
-				timespec_sub(tk->wall_to_monotonic, ts));
+					timespec_sub(tk->wall_to_monotonic, ts));
 
 			__timekeeping_set_tai_offset(tk, tk->tai_offset - leap);
 
@@ -1358,8 +1362,8 @@ static inline unsigned int accumulate_nsecs_to_secs(struct timekeeper *tk)
  * Returns the unconsumed cycles.
  */
 static cycle_t logarithmic_accumulation(struct timekeeper *tk, cycle_t offset,
-						u32 shift,
-						unsigned int *clock_set)
+		u32 shift,
+		unsigned int *clock_set)
 {
 	cycle_t interval = tk->cycle_interval << shift;
 	u64 raw_nsecs;
@@ -1388,7 +1392,7 @@ static cycle_t logarithmic_accumulation(struct timekeeper *tk, cycle_t offset,
 	/* Accumulate error between NTP and clock interval */
 	tk->ntp_error += ntp_tick_length() << shift;
 	tk->ntp_error -= (tk->xtime_interval + tk->xtime_remainder) <<
-						(tk->ntp_error_shift + shift);
+		(tk->ntp_error_shift + shift);
 
 	return offset;
 }
@@ -1399,15 +1403,15 @@ static inline void old_vsyscall_fixup(struct timekeeper *tk)
 	s64 remainder;
 
 	/*
-	* Store only full nanoseconds into xtime_nsec after rounding
-	* it up and add the remainder to the error difference.
-	* XXX - This is necessary to avoid small 1ns inconsistnecies caused
-	* by truncating the remainder in vsyscalls. However, it causes
-	* additional work to be done in timekeeping_adjust(). Once
-	* the vsyscall implementations are converted to use xtime_nsec
-	* (shifted nanoseconds), and CONFIG_GENERIC_TIME_VSYSCALL_OLD
-	* users are removed, this can be killed.
-	*/
+	 * Store only full nanoseconds into xtime_nsec after rounding
+	 * it up and add the remainder to the error difference.
+	 * XXX - This is necessary to avoid small 1ns inconsistnecies caused
+	 * by truncating the remainder in vsyscalls. However, it causes
+	 * additional work to be done in timekeeping_adjust(). Once
+	 * the vsyscall implementations are converted to use xtime_nsec
+	 * (shifted nanoseconds), and CONFIG_GENERIC_TIME_VSYSCALL_OLD
+	 * users are removed, this can be killed.
+	 */
 	remainder = tk->xtime_nsec & ((1ULL << tk->shift) - 1);
 	tk->xtime_nsec -= remainder;
 	tk->xtime_nsec += 1ULL << tk->shift;
@@ -1467,7 +1471,7 @@ void update_wall_time(void)
 	shift = min(shift, maxshift);
 	while (offset >= tk->cycle_interval) {
 		offset = logarithmic_accumulation(tk, offset, shift,
-							&clock_set);
+				&clock_set);
 		if (offset < tk->cycle_interval<<shift)
 			shift--;
 	}
@@ -1526,9 +1530,9 @@ void getboottime(struct timespec *ts)
 	struct timekeeper *tk = &timekeeper;
 	struct timespec boottime = {
 		.tv_sec = tk->wall_to_monotonic.tv_sec +
-				tk->total_sleep_time.tv_sec,
+			tk->total_sleep_time.tv_sec,
 		.tv_nsec = tk->wall_to_monotonic.tv_nsec +
-				tk->total_sleep_time.tv_nsec
+			tk->total_sleep_time.tv_nsec
 	};
 
 	set_normalized_timespec(ts, -boottime.tv_sec, -boottime.tv_nsec);
@@ -1642,7 +1646,7 @@ struct timespec get_monotonic_coarse(void)
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
 	set_normalized_timespec(&now, now.tv_sec + mono.tv_sec,
-				now.tv_nsec + mono.tv_nsec);
+			now.tv_nsec + mono.tv_nsec);
 	return now;
 }
 
@@ -1663,7 +1667,7 @@ void do_timer(unsigned long ticks)
  * @sleep:	pointer to timespec to be set with time in suspend
  */
 void get_xtime_and_monotonic_and_sleep_offset(struct timespec *xtim,
-				struct timespec *wtom, struct timespec *sleep)
+		struct timespec *wtom, struct timespec *sleep)
 {
 	struct timekeeper *tk = &timekeeper;
 	unsigned long seq;
@@ -1687,7 +1691,7 @@ void get_xtime_and_monotonic_and_sleep_offset(struct timespec *xtim,
  * Called from hrtimer_interrupt() or retrigger_next_event()
  */
 ktime_t ktime_get_update_offsets(ktime_t *offs_real, ktime_t *offs_boot,
-							ktime_t *offs_tai)
+		ktime_t *offs_tai)
 {
 	struct timekeeper *tk = &timekeeper;
 	ktime_t now;

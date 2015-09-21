@@ -128,29 +128,17 @@ SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
 		struct timeval now;
 		struct timespec ts;
 
-		if (ppid == 0) // change current's dilation
-		{
+		if (ppid == 0) { // change current's tdf
 			/* reset virtual_start so that we can get original time */
 			current->dilation = 0;
-
-			/* reset time fields, old version */
-			// current->virtual_start_time = 0;
-			// do_gettimeofday(&now);
-			// current->virtual_start_time = timeval_to_ns(&now);
-			// current->physical_past_time = 0;
-			// current->virtual_past_time = 0;
-
-			/* reset nsec fields, current version */
 			current->virtual_start_nsec = 0;
-			getnstimeofday(&ts);
+			
+			__getnstimeofday(&ts);
+			
 			current->virtual_start_nsec = timespec_to_ns(&ts);
 			current->physical_past_nsec = 0;
 			current->virtual_past_nsec = 0;
-
 			current->dilation = dilation;
-
-			// printk("[info] [process %d] in settimedilationfactor: change/set dilation to %ld\n", current->pid, current->dilation);
-			// printk("[info] [process %d] in settimedilationfactor: virtual RESTART time = %lld nano secs\n", current->pid, current->virtual_start_nsec);
 
 		} else { // change current's parent's dilation
 
@@ -162,7 +150,7 @@ SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
 
 			struct task_struct* parent = rcu_dereference(current->real_parent);
 
-			/* pid_t == __kernel_pid_t == int */
+			/* type equivalence: pid_t == __kernel_pid_t == int */
 			if (!parent || parent->pid != ppid)
 			{
 				rcu_read_unlock();
@@ -170,27 +158,14 @@ SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
 			}
 
 			parent->dilation = 0;
-
-			/* reset virtual_start so that we can get original time */
-
-			/* reset time fields, old version */
-			// parent->virtual_start_time = 0;
-			// do_gettimeofday(&now);
-			// parent->virtual_start_time = timeval_to_ns(&now);
-			// parent->physical_past_time = 0;
-			// parent->virtual_past_time = 0;
-
-			/* reset nsec fields, current version */
 			parent->virtual_start_nsec = 0;
-			getnstimeofday(&ts);
+
+			__getnstimeofday(&ts);
+
 			parent->virtual_start_nsec = timespec_to_ns(&ts);
 			parent->physical_past_nsec = 0;
 			parent->virtual_past_nsec = 0;
-
 			parent->dilation = dilation;
-
-			// printk("[info] [process %d] in settimedilationfactor: change/set process %d's dilation to %ld\n", current->pid, parent->pid, parent->dilation);
-			// printk("[info] [process %d] in settimedilationfactor: process %d's virtual RESTART time = %lld nano secs\n", current->pid, parent->pid, parent->virtual_start_nsec);
 
 			rcu_read_unlock();
 		}
