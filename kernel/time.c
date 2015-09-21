@@ -121,7 +121,7 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
  * Change current process's time dilation factor --- Jiaqi Yan
  * Operation fail when "dilation" is zero
  */
-SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
+int set_tdf(unsigned long dilation, pid_t ppid)
 {
 	if (dilation > 0) {
 
@@ -174,6 +174,7 @@ SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
 		return -EINVAL;
 	}
 }
+EXPORT_SYMBOL(set_tdf);
 
 /*
  * Indicates if there is an offset between the system clock and the hardware

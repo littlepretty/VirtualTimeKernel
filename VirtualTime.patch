@@ -146,58 +146,9 @@ Only in ../linux-3.16.3/arch/x86/vdso: vma.o
 Only in ../linux-3.16.3/arch/x86/vdso: .vma.o.cmd
 Only in ../linux-3.16.3/arch/x86: video
 Only in ../linux-3.16.3/arch/x86: xen
+Only in ../linux-3.16.3/arch: x86_64
 Only in ../linux-3.16.3/arch: xtensa
 Only in ../linux-3.16.3/: block
-diff -rup ../linux-3.16.3/build_all.sh ./build_all.sh
---- ../linux-3.16.3/build_all.sh	2015-09-21 15:07:00.594171000 -0500
-+++ ./build_all.sh	2015-07-21 15:08:58.933983000 -0500
-@@ -20,12 +20,12 @@ check_err() {
- 
- make_kernel() {
- 	echo "step 1. make src code for kernel and module"
--	if [ ! -f .config ]; 
--    	then
--        	cp -vi /boot/config-`uname -r` .config
--        	yes "" | make oldconfig
--    	fi
--    	sudo make -j2 2>$ERR
-+    if [ ! -f .config ]; 
-+    then
-+        cp -vi /boot/config-`uname -r` .config
-+        yes "" | make oldconfig
-+    fi
-+    sudo make -j2 2>$ERR
- 	check_err make_kernel
- }
- 
-@@ -57,8 +57,8 @@ update_grub() {
- }
- 
- build_all() {
--    	rm -f $LOG
--    	rm -f $ERR
-+    rm -f $LOG
-+    rm -f $ERR
- 	make_kernel
- 	make_modules
- 	install_modules
-@@ -71,11 +71,11 @@ build_all() {
- usage() {
- 	echo "akb: script for build kernel 3.16.3 by YJQ"
- 	echo "		-a: automate build all process, e.g. -k + -m + -i + -g"
--    	echo "		-k: make kernel"
--    	echo "		-m: -k + make modules"
--    	echo "		-i: -m + install modules and kernel"
--    	echo "		-g: just update GRUB" 
--    	exit 0
-+    echo "		-k: make kernel"
-+    echo "		-m: -k + make modules"
-+    echo "		-i: -m + install modules and kernel"
-+    echo "		-g: just update GRUB" 
-+    exit 0
- }
- 
- echo "log info is in ${LOG}"
 Only in ../linux-3.16.3/: build.err
 Only in ../linux-3.16.3/: .config
 Only in ../linux-3.16.3/: .config.old
@@ -205,9 +156,11 @@ Only in ../linux-3.16.3/: COPYING
 Only in ../linux-3.16.3/: CREDITS
 Only in ../linux-3.16.3/: crypto
 Only in ../linux-3.16.3/: cscope.files
+Only in ../linux-3.16.3/: cscope.in.out
 Only in ../linux-3.16.3/: cscope.out
 Only in ../linux-3.16.3/: cscope.out.in
 Only in ../linux-3.16.3/: cscope.out.po
+Only in ../linux-3.16.3/: cscope.po.out
 Only in ../linux-3.16.3/: Documentation
 Only in ../linux-3.16.3/: drivers
 Only in ../linux-3.16.3/: firmware
@@ -1082,6 +1035,19 @@ Only in ../linux-3.16.3/include/linux: scatterlist.h
 Only in ../linux-3.16.3/include/linux: scc.h
 Only in ../linux-3.16.3/include/linux: sched
 Only in ../linux-3.16.3/include/linux: sched_clock.h
+diff -rup ../linux-3.16.3/include/linux/sched.h ./include/linux/sched.h
+--- ../linux-3.16.3/include/linux/sched.h	2015-09-21 15:10:36.166171000 -0500
++++ ./include/linux/sched.h	2015-09-21 18:27:35.706116999 -0500
+@@ -1665,6 +1665,9 @@ struct task_struct {
+ #endif
+ };
+ 
++/* Change process's dilation */
++extern int set_tdf(int dilation, int ppid);
++
+ /* Future-safe accessor for struct task_struct's cpus_allowed. */
+ #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
+ 
 Only in ../linux-3.16.3/include/linux: screen_info.h
 Only in ../linux-3.16.3/include/linux: sctp.h
 Only in ../linux-3.16.3/include/linux: scx200_gpio.h
@@ -1184,6 +1150,20 @@ Only in ../linux-3.16.3/include/linux: swapops.h
 Only in ../linux-3.16.3/include/linux: swiotlb.h
 Only in ../linux-3.16.3/include/linux: sxgbe_platform.h
 Only in ../linux-3.16.3/include/linux: synclink.h
+diff -rup ../linux-3.16.3/include/linux/syscalls.h ./include/linux/syscalls.h
+--- ../linux-3.16.3/include/linux/syscalls.h	2015-09-21 15:10:36.170171000 -0500
++++ ./include/linux/syscalls.h	2015-09-21 18:28:28.966116999 -0500
+@@ -831,10 +831,6 @@ asmlinkage long sys_clone(unsigned long,
+ #endif
+ #endif
+ 
+-/* virtual time support --- Jiaqi*/
+-asmlinkage long sys_set_tdf(unsigned long, pid_t);
+-
+-
+ asmlinkage long sys_execve(const char __user *filename,
+ 		const char __user *const __user *argv,
+ 		const char __user *const __user *envp);
 Only in ../linux-3.16.3/include/linux: syscore_ops.h
 Only in ../linux-3.16.3/include/linux: sysctl.h
 Only in ../linux-3.16.3/include/linux: sysfs.h
@@ -1516,6 +1496,23 @@ Only in ../linux-3.16.3/include/uapi/asm-generic: termbits.h
 Only in ../linux-3.16.3/include/uapi/asm-generic: termios.h
 Only in ../linux-3.16.3/include/uapi/asm-generic: types.h
 Only in ../linux-3.16.3/include/uapi/asm-generic: ucontext.h
+diff -rup ../linux-3.16.3/include/uapi/asm-generic/unistd.h ./include/uapi/asm-generic/unistd.h
+--- ../linux-3.16.3/include/uapi/asm-generic/unistd.h	2015-09-21 15:10:36.162171000 -0500
++++ ./include/uapi/asm-generic/unistd.h	2015-09-21 18:29:30.398116999 -0500
+@@ -700,12 +700,8 @@ __SYSCALL(__NR_sched_getattr, sys_sched_
+ #define __NR_renameat2 276
+ __SYSCALL(__NR_renameat2, sys_renameat2)
+ 
+-/* virtual time system call --- Jiaqi */
+-#define __NR_set_tdf 277
+-__SYSCALL(__NR_set_tdf, sys_set_tdf)
+-
+ #undef __NR_syscalls
+-#define __NR_syscalls 278
++#define __NR_syscalls 277
+ 
+ /*
+  * All syscalls below here should go away really,
 Only in ../linux-3.16.3/include/uapi: drm
 Only in ../linux-3.16.3/include/uapi: Kbuild
 Only in ../linux-3.16.3/include/uapi/linux: acct.h
@@ -1954,40 +1951,72 @@ Only in ../linux-3.16.3/: ipc
 Only in ../linux-3.16.3/: Kbuild
 Only in ../linux-3.16.3/: Kconfig
 Only in ../linux-3.16.3/kernel: acct.c
+Only in ../linux-3.16.3/kernel: acct.o
+Only in ../linux-3.16.3/kernel: .acct.o.cmd
 Only in ../linux-3.16.3/kernel: async.c
 Only in ../linux-3.16.3/kernel: async.o
 Only in ../linux-3.16.3/kernel: .async.o.cmd
 Only in ../linux-3.16.3/kernel: audit.c
 Only in ../linux-3.16.3/kernel: auditfilter.c
+Only in ../linux-3.16.3/kernel: auditfilter.o
+Only in ../linux-3.16.3/kernel: .auditfilter.o.cmd
 Only in ../linux-3.16.3/kernel: audit.h
+Only in ../linux-3.16.3/kernel: audit.o
+Only in ../linux-3.16.3/kernel: .audit.o.cmd
 Only in ../linux-3.16.3/kernel: auditsc.c
+Only in ../linux-3.16.3/kernel: auditsc.o
+Only in ../linux-3.16.3/kernel: .auditsc.o.cmd
 Only in ../linux-3.16.3/kernel: audit_tree.c
+Only in ../linux-3.16.3/kernel: audit_tree.o
+Only in ../linux-3.16.3/kernel: .audit_tree.o.cmd
 Only in ../linux-3.16.3/kernel: audit_watch.c
+Only in ../linux-3.16.3/kernel: audit_watch.o
+Only in ../linux-3.16.3/kernel: .audit_watch.o.cmd
 Only in ../linux-3.16.3/kernel: backtracetest.c
 Only in ../linux-3.16.3/kernel: bounds.c
 Only in ../linux-3.16.3/kernel: bounds.s
 Only in ../linux-3.16.3/kernel: .bounds.s.cmd
+Only in ../linux-3.16.3/kernel: built-in.o
+Only in ../linux-3.16.3/kernel: .built-in.o.cmd
 Only in ../linux-3.16.3/kernel: capability.c
 Only in ../linux-3.16.3/kernel: capability.o
 Only in ../linux-3.16.3/kernel: .capability.o.cmd
 Only in ../linux-3.16.3/kernel: cgroup.c
 Only in ../linux-3.16.3/kernel: cgroup_freezer.c
+Only in ../linux-3.16.3/kernel: cgroup_freezer.o
+Only in ../linux-3.16.3/kernel: .cgroup_freezer.o.cmd
+Only in ../linux-3.16.3/kernel: cgroup.o
+Only in ../linux-3.16.3/kernel: .cgroup.o.cmd
 Only in ../linux-3.16.3/kernel: compat.c
+Only in ../linux-3.16.3/kernel: compat.o
+Only in ../linux-3.16.3/kernel: .compat.o.cmd
 Only in ../linux-3.16.3/kernel: configs.c
 Only in ../linux-3.16.3/kernel: context_tracking.c
+Only in ../linux-3.16.3/kernel: context_tracking.o
+Only in ../linux-3.16.3/kernel: .context_tracking.o.cmd
 Only in ../linux-3.16.3/kernel: cpu.c
 Only in ../linux-3.16.3/kernel: cpu.o
 Only in ../linux-3.16.3/kernel: .cpu.o.cmd
 Only in ../linux-3.16.3/kernel: cpu_pm.c
 Only in ../linux-3.16.3/kernel: cpuset.c
+Only in ../linux-3.16.3/kernel: cpuset.o
+Only in ../linux-3.16.3/kernel: .cpuset.o.cmd
 Only in ../linux-3.16.3/kernel: crash_dump.c
+Only in ../linux-3.16.3/kernel: crash_dump.o
+Only in ../linux-3.16.3/kernel: .crash_dump.o.cmd
 Only in ../linux-3.16.3/kernel: cred.c
 Only in ../linux-3.16.3/kernel: cred.o
 Only in ../linux-3.16.3/kernel: .cred.o.cmd
 Only in ../linux-3.16.3/kernel: debug
 Only in ../linux-3.16.3/kernel: delayacct.c
+Only in ../linux-3.16.3/kernel: delayacct.o
+Only in ../linux-3.16.3/kernel: .delayacct.o.cmd
 Only in ../linux-3.16.3/kernel: dma.c
+Only in ../linux-3.16.3/kernel: dma.o
+Only in ../linux-3.16.3/kernel: .dma.o.cmd
 Only in ../linux-3.16.3/kernel: elfcore.c
+Only in ../linux-3.16.3/kernel: elfcore.o
+Only in ../linux-3.16.3/kernel: .elfcore.o.cmd
 Only in ../linux-3.16.3/kernel: events
 Only in ../linux-3.16.3/kernel: exec_domain.c
 Only in ../linux-3.16.3/kernel: exec_domain.o
@@ -2001,8 +2030,14 @@ Only in ../linux-3.16.3/kernel: .extable.o.cmd
 Only in ../linux-3.16.3/kernel: fork.o
 Only in ../linux-3.16.3/kernel: .fork.o.cmd
 Only in ../linux-3.16.3/kernel: freezer.c
+Only in ../linux-3.16.3/kernel: freezer.o
+Only in ../linux-3.16.3/kernel: .freezer.o.cmd
 Only in ../linux-3.16.3/kernel: futex.c
 Only in ../linux-3.16.3/kernel: futex_compat.c
+Only in ../linux-3.16.3/kernel: futex_compat.o
+Only in ../linux-3.16.3/kernel: .futex_compat.o.cmd
+Only in ../linux-3.16.3/kernel: futex.o
+Only in ../linux-3.16.3/kernel: .futex.o.cmd
 Only in ../linux-3.16.3/kernel: gcov
 Only in ../linux-3.16.3/kernel: .gitignore
 Only in ../linux-3.16.3/kernel: groups.c
@@ -2012,25 +2047,39 @@ Only in ../linux-3.16.3/kernel: hrtimer.c
 Only in ../linux-3.16.3/kernel: hrtimer.o
 Only in ../linux-3.16.3/kernel: .hrtimer.o.cmd
 Only in ../linux-3.16.3/kernel: hung_task.c
+Only in ../linux-3.16.3/kernel: hung_task.o
+Only in ../linux-3.16.3/kernel: .hung_task.o.cmd
 Only in ../linux-3.16.3/kernel: hz.bc
 Only in ../linux-3.16.3/kernel: .hz.bc.cmd
 Only in ../linux-3.16.3/kernel: irq
 Only in ../linux-3.16.3/kernel: irq_work.c
+Only in ../linux-3.16.3/kernel: irq_work.o
+Only in ../linux-3.16.3/kernel: .irq_work.o.cmd
 Only in ../linux-3.16.3/kernel: itimer.c
 Only in ../linux-3.16.3/kernel: itimer.o
 Only in ../linux-3.16.3/kernel: .itimer.o.cmd
 Only in ../linux-3.16.3/kernel: jump_label.c
+Only in ../linux-3.16.3/kernel: jump_label.o
+Only in ../linux-3.16.3/kernel: .jump_label.o.cmd
 Only in ../linux-3.16.3/kernel: kallsyms.c
+Only in ../linux-3.16.3/kernel: kallsyms.o
+Only in ../linux-3.16.3/kernel: .kallsyms.o.cmd
 Only in ../linux-3.16.3/kernel: kcmp.c
+Only in ../linux-3.16.3/kernel: kcmp.o
+Only in ../linux-3.16.3/kernel: .kcmp.o.cmd
 Only in ../linux-3.16.3/kernel: Kconfig.freezer
 Only in ../linux-3.16.3/kernel: Kconfig.hz
 Only in ../linux-3.16.3/kernel: Kconfig.locks
 Only in ../linux-3.16.3/kernel: Kconfig.preempt
 Only in ../linux-3.16.3/kernel: kexec.c
+Only in ../linux-3.16.3/kernel: kexec.o
+Only in ../linux-3.16.3/kernel: .kexec.o.cmd
 Only in ../linux-3.16.3/kernel: kmod.c
 Only in ../linux-3.16.3/kernel: kmod.o
 Only in ../linux-3.16.3/kernel: .kmod.o.cmd
 Only in ../linux-3.16.3/kernel: kprobes.c
+Only in ../linux-3.16.3/kernel: kprobes.o
+Only in ../linux-3.16.3/kernel: .kprobes.o.cmd
 Only in ../linux-3.16.3/kernel: ksysfs.c
 Only in ../linux-3.16.3/kernel: ksysfs.o
 Only in ../linux-3.16.3/kernel: .ksysfs.o.cmd
@@ -2038,12 +2087,19 @@ Only in ../linux-3.16.3/kernel: kthread.c
 Only in ../linux-3.16.3/kernel: kthread.o
 Only in ../linux-3.16.3/kernel: .kthread.o.cmd
 Only in ../linux-3.16.3/kernel: latencytop.c
+Only in ../linux-3.16.3/kernel: latencytop.o
+Only in ../linux-3.16.3/kernel: .latencytop.o.cmd
 Only in ../linux-3.16.3/kernel: locking
 Only in ../linux-3.16.3/kernel: Makefile
 Only in ../linux-3.16.3/kernel: module.c
 Only in ../linux-3.16.3/kernel: module-internal.h
+Only in ../linux-3.16.3/kernel: module.o
+Only in ../linux-3.16.3/kernel: .module.o.cmd
 Only in ../linux-3.16.3/kernel: modules.builtin
 Only in ../linux-3.16.3/kernel: module_signing.c
+Only in ../linux-3.16.3/kernel: module_signing.o
+Only in ../linux-3.16.3/kernel: .module_signing.o.cmd
+Only in ../linux-3.16.3/kernel: modules.order
 Only in ../linux-3.16.3/kernel: notifier.c
 Only in ../linux-3.16.3/kernel: notifier.o
 Only in ../linux-3.16.3/kernel: .notifier.o.cmd
@@ -2051,6 +2107,8 @@ Only in ../linux-3.16.3/kernel: nsproxy.c
 Only in ../linux-3.16.3/kernel: nsproxy.o
 Only in ../linux-3.16.3/kernel: .nsproxy.o.cmd
 Only in ../linux-3.16.3/kernel: padata.c
+Only in ../linux-3.16.3/kernel: padata.o
+Only in ../linux-3.16.3/kernel: .padata.o.cmd
 Only in ../linux-3.16.3/kernel: panic.c
 Only in ../linux-3.16.3/kernel: panic.o
 Only in ../linux-3.16.3/kernel: .panic.o.cmd
@@ -2059,6 +2117,8 @@ Only in ../linux-3.16.3/kernel: params.o
 Only in ../linux-3.16.3/kernel: .params.o.cmd
 Only in ../linux-3.16.3/kernel: pid.c
 Only in ../linux-3.16.3/kernel: pid_namespace.c
+Only in ../linux-3.16.3/kernel: pid_namespace.o
+Only in ../linux-3.16.3/kernel: .pid_namespace.o.cmd
 Only in ../linux-3.16.3/kernel: pid.o
 Only in ../linux-3.16.3/kernel: .pid.o.cmd
 Only in ../linux-3.16.3/kernel: posix-cpu-timers.c
@@ -2070,6 +2130,8 @@ Only in ../linux-3.16.3/kernel: .posix-timers.o.cmd
 Only in ../linux-3.16.3/kernel: power
 Only in ../linux-3.16.3/kernel: printk
 Only in ../linux-3.16.3/kernel: profile.c
+Only in ../linux-3.16.3/kernel: profile.o
+Only in ../linux-3.16.3/kernel: .profile.o.cmd
 Only in ../linux-3.16.3/kernel: ptrace.c
 Only in ../linux-3.16.3/kernel: ptrace.o
 Only in ../linux-3.16.3/kernel: .ptrace.o.cmd
@@ -2081,12 +2143,18 @@ Only in ../linux-3.16.3/kernel: reboot.c
 Only in ../linux-3.16.3/kernel: reboot.o
 Only in ../linux-3.16.3/kernel: .reboot.o.cmd
 Only in ../linux-3.16.3/kernel: relay.c
+Only in ../linux-3.16.3/kernel: relay.o
+Only in ../linux-3.16.3/kernel: .relay.o.cmd
 Only in ../linux-3.16.3/kernel: res_counter.c
+Only in ../linux-3.16.3/kernel: res_counter.o
+Only in ../linux-3.16.3/kernel: .res_counter.o.cmd
 Only in ../linux-3.16.3/kernel: resource.c
 Only in ../linux-3.16.3/kernel: resource.o
 Only in ../linux-3.16.3/kernel: .resource.o.cmd
 Only in ../linux-3.16.3/kernel: sched
 Only in ../linux-3.16.3/kernel: seccomp.c
+Only in ../linux-3.16.3/kernel: seccomp.o
+Only in ../linux-3.16.3/kernel: .seccomp.o.cmd
 Only in ../linux-3.16.3/kernel: signal.c
 Only in ../linux-3.16.3/kernel: signal.o
 Only in ../linux-3.16.3/kernel: .signal.o.cmd
@@ -2095,11 +2163,17 @@ Only in ../linux-3.16.3/kernel: smpboot.h
 Only in ../linux-3.16.3/kernel: smpboot.o
 Only in ../linux-3.16.3/kernel: .smpboot.o.cmd
 Only in ../linux-3.16.3/kernel: smp.c
+Only in ../linux-3.16.3/kernel: smp.o
+Only in ../linux-3.16.3/kernel: .smp.o.cmd
 Only in ../linux-3.16.3/kernel: softirq.c
 Only in ../linux-3.16.3/kernel: softirq.o
 Only in ../linux-3.16.3/kernel: .softirq.o.cmd
 Only in ../linux-3.16.3/kernel: stacktrace.c
+Only in ../linux-3.16.3/kernel: stacktrace.o
+Only in ../linux-3.16.3/kernel: .stacktrace.o.cmd
 Only in ../linux-3.16.3/kernel: stop_machine.c
+Only in ../linux-3.16.3/kernel: stop_machine.o
+Only in ../linux-3.16.3/kernel: .stop_machine.o.cmd
 Only in ../linux-3.16.3/kernel: sys.c
 Only in ../linux-3.16.3/kernel: sysctl_binary.c
 Only in ../linux-3.16.3/kernel: sysctl_binary.o
@@ -2112,75 +2186,148 @@ Only in ../linux-3.16.3/kernel: sys_ni.o
 Only in ../linux-3.16.3/kernel: .sys_ni.o.cmd
 Only in ../linux-3.16.3/kernel: sys.o
 Only in ../linux-3.16.3/kernel: .sys.o.cmd
+Only in ../linux-3.16.3/kernel: system_certificates.o
+Only in ../linux-3.16.3/kernel: .system_certificates.o.cmd
 Only in ../linux-3.16.3/kernel: system_certificates.S
 Only in ../linux-3.16.3/kernel: system_keyring.c
+Only in ../linux-3.16.3/kernel: system_keyring.o
+Only in ../linux-3.16.3/kernel: .system_keyring.o.cmd
 Only in ../linux-3.16.3/kernel: taskstats.c
+Only in ../linux-3.16.3/kernel: taskstats.o
+Only in ../linux-3.16.3/kernel: .taskstats.o.cmd
 Only in ../linux-3.16.3/kernel: task_work.c
 Only in ../linux-3.16.3/kernel: task_work.o
 Only in ../linux-3.16.3/kernel: .task_work.o.cmd
 Only in ../linux-3.16.3/kernel: test_kprobes.c
 Only in ../linux-3.16.3/kernel/time: alarmtimer.c
+Only in ../linux-3.16.3/kernel/time: alarmtimer.o
+Only in ../linux-3.16.3/kernel/time: .alarmtimer.o.cmd
+Only in ../linux-3.16.3/kernel/time: built-in.o
+Only in ../linux-3.16.3/kernel/time: .built-in.o.cmd
 Only in ../linux-3.16.3/kernel/time: clockevents.c
+Only in ../linux-3.16.3/kernel/time: clockevents.o
+Only in ../linux-3.16.3/kernel/time: .clockevents.o.cmd
 Only in ../linux-3.16.3/kernel/time: clocksource.c
+Only in ../linux-3.16.3/kernel/time: clocksource.o
+Only in ../linux-3.16.3/kernel/time: .clocksource.o.cmd
 Only in ../linux-3.16.3/kernel/time: jiffies.c
+Only in ../linux-3.16.3/kernel/time: jiffies.o
+Only in ../linux-3.16.3/kernel/time: .jiffies.o.cmd
 Only in ../linux-3.16.3/kernel/time: Kconfig
 Only in ../linux-3.16.3/kernel/time: Makefile
 Only in ../linux-3.16.3/kernel/time: modules.builtin
+Only in ../linux-3.16.3/kernel/time: modules.order
 Only in ../linux-3.16.3/kernel/time: ntp.c
 Only in ../linux-3.16.3/kernel/time: ntp_internal.h
+Only in ../linux-3.16.3/kernel/time: ntp.o
+Only in ../linux-3.16.3/kernel/time: .ntp.o.cmd
 Only in ../linux-3.16.3/kernel/time: posix-clock.c
+Only in ../linux-3.16.3/kernel/time: posix-clock.o
+Only in ../linux-3.16.3/kernel/time: .posix-clock.o.cmd
 Only in ../linux-3.16.3/kernel/time: sched_clock.c
 Only in ../linux-3.16.3/kernel/time: tick-broadcast.c
 Only in ../linux-3.16.3/kernel/time: tick-broadcast-hrtimer.c
+Only in ../linux-3.16.3/kernel/time: tick-broadcast-hrtimer.o
+Only in ../linux-3.16.3/kernel/time: .tick-broadcast-hrtimer.o.cmd
+Only in ../linux-3.16.3/kernel/time: tick-broadcast.o
+Only in ../linux-3.16.3/kernel/time: .tick-broadcast.o.cmd
 Only in ../linux-3.16.3/kernel/time: tick-common.c
+Only in ../linux-3.16.3/kernel/time: tick-common.o
+Only in ../linux-3.16.3/kernel/time: .tick-common.o.cmd
 Only in ../linux-3.16.3/kernel/time: tick-internal.h
 Only in ../linux-3.16.3/kernel/time: tick-oneshot.c
+Only in ../linux-3.16.3/kernel/time: tick-oneshot.o
+Only in ../linux-3.16.3/kernel/time: .tick-oneshot.o.cmd
 Only in ../linux-3.16.3/kernel/time: tick-sched.c
+Only in ../linux-3.16.3/kernel/time: tick-sched.o
+Only in ../linux-3.16.3/kernel/time: .tick-sched.o.cmd
 Only in ../linux-3.16.3/kernel/time: timeconv.c
-diff -rup ../linux-3.16.3/kernel/time/timekeeping.c ./kernel/time/timekeeping.c
---- ../linux-3.16.3/kernel/time/timekeeping.c	2015-09-21 15:05:24.762171000 -0500
-+++ ./kernel/time/timekeeping.c	2015-09-21 15:10:32.062171000 -0500
-@@ -333,7 +333,7 @@ static void do_dilatetimeofday(struct ti
- 
- 		if ( tdf > 1 && dilated_now > now ) {
- 			printk("[panic: process %d] VT(dilated_now = %lld) > RT (now = %lld) when tdf = %d\n", current->pid, dilated_now, now, tdf);
--			printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, divisor, physical_past_nsec, dividend);
-+			printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, quotient, physical_past_nsec, dividend);
- 			printk("[return normal time(%lld:%lld)\n", ts->tv_sec, ts->tv_nsec);
- 			return;
- 		}
+Only in ../linux-3.16.3/kernel/time: timeconv.o
+Only in ../linux-3.16.3/kernel/time: .timeconv.o.cmd
 Only in ../linux-3.16.3/kernel/time: timekeeping_debug.c
+Only in ../linux-3.16.3/kernel/time: timekeeping_debug.o
+Only in ../linux-3.16.3/kernel/time: .timekeeping_debug.o.cmd
 Only in ../linux-3.16.3/kernel/time: timekeeping_internal.h
+Only in ../linux-3.16.3/kernel/time: timekeeping.o
+Only in ../linux-3.16.3/kernel/time: .timekeeping.o.cmd
 Only in ../linux-3.16.3/kernel/time: timer_list.c
+Only in ../linux-3.16.3/kernel/time: timer_list.o
+Only in ../linux-3.16.3/kernel/time: .timer_list.o.cmd
 Only in ../linux-3.16.3/kernel/time: timer_stats.c
+Only in ../linux-3.16.3/kernel/time: timer_stats.o
+Only in ../linux-3.16.3/kernel/time: .timer_stats.o.cmd
+diff -rup ../linux-3.16.3/kernel/time.c ./kernel/time.c
+--- ../linux-3.16.3/kernel/time.c	2015-09-21 15:10:36.154171000 -0500
++++ ./kernel/time.c	2015-09-21 18:24:27.862116999 -0500
+@@ -121,7 +121,7 @@ SYSCALL_DEFINE2(gettimeofday, struct tim
+  * Change current process's time dilation factor --- Jiaqi Yan
+  * Operation fail when "dilation" is zero
+  */
+-SYSCALL_DEFINE2(set_tdf, unsigned long, dilation, pid_t, ppid)
++int set_tdf(unsigned long dilation, pid_t ppid)
+ {
+ 	if (dilation > 0) {
+ 
+@@ -174,6 +174,7 @@ SYSCALL_DEFINE2(set_tdf, unsigned long,
+ 		return -EINVAL;
+ 	}
+ }
++EXPORT_SYMBOL(set_tdf);
+ 
+ /*
+  * Indicates if there is an offset between the system clock and the hardware
 Only in ../linux-3.16.3/kernel: timeconst.bc
+Only in ../linux-3.16.3/kernel: timeconst.h
+Only in ../linux-3.16.3/kernel: .timeconst.h.cmd
+Only in ../linux-3.16.3/kernel: time.o
+Only in ../linux-3.16.3/kernel: .time.o.cmd
 Only in ../linux-3.16.3/kernel: timer.c
 Only in ../linux-3.16.3/kernel: timer.o
 Only in ../linux-3.16.3/kernel: .timer.o.cmd
 Only in ../linux-3.16.3/kernel: torture.c
 Only in ../linux-3.16.3/kernel: trace
 Only in ../linux-3.16.3/kernel: tracepoint.c
+Only in ../linux-3.16.3/kernel: tracepoint.o
+Only in ../linux-3.16.3/kernel: .tracepoint.o.cmd
 Only in ../linux-3.16.3/kernel: tsacct.c
+Only in ../linux-3.16.3/kernel: tsacct.o
+Only in ../linux-3.16.3/kernel: .tsacct.o.cmd
 Only in ../linux-3.16.3/kernel: uid16.c
+Only in ../linux-3.16.3/kernel: uid16.o
+Only in ../linux-3.16.3/kernel: .uid16.o.cmd
 Only in ../linux-3.16.3/kernel: up.c
 Only in ../linux-3.16.3/kernel: user.c
 Only in ../linux-3.16.3/kernel: user_namespace.c
+Only in ../linux-3.16.3/kernel: user_namespace.o
+Only in ../linux-3.16.3/kernel: .user_namespace.o.cmd
 Only in ../linux-3.16.3/kernel: user.o
 Only in ../linux-3.16.3/kernel: .user.o.cmd
 Only in ../linux-3.16.3/kernel: user-return-notifier.c
+Only in ../linux-3.16.3/kernel: user-return-notifier.o
+Only in ../linux-3.16.3/kernel: .user-return-notifier.o.cmd
 Only in ../linux-3.16.3/kernel: utsname.c
+Only in ../linux-3.16.3/kernel: utsname.o
+Only in ../linux-3.16.3/kernel: .utsname.o.cmd
 Only in ../linux-3.16.3/kernel: utsname_sysctl.c
+Only in ../linux-3.16.3/kernel: utsname_sysctl.o
+Only in ../linux-3.16.3/kernel: .utsname_sysctl.o.cmd
 Only in ../linux-3.16.3/kernel: watchdog.c
+Only in ../linux-3.16.3/kernel: watchdog.o
+Only in ../linux-3.16.3/kernel: .watchdog.o.cmd
 Only in ../linux-3.16.3/kernel: workqueue.c
 Only in ../linux-3.16.3/kernel: workqueue_internal.h
 Only in ../linux-3.16.3/kernel: workqueue.o
 Only in ../linux-3.16.3/kernel: .workqueue.o.cmd
+Only in ../linux-3.16.3/kernel: x509_certificate_list
+Only in ../linux-3.16.3/kernel: .x509_certificate_list.cmd
 Only in ../linux-3.16.3/: lib
 Only in ../linux-3.16.3/: .mailmap
 Only in ../linux-3.16.3/: MAINTAINERS
 Only in ../linux-3.16.3/: .missing-syscalls.d
 Only in ../linux-3.16.3/: mm
+Only in ../linux-3.16.3/: modules.builtin
 Only in ../linux-3.16.3/: modules.order
+Only in ../linux-3.16.3/: Module.symvers
 Only in ../linux-3.16.3/net: 802
 Only in ../linux-3.16.3/net: 8021q
 Only in ../linux-3.16.3/net: 9p
@@ -2190,51 +2337,133 @@ Only in ../linux-3.16.3/net: ax25
 Only in ../linux-3.16.3/net: batman-adv
 Only in ../linux-3.16.3/net: bluetooth
 Only in ../linux-3.16.3/net: bridge
+Only in ../linux-3.16.3/net: built-in.o
+Only in ../linux-3.16.3/net: .built-in.o.cmd
 Only in ../linux-3.16.3/net: caif
 Only in ../linux-3.16.3/net: can
 Only in ../linux-3.16.3/net: ceph
 Only in ../linux-3.16.3/net: compat.c
+Only in ../linux-3.16.3/net: compat.o
+Only in ../linux-3.16.3/net: .compat.o.cmd
+Only in ../linux-3.16.3/net/core: built-in.o
+Only in ../linux-3.16.3/net/core: .built-in.o.cmd
 Only in ../linux-3.16.3/net/core: datagram.c
+Only in ../linux-3.16.3/net/core: datagram.o
+Only in ../linux-3.16.3/net/core: .datagram.o.cmd
 Only in ../linux-3.16.3/net/core: dev_addr_lists.c
+Only in ../linux-3.16.3/net/core: dev_addr_lists.o
+Only in ../linux-3.16.3/net/core: .dev_addr_lists.o.cmd
 Only in ../linux-3.16.3/net/core: dev_ioctl.c
+Only in ../linux-3.16.3/net/core: dev_ioctl.o
+Only in ../linux-3.16.3/net/core: .dev_ioctl.o.cmd
+Only in ../linux-3.16.3/net/core: dev.o
+Only in ../linux-3.16.3/net/core: .dev.o.cmd
 Only in ../linux-3.16.3/net/core: drop_monitor.c
 Only in ../linux-3.16.3/net/core: dst.c
+Only in ../linux-3.16.3/net/core: dst.o
+Only in ../linux-3.16.3/net/core: .dst.o.cmd
 Only in ../linux-3.16.3/net/core: ethtool.c
+Only in ../linux-3.16.3/net/core: ethtool.o
+Only in ../linux-3.16.3/net/core: .ethtool.o.cmd
 Only in ../linux-3.16.3/net/core: fib_rules.c
+Only in ../linux-3.16.3/net/core: fib_rules.o
+Only in ../linux-3.16.3/net/core: .fib_rules.o.cmd
 Only in ../linux-3.16.3/net/core: filter.c
+Only in ../linux-3.16.3/net/core: filter.o
+Only in ../linux-3.16.3/net/core: .filter.o.cmd
 Only in ../linux-3.16.3/net/core: flow.c
 Only in ../linux-3.16.3/net/core: flow_dissector.c
+Only in ../linux-3.16.3/net/core: flow_dissector.o
+Only in ../linux-3.16.3/net/core: .flow_dissector.o.cmd
+Only in ../linux-3.16.3/net/core: flow.o
+Only in ../linux-3.16.3/net/core: .flow.o.cmd
 Only in ../linux-3.16.3/net/core: gen_estimator.c
+Only in ../linux-3.16.3/net/core: gen_estimator.o
+Only in ../linux-3.16.3/net/core: .gen_estimator.o.cmd
 Only in ../linux-3.16.3/net/core: gen_stats.c
+Only in ../linux-3.16.3/net/core: gen_stats.o
+Only in ../linux-3.16.3/net/core: .gen_stats.o.cmd
 Only in ../linux-3.16.3/net/core: iovec.c
+Only in ../linux-3.16.3/net/core: iovec.o
+Only in ../linux-3.16.3/net/core: .iovec.o.cmd
 Only in ../linux-3.16.3/net/core: link_watch.c
+Only in ../linux-3.16.3/net/core: link_watch.o
+Only in ../linux-3.16.3/net/core: .link_watch.o.cmd
 Only in ../linux-3.16.3/net/core: Makefile
 Only in ../linux-3.16.3/net/core: modules.builtin
+Only in ../linux-3.16.3/net/core: modules.order
 Only in ../linux-3.16.3/net/core: neighbour.c
+Only in ../linux-3.16.3/net/core: neighbour.o
+Only in ../linux-3.16.3/net/core: .neighbour.o.cmd
 Only in ../linux-3.16.3/net/core: netclassid_cgroup.c
+Only in ../linux-3.16.3/net/core: netclassid_cgroup.o
+Only in ../linux-3.16.3/net/core: .netclassid_cgroup.o.cmd
 Only in ../linux-3.16.3/net/core: netevent.c
+Only in ../linux-3.16.3/net/core: netevent.o
+Only in ../linux-3.16.3/net/core: .netevent.o.cmd
 Only in ../linux-3.16.3/net/core: net_namespace.c
+Only in ../linux-3.16.3/net/core: net_namespace.o
+Only in ../linux-3.16.3/net/core: .net_namespace.o.cmd
 Only in ../linux-3.16.3/net/core: netpoll.c
+Only in ../linux-3.16.3/net/core: netpoll.o
+Only in ../linux-3.16.3/net/core: .netpoll.o.cmd
 Only in ../linux-3.16.3/net/core: netprio_cgroup.c
 Only in ../linux-3.16.3/net/core: net-procfs.c
+Only in ../linux-3.16.3/net/core: net-procfs.o
+Only in ../linux-3.16.3/net/core: .net-procfs.o.cmd
 Only in ../linux-3.16.3/net/core: net-sysfs.c
 Only in ../linux-3.16.3/net/core: net-sysfs.h
+Only in ../linux-3.16.3/net/core: net-sysfs.o
+Only in ../linux-3.16.3/net/core: .net-sysfs.o.cmd
 Only in ../linux-3.16.3/net/core: net-traces.c
+Only in ../linux-3.16.3/net/core: net-traces.o
+Only in ../linux-3.16.3/net/core: .net-traces.o.cmd
 Only in ../linux-3.16.3/net/core: pktgen.c
+Only in ../linux-3.16.3/net/core: pktgen.ko
+Only in ../linux-3.16.3/net/core: .pktgen.ko.cmd
+Only in ../linux-3.16.3/net/core: pktgen.mod.c
+Only in ../linux-3.16.3/net/core: pktgen.mod.o
+Only in ../linux-3.16.3/net/core: .pktgen.mod.o.cmd
+Only in ../linux-3.16.3/net/core: pktgen.o
+Only in ../linux-3.16.3/net/core: .pktgen.o.cmd
 Only in ../linux-3.16.3/net/core: ptp_classifier.c
+Only in ../linux-3.16.3/net/core: ptp_classifier.o
+Only in ../linux-3.16.3/net/core: .ptp_classifier.o.cmd
 Only in ../linux-3.16.3/net/core: request_sock.c
+Only in ../linux-3.16.3/net/core: request_sock.o
+Only in ../linux-3.16.3/net/core: .request_sock.o.cmd
 Only in ../linux-3.16.3/net/core: rtnetlink.c
+Only in ../linux-3.16.3/net/core: rtnetlink.o
+Only in ../linux-3.16.3/net/core: .rtnetlink.o.cmd
 Only in ../linux-3.16.3/net/core: scm.c
+Only in ../linux-3.16.3/net/core: scm.o
+Only in ../linux-3.16.3/net/core: .scm.o.cmd
 Only in ../linux-3.16.3/net/core: secure_seq.c
+Only in ../linux-3.16.3/net/core: secure_seq.o
+Only in ../linux-3.16.3/net/core: .secure_seq.o.cmd
 Only in ../linux-3.16.3/net/core: skbuff.c
+Only in ../linux-3.16.3/net/core: skbuff.o
+Only in ../linux-3.16.3/net/core: .skbuff.o.cmd
 Only in ../linux-3.16.3/net/core: sock.c
 Only in ../linux-3.16.3/net/core: sock_diag.c
+Only in ../linux-3.16.3/net/core: sock_diag.o
+Only in ../linux-3.16.3/net/core: .sock_diag.o.cmd
+Only in ../linux-3.16.3/net/core: sock.o
+Only in ../linux-3.16.3/net/core: .sock.o.cmd
 Only in ../linux-3.16.3/net/core: stream.c
+Only in ../linux-3.16.3/net/core: stream.o
+Only in ../linux-3.16.3/net/core: .stream.o.cmd
 Only in ../linux-3.16.3/net/core: sysctl_net_core.c
+Only in ../linux-3.16.3/net/core: sysctl_net_core.o
+Only in ../linux-3.16.3/net/core: .sysctl_net_core.o.cmd
 Only in ../linux-3.16.3/net/core: timestamping.c
 Only in ../linux-3.16.3/net/core: tso.c
+Only in ../linux-3.16.3/net/core: tso.o
+Only in ../linux-3.16.3/net/core: .tso.o.cmd
 Only in ../linux-3.16.3/net/core: user_dma.c
 Only in ../linux-3.16.3/net/core: utils.c
+Only in ../linux-3.16.3/net/core: utils.o
+Only in ../linux-3.16.3/net/core: .utils.o.cmd
 Only in ../linux-3.16.3/net: dcb
 Only in ../linux-3.16.3/net: dccp
 Only in ../linux-3.16.3/net: decnet
@@ -2257,6 +2486,7 @@ Only in ../linux-3.16.3/net: mac80211
 Only in ../linux-3.16.3/net: mac802154
 Only in ../linux-3.16.3/net: Makefile
 Only in ../linux-3.16.3/net: modules.builtin
+Only in ../linux-3.16.3/net: modules.order
 Only in ../linux-3.16.3/net: mpls
 Only in ../linux-3.16.3/net: netfilter
 Only in ../linux-3.16.3/net: netlabel
@@ -2272,68 +2502,434 @@ Only in ../linux-3.16.3/net: rfkill
 Only in ../linux-3.16.3/net: rose
 Only in ../linux-3.16.3/net: rxrpc
 Only in ../linux-3.16.3/net/sched: act_api.c
+Only in ../linux-3.16.3/net/sched: act_api.o
+Only in ../linux-3.16.3/net/sched: .act_api.o.cmd
 Only in ../linux-3.16.3/net/sched: act_csum.c
+Only in ../linux-3.16.3/net/sched: act_csum.ko
+Only in ../linux-3.16.3/net/sched: .act_csum.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_csum.mod.c
+Only in ../linux-3.16.3/net/sched: act_csum.mod.o
+Only in ../linux-3.16.3/net/sched: .act_csum.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_csum.o
+Only in ../linux-3.16.3/net/sched: .act_csum.o.cmd
 Only in ../linux-3.16.3/net/sched: act_gact.c
+Only in ../linux-3.16.3/net/sched: act_gact.ko
+Only in ../linux-3.16.3/net/sched: .act_gact.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_gact.mod.c
+Only in ../linux-3.16.3/net/sched: act_gact.mod.o
+Only in ../linux-3.16.3/net/sched: .act_gact.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_gact.o
+Only in ../linux-3.16.3/net/sched: .act_gact.o.cmd
 Only in ../linux-3.16.3/net/sched: act_ipt.c
+Only in ../linux-3.16.3/net/sched: act_ipt.ko
+Only in ../linux-3.16.3/net/sched: .act_ipt.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_ipt.mod.c
+Only in ../linux-3.16.3/net/sched: act_ipt.mod.o
+Only in ../linux-3.16.3/net/sched: .act_ipt.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_ipt.o
+Only in ../linux-3.16.3/net/sched: .act_ipt.o.cmd
 Only in ../linux-3.16.3/net/sched: act_mirred.c
+Only in ../linux-3.16.3/net/sched: act_mirred.ko
+Only in ../linux-3.16.3/net/sched: .act_mirred.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_mirred.mod.c
+Only in ../linux-3.16.3/net/sched: act_mirred.mod.o
+Only in ../linux-3.16.3/net/sched: .act_mirred.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_mirred.o
+Only in ../linux-3.16.3/net/sched: .act_mirred.o.cmd
 Only in ../linux-3.16.3/net/sched: act_nat.c
+Only in ../linux-3.16.3/net/sched: act_nat.ko
+Only in ../linux-3.16.3/net/sched: .act_nat.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_nat.mod.c
+Only in ../linux-3.16.3/net/sched: act_nat.mod.o
+Only in ../linux-3.16.3/net/sched: .act_nat.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_nat.o
+Only in ../linux-3.16.3/net/sched: .act_nat.o.cmd
 Only in ../linux-3.16.3/net/sched: act_pedit.c
+Only in ../linux-3.16.3/net/sched: act_pedit.ko
+Only in ../linux-3.16.3/net/sched: .act_pedit.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_pedit.mod.c
+Only in ../linux-3.16.3/net/sched: act_pedit.mod.o
+Only in ../linux-3.16.3/net/sched: .act_pedit.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_pedit.o
+Only in ../linux-3.16.3/net/sched: .act_pedit.o.cmd
+Only in ../linux-3.16.3/net/sched: act_police.ko
+Only in ../linux-3.16.3/net/sched: .act_police.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_police.mod.c
+Only in ../linux-3.16.3/net/sched: act_police.mod.o
+Only in ../linux-3.16.3/net/sched: .act_police.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_police.o
+Only in ../linux-3.16.3/net/sched: .act_police.o.cmd
 Only in ../linux-3.16.3/net/sched: act_simple.c
+Only in ../linux-3.16.3/net/sched: act_simple.ko
+Only in ../linux-3.16.3/net/sched: .act_simple.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_simple.mod.c
+Only in ../linux-3.16.3/net/sched: act_simple.mod.o
+Only in ../linux-3.16.3/net/sched: .act_simple.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_simple.o
+Only in ../linux-3.16.3/net/sched: .act_simple.o.cmd
 Only in ../linux-3.16.3/net/sched: act_skbedit.c
+Only in ../linux-3.16.3/net/sched: act_skbedit.ko
+Only in ../linux-3.16.3/net/sched: .act_skbedit.ko.cmd
+Only in ../linux-3.16.3/net/sched: act_skbedit.mod.c
+Only in ../linux-3.16.3/net/sched: act_skbedit.mod.o
+Only in ../linux-3.16.3/net/sched: .act_skbedit.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: act_skbedit.o
+Only in ../linux-3.16.3/net/sched: .act_skbedit.o.cmd
+Only in ../linux-3.16.3/net/sched: built-in.o
+Only in ../linux-3.16.3/net/sched: .built-in.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_api.c
+Only in ../linux-3.16.3/net/sched: cls_api.o
+Only in ../linux-3.16.3/net/sched: .cls_api.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_basic.c
+Only in ../linux-3.16.3/net/sched: cls_basic.ko
+Only in ../linux-3.16.3/net/sched: .cls_basic.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_basic.mod.c
+Only in ../linux-3.16.3/net/sched: cls_basic.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_basic.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_basic.o
+Only in ../linux-3.16.3/net/sched: .cls_basic.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_bpf.c
+Only in ../linux-3.16.3/net/sched: cls_bpf.ko
+Only in ../linux-3.16.3/net/sched: .cls_bpf.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_bpf.mod.c
+Only in ../linux-3.16.3/net/sched: cls_bpf.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_bpf.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_bpf.o
+Only in ../linux-3.16.3/net/sched: .cls_bpf.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_cgroup.c
+Only in ../linux-3.16.3/net/sched: cls_cgroup.ko
+Only in ../linux-3.16.3/net/sched: .cls_cgroup.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_cgroup.mod.c
+Only in ../linux-3.16.3/net/sched: cls_cgroup.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_cgroup.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_cgroup.o
+Only in ../linux-3.16.3/net/sched: .cls_cgroup.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_flow.c
+Only in ../linux-3.16.3/net/sched: cls_flow.ko
+Only in ../linux-3.16.3/net/sched: .cls_flow.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_flow.mod.c
+Only in ../linux-3.16.3/net/sched: cls_flow.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_flow.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_flow.o
+Only in ../linux-3.16.3/net/sched: .cls_flow.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_fw.c
+Only in ../linux-3.16.3/net/sched: cls_fw.ko
+Only in ../linux-3.16.3/net/sched: .cls_fw.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_fw.mod.c
+Only in ../linux-3.16.3/net/sched: cls_fw.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_fw.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_fw.o
+Only in ../linux-3.16.3/net/sched: .cls_fw.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_route.c
+Only in ../linux-3.16.3/net/sched: cls_route.ko
+Only in ../linux-3.16.3/net/sched: .cls_route.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_route.mod.c
+Only in ../linux-3.16.3/net/sched: cls_route.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_route.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_route.o
+Only in ../linux-3.16.3/net/sched: .cls_route.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_rsvp6.c
+Only in ../linux-3.16.3/net/sched: cls_rsvp6.ko
+Only in ../linux-3.16.3/net/sched: .cls_rsvp6.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_rsvp6.mod.c
+Only in ../linux-3.16.3/net/sched: cls_rsvp6.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_rsvp6.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_rsvp6.o
+Only in ../linux-3.16.3/net/sched: .cls_rsvp6.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_rsvp.c
 Only in ../linux-3.16.3/net/sched: cls_rsvp.h
+Only in ../linux-3.16.3/net/sched: cls_rsvp.ko
+Only in ../linux-3.16.3/net/sched: .cls_rsvp.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_rsvp.mod.c
+Only in ../linux-3.16.3/net/sched: cls_rsvp.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_rsvp.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_rsvp.o
+Only in ../linux-3.16.3/net/sched: .cls_rsvp.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_tcindex.c
+Only in ../linux-3.16.3/net/sched: cls_tcindex.ko
+Only in ../linux-3.16.3/net/sched: .cls_tcindex.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_tcindex.mod.c
+Only in ../linux-3.16.3/net/sched: cls_tcindex.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_tcindex.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_tcindex.o
+Only in ../linux-3.16.3/net/sched: .cls_tcindex.o.cmd
 Only in ../linux-3.16.3/net/sched: cls_u32.c
+Only in ../linux-3.16.3/net/sched: cls_u32.ko
+Only in ../linux-3.16.3/net/sched: .cls_u32.ko.cmd
+Only in ../linux-3.16.3/net/sched: cls_u32.mod.c
+Only in ../linux-3.16.3/net/sched: cls_u32.mod.o
+Only in ../linux-3.16.3/net/sched: .cls_u32.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: cls_u32.o
+Only in ../linux-3.16.3/net/sched: .cls_u32.o.cmd
 Only in ../linux-3.16.3/net/sched: ematch.c
+Only in ../linux-3.16.3/net/sched: ematch.o
+Only in ../linux-3.16.3/net/sched: .ematch.o.cmd
 Only in ../linux-3.16.3/net/sched: em_canid.c
+Only in ../linux-3.16.3/net/sched: em_canid.ko
+Only in ../linux-3.16.3/net/sched: .em_canid.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_canid.mod.c
+Only in ../linux-3.16.3/net/sched: em_canid.mod.o
+Only in ../linux-3.16.3/net/sched: .em_canid.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_canid.o
+Only in ../linux-3.16.3/net/sched: .em_canid.o.cmd
 Only in ../linux-3.16.3/net/sched: em_cmp.c
+Only in ../linux-3.16.3/net/sched: em_cmp.ko
+Only in ../linux-3.16.3/net/sched: .em_cmp.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_cmp.mod.c
+Only in ../linux-3.16.3/net/sched: em_cmp.mod.o
+Only in ../linux-3.16.3/net/sched: .em_cmp.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_cmp.o
+Only in ../linux-3.16.3/net/sched: .em_cmp.o.cmd
 Only in ../linux-3.16.3/net/sched: em_ipset.c
+Only in ../linux-3.16.3/net/sched: em_ipset.ko
+Only in ../linux-3.16.3/net/sched: .em_ipset.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_ipset.mod.c
+Only in ../linux-3.16.3/net/sched: em_ipset.mod.o
+Only in ../linux-3.16.3/net/sched: .em_ipset.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_ipset.o
+Only in ../linux-3.16.3/net/sched: .em_ipset.o.cmd
 Only in ../linux-3.16.3/net/sched: em_meta.c
+Only in ../linux-3.16.3/net/sched: em_meta.ko
+Only in ../linux-3.16.3/net/sched: .em_meta.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_meta.mod.c
+Only in ../linux-3.16.3/net/sched: em_meta.mod.o
+Only in ../linux-3.16.3/net/sched: .em_meta.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_meta.o
+Only in ../linux-3.16.3/net/sched: .em_meta.o.cmd
 Only in ../linux-3.16.3/net/sched: em_nbyte.c
+Only in ../linux-3.16.3/net/sched: em_nbyte.ko
+Only in ../linux-3.16.3/net/sched: .em_nbyte.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_nbyte.mod.c
+Only in ../linux-3.16.3/net/sched: em_nbyte.mod.o
+Only in ../linux-3.16.3/net/sched: .em_nbyte.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_nbyte.o
+Only in ../linux-3.16.3/net/sched: .em_nbyte.o.cmd
 Only in ../linux-3.16.3/net/sched: em_text.c
+Only in ../linux-3.16.3/net/sched: em_text.ko
+Only in ../linux-3.16.3/net/sched: .em_text.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_text.mod.c
+Only in ../linux-3.16.3/net/sched: em_text.mod.o
+Only in ../linux-3.16.3/net/sched: .em_text.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_text.o
+Only in ../linux-3.16.3/net/sched: .em_text.o.cmd
 Only in ../linux-3.16.3/net/sched: em_u32.c
+Only in ../linux-3.16.3/net/sched: em_u32.ko
+Only in ../linux-3.16.3/net/sched: .em_u32.ko.cmd
+Only in ../linux-3.16.3/net/sched: em_u32.mod.c
+Only in ../linux-3.16.3/net/sched: em_u32.mod.o
+Only in ../linux-3.16.3/net/sched: .em_u32.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: em_u32.o
+Only in ../linux-3.16.3/net/sched: .em_u32.o.cmd
 Only in ../linux-3.16.3/net/sched: Kconfig
 Only in ../linux-3.16.3/net/sched: Makefile
 Only in ../linux-3.16.3/net/sched: modules.builtin
+Only in ../linux-3.16.3/net/sched: modules.order
+Only in ../linux-3.16.3/net/sched: sch_api.o
+Only in ../linux-3.16.3/net/sched: .sch_api.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_atm.c
+Only in ../linux-3.16.3/net/sched: sch_atm.ko
+Only in ../linux-3.16.3/net/sched: .sch_atm.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_atm.mod.c
+Only in ../linux-3.16.3/net/sched: sch_atm.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_atm.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_atm.o
+Only in ../linux-3.16.3/net/sched: .sch_atm.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_blackhole.c
+Only in ../linux-3.16.3/net/sched: sch_blackhole.o
+Only in ../linux-3.16.3/net/sched: .sch_blackhole.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_cbq.c
+Only in ../linux-3.16.3/net/sched: sch_cbq.ko
+Only in ../linux-3.16.3/net/sched: .sch_cbq.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_cbq.mod.c
+Only in ../linux-3.16.3/net/sched: sch_cbq.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_cbq.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_cbq.o
+Only in ../linux-3.16.3/net/sched: .sch_cbq.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_choke.c
+Only in ../linux-3.16.3/net/sched: sch_choke.ko
+Only in ../linux-3.16.3/net/sched: .sch_choke.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_choke.mod.c
+Only in ../linux-3.16.3/net/sched: sch_choke.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_choke.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_choke.o
+Only in ../linux-3.16.3/net/sched: .sch_choke.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_codel.c
+Only in ../linux-3.16.3/net/sched: sch_codel.ko
+Only in ../linux-3.16.3/net/sched: .sch_codel.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_codel.mod.c
+Only in ../linux-3.16.3/net/sched: sch_codel.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_codel.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_codel.o
+Only in ../linux-3.16.3/net/sched: .sch_codel.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_drr.c
+Only in ../linux-3.16.3/net/sched: sch_drr.ko
+Only in ../linux-3.16.3/net/sched: .sch_drr.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_drr.mod.c
+Only in ../linux-3.16.3/net/sched: sch_drr.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_drr.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_drr.o
+Only in ../linux-3.16.3/net/sched: .sch_drr.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_dsmark.c
+Only in ../linux-3.16.3/net/sched: sch_dsmark.ko
+Only in ../linux-3.16.3/net/sched: .sch_dsmark.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_dsmark.mod.c
+Only in ../linux-3.16.3/net/sched: sch_dsmark.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_dsmark.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_dsmark.o
+Only in ../linux-3.16.3/net/sched: .sch_dsmark.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_fifo.c
+Only in ../linux-3.16.3/net/sched: sch_fifo.o
+Only in ../linux-3.16.3/net/sched: .sch_fifo.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_fq.c
 Only in ../linux-3.16.3/net/sched: sch_fq_codel.c
+Only in ../linux-3.16.3/net/sched: sch_fq_codel.ko
+Only in ../linux-3.16.3/net/sched: .sch_fq_codel.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_fq_codel.mod.c
+Only in ../linux-3.16.3/net/sched: sch_fq_codel.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_fq_codel.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_fq_codel.o
+Only in ../linux-3.16.3/net/sched: .sch_fq_codel.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_fq.ko
+Only in ../linux-3.16.3/net/sched: .sch_fq.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_fq.mod.c
+Only in ../linux-3.16.3/net/sched: sch_fq.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_fq.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_fq.o
+Only in ../linux-3.16.3/net/sched: .sch_fq.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_generic.o
+Only in ../linux-3.16.3/net/sched: .sch_generic.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_gred.c
+Only in ../linux-3.16.3/net/sched: sch_gred.ko
+Only in ../linux-3.16.3/net/sched: .sch_gred.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_gred.mod.c
+Only in ../linux-3.16.3/net/sched: sch_gred.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_gred.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_gred.o
+Only in ../linux-3.16.3/net/sched: .sch_gred.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_hfsc.c
+Only in ../linux-3.16.3/net/sched: sch_hfsc.ko
+Only in ../linux-3.16.3/net/sched: .sch_hfsc.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_hfsc.mod.c
+Only in ../linux-3.16.3/net/sched: sch_hfsc.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_hfsc.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_hfsc.o
+Only in ../linux-3.16.3/net/sched: .sch_hfsc.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_hhf.c
+Only in ../linux-3.16.3/net/sched: sch_htb.ko
+Only in ../linux-3.16.3/net/sched: .sch_htb.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_htb.mod.c
+Only in ../linux-3.16.3/net/sched: sch_htb.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_htb.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_htb.o
+Only in ../linux-3.16.3/net/sched: .sch_htb.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_ingress.c
+Only in ../linux-3.16.3/net/sched: sch_ingress.ko
+Only in ../linux-3.16.3/net/sched: .sch_ingress.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_ingress.mod.c
+Only in ../linux-3.16.3/net/sched: sch_ingress.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_ingress.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_ingress.o
+Only in ../linux-3.16.3/net/sched: .sch_ingress.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_mq.c
+Only in ../linux-3.16.3/net/sched: sch_mq.o
+Only in ../linux-3.16.3/net/sched: .sch_mq.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_mqprio.c
+Only in ../linux-3.16.3/net/sched: sch_mqprio.ko
+Only in ../linux-3.16.3/net/sched: .sch_mqprio.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_mqprio.mod.c
+Only in ../linux-3.16.3/net/sched: sch_mqprio.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_mqprio.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_mqprio.o
+Only in ../linux-3.16.3/net/sched: .sch_mqprio.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_multiq.c
+Only in ../linux-3.16.3/net/sched: sch_multiq.ko
+Only in ../linux-3.16.3/net/sched: .sch_multiq.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_multiq.mod.c
+Only in ../linux-3.16.3/net/sched: sch_multiq.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_multiq.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_multiq.o
+Only in ../linux-3.16.3/net/sched: .sch_multiq.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_netem.c
+Only in ../linux-3.16.3/net/sched: sch_netem.ko
+Only in ../linux-3.16.3/net/sched: .sch_netem.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_netem.mod.c
+Only in ../linux-3.16.3/net/sched: sch_netem.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_netem.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_netem.o
+Only in ../linux-3.16.3/net/sched: .sch_netem.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_pie.c
 Only in ../linux-3.16.3/net/sched: sch_plug.c
+Only in ../linux-3.16.3/net/sched: sch_plug.ko
+Only in ../linux-3.16.3/net/sched: .sch_plug.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_plug.mod.c
+Only in ../linux-3.16.3/net/sched: sch_plug.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_plug.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_plug.o
+Only in ../linux-3.16.3/net/sched: .sch_plug.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_prio.c
+Only in ../linux-3.16.3/net/sched: sch_prio.ko
+Only in ../linux-3.16.3/net/sched: .sch_prio.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_prio.mod.c
+Only in ../linux-3.16.3/net/sched: sch_prio.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_prio.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_prio.o
+Only in ../linux-3.16.3/net/sched: .sch_prio.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_qfq.c
+Only in ../linux-3.16.3/net/sched: sch_qfq.ko
+Only in ../linux-3.16.3/net/sched: .sch_qfq.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_qfq.mod.c
+Only in ../linux-3.16.3/net/sched: sch_qfq.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_qfq.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_qfq.o
+Only in ../linux-3.16.3/net/sched: .sch_qfq.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_red.c
+Only in ../linux-3.16.3/net/sched: sch_red.ko
+Only in ../linux-3.16.3/net/sched: .sch_red.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_red.mod.c
+Only in ../linux-3.16.3/net/sched: sch_red.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_red.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_red.o
+Only in ../linux-3.16.3/net/sched: .sch_red.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_sfb.c
+Only in ../linux-3.16.3/net/sched: sch_sfb.ko
+Only in ../linux-3.16.3/net/sched: .sch_sfb.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_sfb.mod.c
+Only in ../linux-3.16.3/net/sched: sch_sfb.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_sfb.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_sfb.o
+Only in ../linux-3.16.3/net/sched: .sch_sfb.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_sfq.c
+Only in ../linux-3.16.3/net/sched: sch_sfq.ko
+Only in ../linux-3.16.3/net/sched: .sch_sfq.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_sfq.mod.c
+Only in ../linux-3.16.3/net/sched: sch_sfq.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_sfq.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_sfq.o
+Only in ../linux-3.16.3/net/sched: .sch_sfq.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_tbf.c
+Only in ../linux-3.16.3/net/sched: sch_tbf.ko
+Only in ../linux-3.16.3/net/sched: .sch_tbf.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_tbf.mod.c
+Only in ../linux-3.16.3/net/sched: sch_tbf.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_tbf.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_tbf.o
+Only in ../linux-3.16.3/net/sched: .sch_tbf.o.cmd
 Only in ../linux-3.16.3/net/sched: sch_teql.c
+Only in ../linux-3.16.3/net/sched: sch_teql.ko
+Only in ../linux-3.16.3/net/sched: .sch_teql.ko.cmd
+Only in ../linux-3.16.3/net/sched: sch_teql.mod.c
+Only in ../linux-3.16.3/net/sched: sch_teql.mod.o
+Only in ../linux-3.16.3/net/sched: .sch_teql.mod.o.cmd
+Only in ../linux-3.16.3/net/sched: sch_teql.o
+Only in ../linux-3.16.3/net/sched: .sch_teql.o.cmd
 Only in ../linux-3.16.3/net: sctp
 Only in ../linux-3.16.3/net: socket.c
+Only in ../linux-3.16.3/net: socket.o
+Only in ../linux-3.16.3/net: .socket.o.cmd
 Only in ../linux-3.16.3/net: sunrpc
 Only in ../linux-3.16.3/net: sysctl_net.c
+Only in ../linux-3.16.3/net: sysctl_net.o
+Only in ../linux-3.16.3/net: .sysctl_net.o.cmd
 Only in ../linux-3.16.3/net: tipc
 Only in ../linux-3.16.3/net: unix
 Only in ../linux-3.16.3/net: vmw_vsock
@@ -2348,10 +2944,18 @@ Only in ../linux-3.16.3/: REPORTING-BUGS
 Only in ../linux-3.16.3/: samples
 Only in ../linux-3.16.3/: scripts
 Only in ../linux-3.16.3/: security
+Only in ../linux-3.16.3/: signing_key.priv
+Only in ../linux-3.16.3/: signing_key.x509
 Only in ../linux-3.16.3/: sound
 Only in ./: syscall_wrapper
+Only in ../linux-3.16.3/: System.map
 Only in ../linux-3.16.3/: tags
+Only in ../linux-3.16.3/: .tmp_kallsyms1.o
+Only in ../linux-3.16.3/: .tmp_kallsyms2.o
+Only in ../linux-3.16.3/: .tmp_System.map
 Only in ../linux-3.16.3/: .tmp_versions
+Only in ../linux-3.16.3/: .tmp_vmlinux1
+Only in ../linux-3.16.3/: .tmp_vmlinux2
 Only in ../linux-3.16.3/: tools
 Only in ./: transfer.sh
 Only in ../linux-3.16.3/: usr
@@ -2359,3 +2963,7 @@ Only in ../linux-3.16.3/: .version
 Only in ../linux-3.16.3/: virt
 Only in ./: virtual_time
 Only in ./: VirtualTime.patch
+Only in ../linux-3.16.3/: vmlinux
+Only in ../linux-3.16.3/: .vmlinux.cmd
+Only in ../linux-3.16.3/: vmlinux.o
+Only in ../linux-3.16.3/: x509.genkey

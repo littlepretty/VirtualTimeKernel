@@ -831,10 +831,6 @@ asmlinkage long sys_clone(unsigned long, unsigned long, int __user *,
 #endif
 #endif
 
-/* virtual time support --- Jiaqi*/
-asmlinkage long sys_set_tdf(unsigned long, pid_t);
-
-
 asmlinkage long sys_execve(const char __user *filename,
 		const char __user *const __user *argv,
 		const char __user *const __user *envp);

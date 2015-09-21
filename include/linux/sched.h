@@ -1665,6 +1665,9 @@ struct task_struct {
 #endif
 };
 
+/* Change process's dilation */
+extern int set_tdf(int dilation, int ppid);
+
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
 

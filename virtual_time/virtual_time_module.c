@@ -14,6 +14,18 @@ void vt_module_cleanup(void)
 	return;
 }
 
+#ifndef __NR_set_tdf
+#define __NR_set_tdf 317
+#endif
+/*
+ * ppid == 0 : change caller itself's dilation
+ * ppid != 0 : change caller's parent's dilation
+ */
+int change_tdf(int dilation, int ppid)
+{
+	return set_tdf(dilation, ppid);
+}
+
 void freeze(int* pgid_list, size_t length)
 {
 	int i;
