@@ -28,6 +28,8 @@ Only in ../PatchKernel-3.16.3/arch: tile
 Only in ../PatchKernel-3.16.3/arch: um
 Only in ../PatchKernel-3.16.3/arch: unicore32
 Only in ../PatchKernel-3.16.3/arch/x86: boot
+Only in ../PatchKernel-3.16.3/arch/x86: built-in.o
+Only in ../PatchKernel-3.16.3/arch/x86: .built-in.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86: configs
 Only in ../PatchKernel-3.16.3/arch/x86: crypto
 Only in ../PatchKernel-3.16.3/arch/x86: .gitignore
@@ -46,6 +48,8 @@ Only in ../PatchKernel-3.16.3/arch/x86: Makefile_32.cpu
 Only in ../PatchKernel-3.16.3/arch/x86: Makefile.um
 Only in ../PatchKernel-3.16.3/arch/x86: math-emu
 Only in ../PatchKernel-3.16.3/arch/x86: mm
+Only in ../PatchKernel-3.16.3/arch/x86: modules.builtin
+Only in ../PatchKernel-3.16.3/arch/x86: modules.order
 Only in ../PatchKernel-3.16.3/arch/x86: net
 Only in ../PatchKernel-3.16.3/arch/x86: oprofile
 Only in ../PatchKernel-3.16.3/arch/x86: pci
@@ -55,47 +59,87 @@ Only in ../PatchKernel-3.16.3/arch/x86: realmode
 Only in ../PatchKernel-3.16.3/arch/x86: syscalls
 Only in ../PatchKernel-3.16.3/arch/x86: tools
 Only in ../PatchKernel-3.16.3/arch/x86: um
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: built-in.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .built-in.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: checkundef.sh
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: .gitignore
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: Makefile
-diff -rup ../PatchKernel-3.16.3/arch/x86/vdso/vclock_gettime.c ./arch/x86/vdso/vclock_gettime.c
---- ../PatchKernel-3.16.3/arch/x86/vdso/vclock_gettime.c	2015-09-23 16:29:56.817168000 -0500
-+++ ./arch/x86/vdso/vclock_gettime.c	2015-09-23 15:45:34.009168000 -0500
-@@ -319,6 +319,10 @@ int clock_gettime(clockid_t, struct time
- 
- notrace int __vdso_gettimeofday(struct timeval *tv, struct timezone *tz)
- {
-+	// bypass vdso && always fall back to normal gettimeofday
-+	return vdso_fallback_gtod(tv, tz);
-+
-+	/*
- 	if (likely(tv != NULL)) {
- 		if (unlikely(do_realtime((struct timespec *)tv) == VCLOCK_NONE))
- 			return vdso_fallback_gtod(tv, tz);
-@@ -330,6 +334,7 @@ notrace int __vdso_gettimeofday(struct t
- 	}
- 
- 	return 0;
-+	*/
- }
- int gettimeofday(struct timeval *, struct timezone *)
- 	__attribute__((weak, alias("__vdso_gettimeofday")));
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: modules.builtin
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: modules.order
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vclock_gettime.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vclock_gettime.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vclock_gettime-x32.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vclock_gettime-x32.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso2c
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso2c.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso2c.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso2c.h
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32-int80.so.dbg
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso32-int80.so.dbg.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32-setup.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32-setup.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso32-setup.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32-syscall.so.dbg
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso32-syscall.so.dbg.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso32-sysenter.so.dbg
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso32-sysenter.so.dbg.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso64.so.dbg
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso64.so.dbg.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-fakesections.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-fakesections.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-fakesections.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-fakesections-x32.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-fakesections-x32.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-int80.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-int80.c.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-int80.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-int80.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-syscall.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-syscall.c.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-syscall.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-syscall.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-sysenter.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-sysenter.c.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-32-sysenter.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-32-sysenter.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-64.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-64.c.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-64.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-64.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-x32.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-x32.c.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-image-x32.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-image-x32.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-layout.lds.S
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso.lds
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso.lds.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso.lds.S
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-note.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-note.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-note.S
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdso-note-x32.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdso-note-x32.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdsox32.lds
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdsox32.lds.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdsox32.lds.S
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vdsox32.so.dbg
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vdsox32.so.dbg.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vgetcpu.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vgetcpu.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vgetcpu.o.cmd
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vgetcpu-x32.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vgetcpu-x32.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86/vdso: vma.c
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: vma.o
+Only in ../PatchKernel-3.16.3/arch/x86/vdso: .vma.o.cmd
 Only in ../PatchKernel-3.16.3/arch/x86: video
 Only in ../PatchKernel-3.16.3/arch/x86: xen
 Only in ../PatchKernel-3.16.3/arch: xtensa
 Only in ../PatchKernel-3.16.3/: block
-Only in ./: build_all.sh
+Only in ../PatchKernel-3.16.3/: build.err
+Only in ../PatchKernel-3.16.3/: .config
+Only in ../PatchKernel-3.16.3/: .config.old
 Only in ../PatchKernel-3.16.3/: COPYING
 Only in ../PatchKernel-3.16.3/: CREDITS
 Only in ../PatchKernel-3.16.3/: crypto
@@ -109,8 +153,12 @@ Only in ../PatchKernel-3.16.3/fs: afs
 Only in ../PatchKernel-3.16.3/fs: aio.c
 Only in ../PatchKernel-3.16.3/fs: anon_inodes.c
 Only in ../PatchKernel-3.16.3/fs: attr.c
+Only in ../PatchKernel-3.16.3/fs: attr.o
+Only in ../PatchKernel-3.16.3/fs: .attr.o.cmd
 Only in ../PatchKernel-3.16.3/fs: autofs4
 Only in ../PatchKernel-3.16.3/fs: bad_inode.c
+Only in ../PatchKernel-3.16.3/fs: bad_inode.o
+Only in ../PatchKernel-3.16.3/fs: .bad_inode.o.cmd
 Only in ../PatchKernel-3.16.3/fs: befs
 Only in ../PatchKernel-3.16.3/fs: bfs
 Only in ../PatchKernel-3.16.3/fs: binfmt_aout.c
@@ -122,11 +170,17 @@ Only in ../PatchKernel-3.16.3/fs: binfmt_misc.c
 Only in ../PatchKernel-3.16.3/fs: binfmt_script.c
 Only in ../PatchKernel-3.16.3/fs: binfmt_som.c
 Only in ../PatchKernel-3.16.3/fs: block_dev.c
+Only in ../PatchKernel-3.16.3/fs: block_dev.o
+Only in ../PatchKernel-3.16.3/fs: .block_dev.o.cmd
 Only in ../PatchKernel-3.16.3/fs: btrfs
 Only in ../PatchKernel-3.16.3/fs: buffer.c
+Only in ../PatchKernel-3.16.3/fs: buffer.o
+Only in ../PatchKernel-3.16.3/fs: .buffer.o.cmd
 Only in ../PatchKernel-3.16.3/fs: cachefiles
 Only in ../PatchKernel-3.16.3/fs: ceph
 Only in ../PatchKernel-3.16.3/fs: char_dev.c
+Only in ../PatchKernel-3.16.3/fs: char_dev.o
+Only in ../PatchKernel-3.16.3/fs: .char_dev.o.cmd
 Only in ../PatchKernel-3.16.3/fs: cifs
 Only in ../PatchKernel-3.16.3/fs: coda
 Only in ../PatchKernel-3.16.3/fs: compat_binfmt_elf.c
@@ -136,10 +190,14 @@ Only in ../PatchKernel-3.16.3/fs: configfs
 Only in ../PatchKernel-3.16.3/fs: coredump.c
 Only in ../PatchKernel-3.16.3/fs: cramfs
 Only in ../PatchKernel-3.16.3/fs: dcache.c
+Only in ../PatchKernel-3.16.3/fs: dcache.o
+Only in ../PatchKernel-3.16.3/fs: .dcache.o.cmd
 Only in ../PatchKernel-3.16.3/fs: dcookies.c
 Only in ../PatchKernel-3.16.3/fs: debugfs
 Only in ../PatchKernel-3.16.3/fs: devpts
 Only in ../PatchKernel-3.16.3/fs: direct-io.c
+Only in ../PatchKernel-3.16.3/fs: direct-io.o
+Only in ../PatchKernel-3.16.3/fs: .direct-io.o.cmd
 Only in ../PatchKernel-3.16.3/fs: dlm
 Only in ../PatchKernel-3.16.3/fs: drop_caches.c
 Only in ../PatchKernel-3.16.3/fs: ecryptfs
@@ -148,6 +206,8 @@ Only in ../PatchKernel-3.16.3/fs: efs
 Only in ../PatchKernel-3.16.3/fs: eventfd.c
 Only in ../PatchKernel-3.16.3/fs: eventpoll.c
 Only in ../PatchKernel-3.16.3/fs: exec.c
+Only in ../PatchKernel-3.16.3/fs: exec.o
+Only in ../PatchKernel-3.16.3/fs: .exec.o.cmd
 Only in ../PatchKernel-3.16.3/fs: exofs
 Only in ../PatchKernel-3.16.3/fs: exportfs
 Only in ../PatchKernel-3.16.3/fs: ext2
@@ -156,14 +216,26 @@ Only in ../PatchKernel-3.16.3/fs: ext4
 Only in ../PatchKernel-3.16.3/fs: f2fs
 Only in ../PatchKernel-3.16.3/fs: fat
 Only in ../PatchKernel-3.16.3/fs: fcntl.c
+Only in ../PatchKernel-3.16.3/fs: fcntl.o
+Only in ../PatchKernel-3.16.3/fs: .fcntl.o.cmd
 Only in ../PatchKernel-3.16.3/fs: fhandle.c
 Only in ../PatchKernel-3.16.3/fs: file.c
+Only in ../PatchKernel-3.16.3/fs: file.o
+Only in ../PatchKernel-3.16.3/fs: .file.o.cmd
 Only in ../PatchKernel-3.16.3/fs: filesystems.c
+Only in ../PatchKernel-3.16.3/fs: filesystems.o
+Only in ../PatchKernel-3.16.3/fs: .filesystems.o.cmd
 Only in ../PatchKernel-3.16.3/fs: file_table.c
+Only in ../PatchKernel-3.16.3/fs: file_table.o
+Only in ../PatchKernel-3.16.3/fs: .file_table.o.cmd
 Only in ../PatchKernel-3.16.3/fs: freevxfs
 Only in ../PatchKernel-3.16.3/fs: fscache
 Only in ../PatchKernel-3.16.3/fs: fs_struct.c
+Only in ../PatchKernel-3.16.3/fs: fs_struct.o
+Only in ../PatchKernel-3.16.3/fs: .fs_struct.o.cmd
 Only in ../PatchKernel-3.16.3/fs: fs-writeback.c
+Only in ../PatchKernel-3.16.3/fs: fs-writeback.o
+Only in ../PatchKernel-3.16.3/fs: .fs-writeback.o.cmd
 Only in ../PatchKernel-3.16.3/fs: fuse
 Only in ../PatchKernel-3.16.3/fs: gfs2
 Only in ../PatchKernel-3.16.3/fs: hfs
@@ -173,8 +245,12 @@ Only in ../PatchKernel-3.16.3/fs: hpfs
 Only in ../PatchKernel-3.16.3/fs: hppfs
 Only in ../PatchKernel-3.16.3/fs: hugetlbfs
 Only in ../PatchKernel-3.16.3/fs: inode.c
+Only in ../PatchKernel-3.16.3/fs: inode.o
+Only in ../PatchKernel-3.16.3/fs: .inode.o.cmd
 Only in ../PatchKernel-3.16.3/fs: internal.h
 Only in ../PatchKernel-3.16.3/fs: ioctl.c
+Only in ../PatchKernel-3.16.3/fs: ioctl.o
+Only in ../PatchKernel-3.16.3/fs: .ioctl.o.cmd
 Only in ../PatchKernel-3.16.3/fs: isofs
 Only in ../PatchKernel-3.16.3/fs: jbd
 Only in ../PatchKernel-3.16.3/fs: jbd2
@@ -184,16 +260,25 @@ Only in ../PatchKernel-3.16.3/fs: Kconfig
 Only in ../PatchKernel-3.16.3/fs: Kconfig.binfmt
 Only in ../PatchKernel-3.16.3/fs: kernfs
 Only in ../PatchKernel-3.16.3/fs: libfs.c
+Only in ../PatchKernel-3.16.3/fs: libfs.o
+Only in ../PatchKernel-3.16.3/fs: .libfs.o.cmd
 Only in ../PatchKernel-3.16.3/fs: lockd
 Only in ../PatchKernel-3.16.3/fs: locks.c
 Only in ../PatchKernel-3.16.3/fs: logfs
 Only in ../PatchKernel-3.16.3/fs: Makefile
 Only in ../PatchKernel-3.16.3/fs: mbcache.c
 Only in ../PatchKernel-3.16.3/fs: minix
+Only in ../PatchKernel-3.16.3/fs: modules.builtin
 Only in ../PatchKernel-3.16.3/fs: mount.h
 Only in ../PatchKernel-3.16.3/fs: mpage.c
+Only in ../PatchKernel-3.16.3/fs: mpage.o
+Only in ../PatchKernel-3.16.3/fs: .mpage.o.cmd
 Only in ../PatchKernel-3.16.3/fs: namei.c
+Only in ../PatchKernel-3.16.3/fs: namei.o
+Only in ../PatchKernel-3.16.3/fs: .namei.o.cmd
 Only in ../PatchKernel-3.16.3/fs: namespace.c
+Only in ../PatchKernel-3.16.3/fs: namespace.o
+Only in ../PatchKernel-3.16.3/fs: .namespace.o.cmd
 Only in ../PatchKernel-3.16.3/fs: ncpfs
 Only in ../PatchKernel-3.16.3/fs: nfs
 Only in ../PatchKernel-3.16.3/fs: nfs_common
@@ -206,96 +291,30 @@ Only in ../PatchKernel-3.16.3/fs: ntfs
 Only in ../PatchKernel-3.16.3/fs: ocfs2
 Only in ../PatchKernel-3.16.3/fs: omfs
 Only in ../PatchKernel-3.16.3/fs: open.c
+Only in ../PatchKernel-3.16.3/fs: open.o
+Only in ../PatchKernel-3.16.3/fs: .open.o.cmd
 Only in ../PatchKernel-3.16.3/fs: openpromfs
 Only in ../PatchKernel-3.16.3/fs: pipe.c
+Only in ../PatchKernel-3.16.3/fs: pipe.o
+Only in ../PatchKernel-3.16.3/fs: .pipe.o.cmd
 Only in ../PatchKernel-3.16.3/fs: pnode.c
 Only in ../PatchKernel-3.16.3/fs: pnode.h
+Only in ../PatchKernel-3.16.3/fs: pnode.o
+Only in ../PatchKernel-3.16.3/fs: .pnode.o.cmd
 Only in ../PatchKernel-3.16.3/fs: posix_acl.c
 Only in ../PatchKernel-3.16.3/fs/proc: array.c
 diff -rup ../PatchKernel-3.16.3/fs/proc/base.c ./fs/proc/base.c
---- ../PatchKernel-3.16.3/fs/proc/base.c	2015-09-23 16:29:57.725168000 -0500
-+++ ./fs/proc/base.c	2015-09-23 16:08:34.041168000 -0500
-@@ -1407,6 +1407,72 @@ static const struct file_operations proc
- 	.release	= single_release,
- };
+--- ../PatchKernel-3.16.3/fs/proc/base.c	2015-09-23 16:31:05.029168000 -0500
++++ ./fs/proc/base.c	2015-09-23 17:35:13.041168000 -0500
+@@ -1451,7 +1451,7 @@ static int freeze_show(struct seq_file *
+ 		return -ESRCH;
  
-+/*
-+ * Hanle freeze/unfreeze IO under /proc 
-+ */
-+#define FREEZE_MAX_LEN 4 
-+static ssize_t freeze_write(struct file *file, const char __user *buf,
-+				size_t count, loff_t *offset)
-+{
-+	struct inode *inode = file_inode(file);
-+	struct task_struct *p;
-+	char buffer[FREEZE_MAX_LEN];
-+	const size_t maxlen = sizeof(buffer) - 1;
-+
-+	memset(buffer, 0, sizeof(buffer));
-+	if ( copy_from_user(buffer, buf, count > maxlen ? maxlen : count) ) {
-+		return -EFAULT;
-+	}
-+
-+	p = get_proc_task(inode);
-+	if ( !p ) {
-+		return -ESRCH;
-+	}
-+
-+	if ( !strncmp(buffer, "1", 1) ) {
-+		freeze_time(p);
-+	} else if ( !strncmp(buffer, "0", 1) ) {
-+		unfreeze_time(p);
-+	} // do nothing if user input other values
-+
-+	put_task_struct(p);
-+
-+	return count;
-+}
-+
-+static int freeze_show(struct seq_file *m, void *v)
-+{
-+	struct inode *inode = m->private;
-+	struct task_struct *p;
-+	int freezed;
-+
-+	p = get_proc_task(inode);
-+	if ( !p )
-+		return -ESRCH;
-+
-+	task_lock(p);
-+	freezed = (p->freeze_start_time == 0);
-+	task_unlock(p);
-+	seq_printf(m, "%d\n", freezed);
-+
-+	put_task_struct(p);
-+
-+	return 0;
-+}
-+
-+static int freeze_open(struct inode *inode, struct file *filp)
-+{
-+	return single_open(filp, freeze_show, inode);
-+}
-+
-+static const struct file_operations proc_pid_set_freeze_operations = {
-+	.open		= freeze_open,
-+	.read		= seq_read,
-+	.write		= freeze_write,
-+	.llseek		= seq_lseek,
-+	.release	= single_release,
-+};
-+
- static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
- {
- 	struct task_struct *task;
-@@ -2568,6 +2634,7 @@ static const struct pid_entry tgid_base_
- 	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
- #endif
- 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
-+	REG("freeze",	S_IRUGO|S_IWUSR, proc_pid_set_freeze_operations),
- #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
- 	INF("syscall",    S_IRUSR, proc_pid_syscall),
- #endif
+ 	task_lock(p);
+-	freezed = (p->freeze_start_time == 0);
++	freezed = (p->freeze_start_nsec == 0);
+ 	task_unlock(p);
+ 	seq_printf(m, "%d\n", freezed);
+ 
 Only in ../PatchKernel-3.16.3/fs/proc: cmdline.c
 Only in ../PatchKernel-3.16.3/fs/proc: consoles.c
 Only in ../PatchKernel-3.16.3/fs/proc: cpuinfo.c
@@ -304,6 +323,8 @@ Only in ../PatchKernel-3.16.3/fs/proc: fd.c
 Only in ../PatchKernel-3.16.3/fs/proc: fd.h
 Only in ../PatchKernel-3.16.3/fs/proc: generic.c
 Only in ../PatchKernel-3.16.3/fs/proc: inode.c
+Only in ../PatchKernel-3.16.3/fs/proc: inode.o
+Only in ../PatchKernel-3.16.3/fs/proc: .inode.o.cmd
 Only in ../PatchKernel-3.16.3/fs/proc: internal.h
 Only in ../PatchKernel-3.16.3/fs/proc: interrupts.c
 Only in ../PatchKernel-3.16.3/fs/proc: Kconfig
@@ -312,6 +333,7 @@ Only in ../PatchKernel-3.16.3/fs/proc: kmsg.c
 Only in ../PatchKernel-3.16.3/fs/proc: loadavg.c
 Only in ../PatchKernel-3.16.3/fs/proc: Makefile
 Only in ../PatchKernel-3.16.3/fs/proc: meminfo.c
+Only in ../PatchKernel-3.16.3/fs/proc: modules.builtin
 Only in ../PatchKernel-3.16.3/fs/proc: namespaces.c
 Only in ../PatchKernel-3.16.3/fs/proc: nommu.c
 Only in ../PatchKernel-3.16.3/fs/proc: page.c
@@ -319,34 +341,60 @@ Only in ../PatchKernel-3.16.3/fs/proc: proc_net.c
 Only in ../PatchKernel-3.16.3/fs/proc: proc_sysctl.c
 Only in ../PatchKernel-3.16.3/fs/proc: proc_tty.c
 Only in ../PatchKernel-3.16.3/fs/proc: root.c
+Only in ../PatchKernel-3.16.3/fs/proc: root.o
+Only in ../PatchKernel-3.16.3/fs/proc: .root.o.cmd
 Only in ../PatchKernel-3.16.3/fs/proc: self.c
 Only in ../PatchKernel-3.16.3/fs/proc: softirqs.c
 Only in ../PatchKernel-3.16.3/fs/proc: stat.c
 Only in ../PatchKernel-3.16.3/fs/proc: task_mmu.c
+Only in ../PatchKernel-3.16.3/fs/proc: task_mmu.o
+Only in ../PatchKernel-3.16.3/fs/proc: .task_mmu.o.cmd
 Only in ../PatchKernel-3.16.3/fs/proc: task_nommu.c
 Only in ../PatchKernel-3.16.3/fs/proc: uptime.c
 Only in ../PatchKernel-3.16.3/fs/proc: version.c
 Only in ../PatchKernel-3.16.3/fs/proc: vmcore.c
 Only in ../PatchKernel-3.16.3/fs: proc_namespace.c
+Only in ../PatchKernel-3.16.3/fs: proc_namespace.o
+Only in ../PatchKernel-3.16.3/fs: .proc_namespace.o.cmd
 Only in ../PatchKernel-3.16.3/fs: pstore
 Only in ../PatchKernel-3.16.3/fs: qnx4
 Only in ../PatchKernel-3.16.3/fs: qnx6
 Only in ../PatchKernel-3.16.3/fs: quota
 Only in ../PatchKernel-3.16.3/fs: ramfs
 Only in ../PatchKernel-3.16.3/fs: readdir.c
+Only in ../PatchKernel-3.16.3/fs: readdir.o
+Only in ../PatchKernel-3.16.3/fs: .readdir.o.cmd
 Only in ../PatchKernel-3.16.3/fs: read_write.c
+Only in ../PatchKernel-3.16.3/fs: read_write.o
+Only in ../PatchKernel-3.16.3/fs: .read_write.o.cmd
 Only in ../PatchKernel-3.16.3/fs: reiserfs
 Only in ../PatchKernel-3.16.3/fs: romfs
 Only in ../PatchKernel-3.16.3/fs: select.c
+Only in ../PatchKernel-3.16.3/fs: select.o
+Only in ../PatchKernel-3.16.3/fs: .select.o.cmd
 Only in ../PatchKernel-3.16.3/fs: seq_file.c
+Only in ../PatchKernel-3.16.3/fs: seq_file.o
+Only in ../PatchKernel-3.16.3/fs: .seq_file.o.cmd
 Only in ../PatchKernel-3.16.3/fs: signalfd.c
 Only in ../PatchKernel-3.16.3/fs: splice.c
+Only in ../PatchKernel-3.16.3/fs: splice.o
+Only in ../PatchKernel-3.16.3/fs: .splice.o.cmd
 Only in ../PatchKernel-3.16.3/fs: squashfs
 Only in ../PatchKernel-3.16.3/fs: stack.c
+Only in ../PatchKernel-3.16.3/fs: stack.o
+Only in ../PatchKernel-3.16.3/fs: .stack.o.cmd
 Only in ../PatchKernel-3.16.3/fs: stat.c
 Only in ../PatchKernel-3.16.3/fs: statfs.c
+Only in ../PatchKernel-3.16.3/fs: statfs.o
+Only in ../PatchKernel-3.16.3/fs: .statfs.o.cmd
+Only in ../PatchKernel-3.16.3/fs: stat.o
+Only in ../PatchKernel-3.16.3/fs: .stat.o.cmd
 Only in ../PatchKernel-3.16.3/fs: super.c
+Only in ../PatchKernel-3.16.3/fs: super.o
+Only in ../PatchKernel-3.16.3/fs: .super.o.cmd
 Only in ../PatchKernel-3.16.3/fs: sync.c
+Only in ../PatchKernel-3.16.3/fs: sync.o
+Only in ../PatchKernel-3.16.3/fs: .sync.o.cmd
 Only in ../PatchKernel-3.16.3/fs: sysfs
 Only in ../PatchKernel-3.16.3/fs: sysv
 Only in ../PatchKernel-3.16.3/fs: timerfd.c
@@ -354,7 +402,11 @@ Only in ../PatchKernel-3.16.3/fs: ubifs
 Only in ../PatchKernel-3.16.3/fs: udf
 Only in ../PatchKernel-3.16.3/fs: ufs
 Only in ../PatchKernel-3.16.3/fs: utimes.c
+Only in ../PatchKernel-3.16.3/fs: utimes.o
+Only in ../PatchKernel-3.16.3/fs: .utimes.o.cmd
 Only in ../PatchKernel-3.16.3/fs: xattr.c
+Only in ../PatchKernel-3.16.3/fs: xattr.o
+Only in ../PatchKernel-3.16.3/fs: .xattr.o.cmd
 Only in ../PatchKernel-3.16.3/fs: xfs
 Only in ./: .git
 Only in ../PatchKernel-3.16.3/: .gitignore
@@ -362,9 +414,11 @@ Only in ./: howto_submit_patch.md
 Only in ../PatchKernel-3.16.3/include: acpi
 Only in ../PatchKernel-3.16.3/include: asm-generic
 Only in ../PatchKernel-3.16.3/include: clocksource
+Only in ../PatchKernel-3.16.3/include: config
 Only in ../PatchKernel-3.16.3/include: crypto
 Only in ../PatchKernel-3.16.3/include: drm
 Only in ../PatchKernel-3.16.3/include: dt-bindings
+Only in ../PatchKernel-3.16.3/include: generated
 Only in ../PatchKernel-3.16.3/include: Kbuild
 Only in ../PatchKernel-3.16.3/include: keys
 Only in ../PatchKernel-3.16.3/include: kvm
@@ -782,22 +836,6 @@ Only in ../PatchKernel-3.16.3/include/linux: in.h
 Only in ../PatchKernel-3.16.3/include/linux: init.h
 Only in ../PatchKernel-3.16.3/include/linux: init_ohci1394_dma.h
 Only in ../PatchKernel-3.16.3/include/linux: initrd.h
-diff -rup ../PatchKernel-3.16.3/include/linux/init_task.h ./include/linux/init_task.h
---- ../PatchKernel-3.16.3/include/linux/init_task.h	2015-09-23 16:29:57.289168000 -0500
-+++ ./include/linux/init_task.h	2015-09-21 09:16:40.418171000 -0500
-@@ -195,6 +195,12 @@ extern struct task_group root_task_group
- 	.ptraced	= LIST_HEAD_INIT(tsk.ptraced),			\
- 	.ptrace_entry	= LIST_HEAD_INIT(tsk.ptrace_entry),		\
- 	.real_parent	= &tsk,						\
-+	.dilation = 0,                              			\
-+	.virtual_start_nsec = 0,                    			\
-+	.physical_past_nsec = 0,                    			\
-+	.virtual_past_nsec = 0,                     			\
-+	.freeze_start_nsec = 0,						\
-+	.freeze_past_nsec = 0,						\
- 	.parent		= &tsk,						\
- 	.children	= LIST_HEAD_INIT(tsk.children),			\
- 	.sibling	= LIST_HEAD_INIT(tsk.sibling),			\
 Only in ../PatchKernel-3.16.3/include/linux: inotify.h
 Only in ../PatchKernel-3.16.3/include/linux: input
 Only in ../PatchKernel-3.16.3/include/linux: input.h
@@ -1240,34 +1278,6 @@ Only in ../PatchKernel-3.16.3/include/linux: scatterlist.h
 Only in ../PatchKernel-3.16.3/include/linux: scc.h
 Only in ../PatchKernel-3.16.3/include/linux: sched
 Only in ../PatchKernel-3.16.3/include/linux: sched_clock.h
-diff -rup ../PatchKernel-3.16.3/include/linux/sched.h ./include/linux/sched.h
---- ../PatchKernel-3.16.3/include/linux/sched.h	2015-09-23 16:29:57.425168000 -0500
-+++ ./include/linux/sched.h	2015-09-23 15:31:21.877168000 -0500
-@@ -1406,6 +1406,14 @@ struct task_struct {
- 	struct signal_struct *signal;
- 	struct sighand_struct *sighand;
- 
-+/* virtual time variables ---Jiaqi */
-+	int dilation; // for fraction support, here dilation's base is 1000 (e.g. TDF=1)
-+	s64 virtual_start_nsec;
-+	s64 physical_past_nsec;
-+	s64 virtual_past_nsec;
-+	s64 freeze_start_nsec;
-+	s64 freeze_past_nsec;
-+
- 	sigset_t blocked, real_blocked;
- 	sigset_t saved_sigmask;	/* restored if set_restore_sigmask() was used */
- 	struct sigpending pending;
-@@ -1657,6 +1665,9 @@ struct task_struct {
- #endif
- };
- 
-+/* Change process's dilation */
-+// extern int settdf(int dilation, int ppid);
-+
- /* Future-safe accessor for struct task_struct's cpus_allowed. */
- #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)
- 
 Only in ../PatchKernel-3.16.3/include/linux: screen_info.h
 Only in ../PatchKernel-3.16.3/include/linux: sctp.h
 Only in ../PatchKernel-3.16.3/include/linux: scx200_gpio.h
@@ -1402,20 +1412,6 @@ Only in ../PatchKernel-3.16.3/include/linux: tick.h
 Only in ../PatchKernel-3.16.3/include/linux: tifm.h
 Only in ../PatchKernel-3.16.3/include/linux: timb_dma.h
 Only in ../PatchKernel-3.16.3/include/linux: timb_gpio.h
-diff -rup ../PatchKernel-3.16.3/include/linux/time.h ./include/linux/time.h
---- ../PatchKernel-3.16.3/include/linux/time.h	2015-09-23 16:29:57.441168000 -0500
-+++ ./include/linux/time.h	2015-09-23 15:23:44.057168000 -0500
-@@ -184,6 +184,10 @@ extern void timekeeping_clocktai(struct
- struct tms;
- extern void do_sys_times(struct tms *);
- 
-+extern int set_dilation(unsigned long dilation, pid_t pid);
-+extern void freeze_time(struct task_struct *group_leader);
-+extern void unfreeze_time(struct task_struct *group_leader);
-+
- /*
-  * Similar to the struct tm in userspace <time.h>, but it needs to be here so
-  * that the kernel source is self contained.
 Only in ../PatchKernel-3.16.3/include/linux: timekeeper_internal.h
 Only in ../PatchKernel-3.16.3/include/linux: timerfd.h
 Only in ../PatchKernel-3.16.3/include/linux: timer.h
@@ -1647,44 +1643,6 @@ Only in ../PatchKernel-3.16.3/include/net: request_sock.h
 Only in ../PatchKernel-3.16.3/include/net: rose.h
 Only in ../PatchKernel-3.16.3/include/net: route.h
 Only in ../PatchKernel-3.16.3/include/net: rtnetlink.h
-diff -rup ../PatchKernel-3.16.3/include/net/sch_generic.h ./include/net/sch_generic.h
---- ../PatchKernel-3.16.3/include/net/sch_generic.h	2015-09-23 16:29:57.053168000 -0500
-+++ ./include/net/sch_generic.h	2015-09-23 16:21:30.781168000 -0500
-@@ -684,6 +684,7 @@ static inline struct sk_buff *skb_act_cl
- 
- struct psched_ratecfg {
- 	u64	rate_bytes_ps; /* bytes per second */
-+	u64	undilated_rate_bytes_ps; /* undilated Bps, should never overwrite after init in htb_change_class() */
- 	u32	mult;
- 	u16	overhead;
- 	u8	linklayer;
-@@ -705,6 +706,8 @@ void psched_ratecfg_precompute(struct ps
- 			       const struct tc_ratespec *conf,
- 			       u64 rate64);
- 
-+void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation);
-+
- static inline void psched_ratecfg_getrate(struct tc_ratespec *res,
- 					  const struct psched_ratecfg *r)
- {
-@@ -716,6 +719,17 @@ static inline void psched_ratecfg_getrat
- 	 */
- 	res->rate = min_t(u64, r->rate_bytes_ps, ~0U);
- 
-+	/*
-+	if ( current ) {
-+		if ( current->dilation > 0 ) {
-+			// r->rate_bytes_ps = r->rate_bytes_ps / current->dilation * 1000;
-+		}
-+		printk("[info] in psched_ratecfg_getrate res->rate(%llu), r->rate_bytes_ps(%llu)\n", res->rate, r->rate_bytes_ps, current->dilation);
-+	} else {
-+		printk("[info] in psched_ratecfg_getrate current is NULL");
-+	}
-+	*/
-+
- 	res->overhead = r->overhead;
- 	res->linklayer = (r->linklayer & TC_LINKLAYER_MASK);
- }
 Only in ../PatchKernel-3.16.3/include/net: scm.h
 Only in ../PatchKernel-3.16.3/include/net: sctp
 Only in ../PatchKernel-3.16.3/include/net: secure_seq.h
@@ -2046,26 +2004,6 @@ Only in ../PatchKernel-3.16.3/include/uapi/linux: route.h
 Only in ../PatchKernel-3.16.3/include/uapi/linux: rtc.h
 Only in ../PatchKernel-3.16.3/include/uapi/linux: rtnetlink.h
 Only in ../PatchKernel-3.16.3/include/uapi/linux: scc.h
-diff -rup ../PatchKernel-3.16.3/include/uapi/linux/sched.h ./include/uapi/linux/sched.h
---- ../PatchKernel-3.16.3/include/uapi/linux/sched.h	2015-09-23 16:29:57.125168000 -0500
-+++ ./include/uapi/linux/sched.h	2015-09-21 09:22:08.206171000 -0500
-@@ -21,6 +21,8 @@
- #define CLONE_DETACHED		0x00400000	/* Unused, ignored */
- #define CLONE_UNTRACED		0x00800000	/* set if the tracing process can't force CLONE_PTRACE on this clone */
- #define CLONE_CHILD_SETTID	0x01000000	/* set the TID in the child */
-+
-+
- /* 0x02000000 was previously the unused CLONE_STOPPED (Start in stopped state)
-    and is now available for re-use. */
- #define CLONE_NEWUTS		0x04000000	/* New utsname group? */
-@@ -28,6 +30,7 @@
- #define CLONE_NEWUSER		0x10000000	/* New user namespace */
- #define CLONE_NEWPID		0x20000000	/* New pid namespace */
- #define CLONE_NEWNET		0x40000000	/* New network namespace */
-+#define CLONE_NEWTIME		0x02000000	/* New virtual time/clock namespace --- Jiaqi */
- #define CLONE_IO		0x80000000	/* Clone io context */
- 
- /*
 Only in ../PatchKernel-3.16.3/include/uapi/linux: screen_info.h
 Only in ../PatchKernel-3.16.3/include/uapi/linux: sctp.h
 Only in ../PatchKernel-3.16.3/include/uapi/linux: sdla.h
@@ -2177,903 +2115,363 @@ Only in ../PatchKernel-3.16.3/: ipc
 Only in ../PatchKernel-3.16.3/: Kbuild
 Only in ../PatchKernel-3.16.3/: Kconfig
 Only in ../PatchKernel-3.16.3/kernel: acct.c
+Only in ../PatchKernel-3.16.3/kernel: acct.o
+Only in ../PatchKernel-3.16.3/kernel: .acct.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: async.c
+Only in ../PatchKernel-3.16.3/kernel: async.o
+Only in ../PatchKernel-3.16.3/kernel: .async.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: audit.c
 Only in ../PatchKernel-3.16.3/kernel: auditfilter.c
+Only in ../PatchKernel-3.16.3/kernel: auditfilter.o
+Only in ../PatchKernel-3.16.3/kernel: .auditfilter.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: audit.h
+Only in ../PatchKernel-3.16.3/kernel: audit.o
+Only in ../PatchKernel-3.16.3/kernel: .audit.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: auditsc.c
+Only in ../PatchKernel-3.16.3/kernel: auditsc.o
+Only in ../PatchKernel-3.16.3/kernel: .auditsc.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: audit_tree.c
+Only in ../PatchKernel-3.16.3/kernel: audit_tree.o
+Only in ../PatchKernel-3.16.3/kernel: .audit_tree.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: audit_watch.c
+Only in ../PatchKernel-3.16.3/kernel: audit_watch.o
+Only in ../PatchKernel-3.16.3/kernel: .audit_watch.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: backtracetest.c
 Only in ../PatchKernel-3.16.3/kernel: bounds.c
+Only in ../PatchKernel-3.16.3/kernel: bounds.s
+Only in ../PatchKernel-3.16.3/kernel: .bounds.s.cmd
+Only in ../PatchKernel-3.16.3/kernel: built-in.o
+Only in ../PatchKernel-3.16.3/kernel: .built-in.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: capability.c
+Only in ../PatchKernel-3.16.3/kernel: capability.o
+Only in ../PatchKernel-3.16.3/kernel: .capability.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: cgroup.c
 Only in ../PatchKernel-3.16.3/kernel: cgroup_freezer.c
+Only in ../PatchKernel-3.16.3/kernel: cgroup_freezer.o
+Only in ../PatchKernel-3.16.3/kernel: .cgroup_freezer.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: cgroup.o
+Only in ../PatchKernel-3.16.3/kernel: .cgroup.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: compat.c
+Only in ../PatchKernel-3.16.3/kernel: compat.o
+Only in ../PatchKernel-3.16.3/kernel: .compat.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: configs.c
 Only in ../PatchKernel-3.16.3/kernel: context_tracking.c
+Only in ../PatchKernel-3.16.3/kernel: context_tracking.o
+Only in ../PatchKernel-3.16.3/kernel: .context_tracking.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: cpu.c
+Only in ../PatchKernel-3.16.3/kernel: cpu.o
+Only in ../PatchKernel-3.16.3/kernel: .cpu.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: cpu_pm.c
 Only in ../PatchKernel-3.16.3/kernel: cpuset.c
+Only in ../PatchKernel-3.16.3/kernel: cpuset.o
+Only in ../PatchKernel-3.16.3/kernel: .cpuset.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: crash_dump.c
+Only in ../PatchKernel-3.16.3/kernel: crash_dump.o
+Only in ../PatchKernel-3.16.3/kernel: .crash_dump.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: cred.c
+Only in ../PatchKernel-3.16.3/kernel: cred.o
+Only in ../PatchKernel-3.16.3/kernel: .cred.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: debug
 Only in ../PatchKernel-3.16.3/kernel: delayacct.c
+Only in ../PatchKernel-3.16.3/kernel: delayacct.o
+Only in ../PatchKernel-3.16.3/kernel: .delayacct.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: dma.c
+Only in ../PatchKernel-3.16.3/kernel: dma.o
+Only in ../PatchKernel-3.16.3/kernel: .dma.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: elfcore.c
+Only in ../PatchKernel-3.16.3/kernel: elfcore.o
+Only in ../PatchKernel-3.16.3/kernel: .elfcore.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: events
 Only in ../PatchKernel-3.16.3/kernel: exec_domain.c
+Only in ../PatchKernel-3.16.3/kernel: exec_domain.o
+Only in ../PatchKernel-3.16.3/kernel: .exec_domain.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: exit.c
+Only in ../PatchKernel-3.16.3/kernel: exit.o
+Only in ../PatchKernel-3.16.3/kernel: .exit.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: extable.c
-diff -rup ../PatchKernel-3.16.3/kernel/fork.c ./kernel/fork.c
---- ../PatchKernel-3.16.3/kernel/fork.c	2015-09-23 16:29:50.761168000 -0500
-+++ ./kernel/fork.c	2015-09-23 15:35:10.997168000 -0500
-@@ -2,8 +2,8 @@
-  *  linux/kernel/fork.c
-  *
-  *  Copyright (C) 1991, 1992  Linus Torvalds
-+ *
-  */
--
- /*
-  *  'fork.c' contains the help-routines for the 'fork' system call
-  * (see also entry.S and others).
-@@ -148,10 +148,10 @@ void __weak arch_release_thread_info(str
-  */
- # if THREAD_SIZE >= PAGE_SIZE
- static struct thread_info *alloc_thread_info_node(struct task_struct *tsk,
--						  int node)
-+		int node)
- {
- 	struct page *page = alloc_kmem_pages_node(node, THREADINFO_GFP,
--						  THREAD_SIZE_ORDER);
-+			THREAD_SIZE_ORDER);
- 
- 	return page ? page_address(page) : NULL;
- }
-@@ -164,7 +164,7 @@ static inline void free_thread_info(stru
- static struct kmem_cache *thread_info_cache;
- 
- static struct thread_info *alloc_thread_info_node(struct task_struct *tsk,
--						  int node)
-+		int node)
- {
- 	return kmem_cache_alloc_node(thread_info_cache, THREADINFO_GFP, node);
- }
-@@ -177,7 +177,7 @@ static void free_thread_info(struct thre
- void thread_info_cache_init(void)
- {
- 	thread_info_cache = kmem_cache_create("thread_info", THREAD_SIZE,
--					      THREAD_SIZE, 0, NULL);
-+			THREAD_SIZE, 0, NULL);
- 	BUG_ON(thread_info_cache == NULL);
- }
- # endif
-@@ -262,7 +262,7 @@ void __init fork_init(unsigned long memp
- 	/* create a slab on which task_structs can be allocated */
- 	task_struct_cachep =
- 		kmem_cache_create("task_struct", sizeof(struct task_struct),
--			ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
-+				ARCH_MIN_TASKALIGN, SLAB_PANIC | SLAB_NOTRACK, NULL);
- #endif
- 
- 	/* do the arch specific task caches init */
-@@ -288,7 +288,7 @@ void __init fork_init(unsigned long memp
- }
- 
- int __weak arch_dup_task_struct(struct task_struct *dst,
--					       struct task_struct *src)
-+		struct task_struct *src)
- {
- 	*dst = *src;
- 	return 0;
-@@ -387,7 +387,7 @@ static int dup_mmap(struct mm_struct *mm
- 
- 		if (mpnt->vm_flags & VM_DONTCOPY) {
- 			vm_stat_account(mm, mpnt->vm_flags, mpnt->vm_file,
--							-vma_pages(mpnt));
-+					-vma_pages(mpnt));
- 			continue;
- 		}
- 		charge = 0;
-@@ -429,7 +429,7 @@ static int dup_mmap(struct mm_struct *mm
- 						&mapping->i_mmap_nonlinear);
- 			else
- 				vma_interval_tree_insert_after(tmp, mpnt,
--							&mapping->i_mmap);
-+						&mapping->i_mmap);
- 			flush_dcache_mmap_unlock(mapping);
- 			mutex_unlock(&mapping->i_mmap_mutex);
- 		}
-@@ -567,7 +567,7 @@ static void check_mm(struct mm_struct *m
- 
- 		if (unlikely(x))
- 			printk(KERN_ALERT "BUG: Bad rss-counter state "
--					  "mm:%p idx:%d val:%ld\n", mm, i, x);
-+					"mm:%p idx:%d val:%ld\n", mm, i, x);
- 	}
- 
- #if defined(CONFIG_TRANSPARENT_HUGEPAGE) && !USE_SPLIT_PMD_PTLOCKS
-@@ -722,7 +722,7 @@ static void complete_vfork_done(struct t
- }
- 
- static int wait_for_vfork_done(struct task_struct *child,
--				struct completion *vfork)
-+		struct completion *vfork)
- {
- 	int killed;
- 
-@@ -785,7 +785,7 @@ void mm_release(struct task_struct *tsk,
- 	 */
- 	if (tsk->clear_child_tid) {
- 		if (!(tsk->flags & PF_SIGNALED) &&
--		    atomic_read(&mm->mm_users) > 1) {
-+				atomic_read(&mm->mm_users) > 1) {
- 			/*
- 			 * We don't check the error code - if userspace has
- 			 * not set up a proper pointer then tough luck.
-@@ -1074,7 +1074,7 @@ static int copy_signal(unsigned long clo
- 	sig->oom_score_adj_min = current->signal->oom_score_adj_min;
- 
- 	sig->has_child_subreaper = current->signal->has_child_subreaper ||
--				   current->signal->is_child_subreaper;
-+		current->signal->is_child_subreaper;
- 
- 	mutex_init(&sig->cred_guard_mutex);
- 
-@@ -1119,10 +1119,10 @@ static void posix_cpu_timers_init(struct
- 	INIT_LIST_HEAD(&tsk->cpu_timers[2]);
- }
- 
--static inline void
-+	static inline void
- init_task_pid(struct task_struct *task, enum pid_type type, struct pid *pid)
- {
--	 task->pids[type].pid = pid;
-+	task->pids[type].pid = pid;
- }
- 
- /*
-@@ -1134,11 +1134,11 @@ init_task_pid(struct task_struct *task,
-  * flags). The actual kick-off is left to the caller.
-  */
- static struct task_struct *copy_process(unsigned long clone_flags,
--					unsigned long stack_start,
--					unsigned long stack_size,
--					int __user *child_tidptr,
--					struct pid *pid,
--					int trace)
-+		unsigned long stack_start,
-+		unsigned long stack_size,
-+		int __user *child_tidptr,
-+		struct pid *pid,
-+		int trace)
- {
- 	int retval;
- 	struct task_struct *p;
-@@ -1171,7 +1171,7 @@ static struct task_struct *copy_process(
- 	 * from creating siblings.
- 	 */
- 	if ((clone_flags & CLONE_PARENT) &&
--				current->signal->flags & SIGNAL_UNKILLABLE)
-+			current->signal->flags & SIGNAL_UNKILLABLE)
- 		return ERR_PTR(-EINVAL);
- 
- 	/*
-@@ -1181,8 +1181,8 @@ static struct task_struct *copy_process(
- 	 */
- 	if (clone_flags & CLONE_SIGHAND) {
- 		if ((clone_flags & (CLONE_NEWUSER | CLONE_NEWPID)) ||
--		    (task_active_pid_ns(current) !=
--				current->nsproxy->pid_ns_for_children))
-+				(task_active_pid_ns(current) !=
-+				 current->nsproxy->pid_ns_for_children))
- 			return ERR_PTR(-EINVAL);
- 	}
- 
-@@ -1208,7 +1208,7 @@ static struct task_struct *copy_process(
- 	if (atomic_read(&p->real_cred->user->processes) >=
- 			task_rlimit(p, RLIMIT_NPROC)) {
- 		if (p->real_cred->user != INIT_USER &&
--		    !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
-+				!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN))
- 			goto bad_fork_free;
- 	}
- 	current->flags &= ~PF_NPROC_EXCEEDED;
-@@ -1443,7 +1443,7 @@ static struct task_struct *copy_process(
- 	 * it's process group.
- 	 * A fatal signal pending means that current will exit, so the new
- 	 * thread can't slip out of an OOM kill (or normal SIGKILL).
--	*/
-+	 */
- 	recalc_sigpending();
- 	if (signal_pending(current)) {
- 		spin_unlock(&current->sighand->siglock);
-@@ -1477,9 +1477,9 @@ static struct task_struct *copy_process(
- 			atomic_inc(&current->signal->live);
- 			atomic_inc(&current->signal->sigcnt);
- 			list_add_tail_rcu(&p->thread_group,
--					  &p->group_leader->thread_group);
-+					&p->group_leader->thread_group);
- 			list_add_tail_rcu(&p->thread_node,
--					  &p->signal->thread_head);
-+					&p->signal->thread_head);
- 		}
- 		attach_pid(p, PIDTYPE_PID);
- 		nr_threads++;
-@@ -1567,16 +1567,44 @@ struct task_struct *fork_idle(int cpu)
- }
- 
- /*
-+ * Initialize virtual start time as this moment
-+ */
-+static int init_virtual_start_time(struct task_struct *task, int dilation)
-+{
-+	struct timespec ts;
-+	s64 getnstimeofday_nsec;
-+
-+	if( likely(dilation > 0) ) {
-+		/* must make sure further get(ns)timeofday return original time */
-+		task->virtual_start_nsec = 0;
-+		task->dilation = 0;
-+
-+		/* method: will return nano seconds since Epoch 1970 */
-+		__getnstimeofday(&ts);
-+		getnstimeofday_nsec= timespec_to_ns(&ts);
-+		/* printk("[info] [process %d] getnstimeofday virtual start time = %lld nano secs\n", task->pid, getnstimeofday_nsec); */
-+		
-+		/* initialize fields of nsec */
-+		task->virtual_start_nsec = getnstimeofday_nsec;
-+		task->physical_past_nsec = 0;
-+		task->virtual_past_nsec = 0;
-+		task->dilation = dilation * 1000;
-+	} else {
-+		return -EINVAL;
-+	}
-+}
-+
-+/*
-  *  Ok, this is the main fork-routine.
-  *
-  * It copies the process, and if successful kick-starts
-  * it and waits for it to finish using the VM if required.
-  */
- long do_fork(unsigned long clone_flags,
--	      unsigned long stack_start,
--	      unsigned long stack_size,
--	      int __user *parent_tidptr,
--	      int __user *child_tidptr)
-+		unsigned long stack_start,
-+		unsigned long stack_size,
-+		int __user *parent_tidptr,
-+		int __user *child_tidptr)
- {
- 	struct task_struct *p;
- 	int trace = 0;
-@@ -1601,7 +1629,9 @@ long do_fork(unsigned long clone_flags,
- 	}
- 
- 	p = copy_process(clone_flags, stack_start, stack_size,
--			 child_tidptr, NULL, trace);
-+			child_tidptr, NULL, trace);
-+	init_virtual_start_time(p, current->dilation);
-+
- 	/*
- 	 * Do this prior waking up the new thread - the thread pointer
- 	 * might get invalid after that point, if the thread exits quickly.
-@@ -1648,7 +1678,7 @@ long do_fork(unsigned long clone_flags,
- pid_t kernel_thread(int (*fn)(void *), void *arg, unsigned long flags)
- {
- 	return do_fork(flags|CLONE_VM|CLONE_UNTRACED, (unsigned long)fn,
--		(unsigned long)arg, NULL, NULL);
-+			(unsigned long)arg, NULL, NULL);
- }
- 
- #ifdef __ARCH_WANT_SYS_FORK
-@@ -1674,14 +1704,14 @@ SYSCALL_DEFINE0(vfork)
- #ifdef __ARCH_WANT_SYS_CLONE
- #ifdef CONFIG_CLONE_BACKWARDS
- SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
--		 int __user *, parent_tidptr,
--		 int, tls_val,
--		 int __user *, child_tidptr)
-+		int __user *, parent_tidptr,
-+		int, tls_val,
-+		int __user *, child_tidptr)
- #elif defined(CONFIG_CLONE_BACKWARDS2)
- SYSCALL_DEFINE5(clone, unsigned long, newsp, unsigned long, clone_flags,
--		 int __user *, parent_tidptr,
--		 int __user *, child_tidptr,
--		 int, tls_val)
-+		int __user *, parent_tidptr,
-+		int __user *, child_tidptr,
-+		int, tls_val)
- #elif defined(CONFIG_CLONE_BACKWARDS3)
- SYSCALL_DEFINE6(clone, unsigned long, clone_flags, unsigned long, newsp,
- 		int, stack_size,
-@@ -1690,9 +1720,9 @@ SYSCALL_DEFINE6(clone, unsigned long, cl
- 		int, tls_val)
- #else
- SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
--		 int __user *, parent_tidptr,
--		 int __user *, child_tidptr,
--		 int, tls_val)
-+		int __user *, parent_tidptr,
-+		int __user *, child_tidptr,
-+		int, tls_val)
- #endif
- {
- 	return do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr);
-@@ -1749,7 +1779,7 @@ static int check_unshare_flags(unsigned
- 	if (unshare_flags & ~(CLONE_THREAD|CLONE_FS|CLONE_NEWNS|CLONE_SIGHAND|
- 				CLONE_VM|CLONE_FILES|CLONE_SYSVSEM|
- 				CLONE_NEWUTS|CLONE_NEWIPC|CLONE_NEWNET|
--				CLONE_NEWUSER|CLONE_NEWPID))
-+				CLONE_NEWUSER|CLONE_NEWPID|CLONE_NEWTIME))
- 		return -EINVAL;
- 	/*
- 	 * Not implemented, but pretend it works if there is nothing to
-@@ -1795,7 +1825,7 @@ static int unshare_fd(unsigned long unsh
- 	int error = 0;
- 
- 	if ((unshare_flags & CLONE_FILES) &&
--	    (fd && atomic_read(&fd->count) > 1)) {
-+			(fd && atomic_read(&fd->count) > 1)) {
- 		*new_fdp = dup_fd(fd, &error);
- 		if (!*new_fdp)
- 			return error;
-@@ -1804,6 +1834,20 @@ static int unshare_fd(unsigned long unsh
- 	return 0;
- }
- 
-+static int unshare_virtual_time(unsigned long unshare_flags)
-+{
-+	/* if pack virtual time info into a struct "virtual_time"
-+	 * then every process have a pointer to a NULL object
-+	 * here we should allocate it, which may fail
-+	 * also, init allocated object may fail due to "dilation"
-+	 */
-+	int error = 0;
-+	if (unshare_flags & CLONE_NEWTIME) {
-+		error = init_virtual_start_time(current, 1); // default TDF=1(actually, it is 1000)
-+	}
-+	return error;
-+}
-+
- /*
-  * unshare allows a process to 'unshare' part of the process
-  * context which was originally shared using clone.  copy_*
-@@ -1862,10 +1906,12 @@ SYSCALL_DEFINE1(unshare, unsigned long,
- 	if (err)
- 		goto bad_unshare_cleanup_fd;
- 	err = unshare_nsproxy_namespaces(unshare_flags, &new_nsproxy,
--					 new_cred, new_fs);
-+			new_cred, new_fs);
- 	if (err)
- 		goto bad_unshare_cleanup_cred;
--
-+	err = unshare_virtual_time(unshare_flags);
-+	if (err)
-+		goto bad_unshare_cleanup_vt;
- 	if (new_fs || new_fd || do_sysvsem || new_cred || new_nsproxy) {
- 		if (do_sysvsem) {
- 			/*
-@@ -1904,7 +1950,8 @@ SYSCALL_DEFINE1(unshare, unsigned long,
- 			new_cred = NULL;
- 		}
- 	}
--
-+bad_unshare_cleanup_vt:
-+	{/* for now, now resource need to be freed */}
- bad_unshare_cleanup_cred:
- 	if (new_cred)
- 		put_cred(new_cred);
-@@ -1943,3 +1990,4 @@ int unshare_files(struct files_struct **
- 	task_unlock(task);
- 	return 0;
- }
-+
+Only in ../PatchKernel-3.16.3/kernel: extable.o
+Only in ../PatchKernel-3.16.3/kernel: .extable.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: fork.o
+Only in ../PatchKernel-3.16.3/kernel: .fork.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: freezer.c
+Only in ../PatchKernel-3.16.3/kernel: freezer.o
+Only in ../PatchKernel-3.16.3/kernel: .freezer.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: futex.c
 Only in ../PatchKernel-3.16.3/kernel: futex_compat.c
+Only in ../PatchKernel-3.16.3/kernel: futex_compat.o
+Only in ../PatchKernel-3.16.3/kernel: .futex_compat.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: futex.o
+Only in ../PatchKernel-3.16.3/kernel: .futex.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: gcov
 Only in ../PatchKernel-3.16.3/kernel: .gitignore
 Only in ../PatchKernel-3.16.3/kernel: groups.c
+Only in ../PatchKernel-3.16.3/kernel: groups.o
+Only in ../PatchKernel-3.16.3/kernel: .groups.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: hrtimer.c
+Only in ../PatchKernel-3.16.3/kernel: hrtimer.o
+Only in ../PatchKernel-3.16.3/kernel: .hrtimer.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: hung_task.c
+Only in ../PatchKernel-3.16.3/kernel: hung_task.o
+Only in ../PatchKernel-3.16.3/kernel: .hung_task.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: hz.bc
+Only in ../PatchKernel-3.16.3/kernel: .hz.bc.cmd
 Only in ../PatchKernel-3.16.3/kernel: irq
 Only in ../PatchKernel-3.16.3/kernel: irq_work.c
+Only in ../PatchKernel-3.16.3/kernel: irq_work.o
+Only in ../PatchKernel-3.16.3/kernel: .irq_work.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: itimer.c
+Only in ../PatchKernel-3.16.3/kernel: itimer.o
+Only in ../PatchKernel-3.16.3/kernel: .itimer.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: jump_label.c
+Only in ../PatchKernel-3.16.3/kernel: jump_label.o
+Only in ../PatchKernel-3.16.3/kernel: .jump_label.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: kallsyms.c
+Only in ../PatchKernel-3.16.3/kernel: kallsyms.o
+Only in ../PatchKernel-3.16.3/kernel: .kallsyms.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: kcmp.c
+Only in ../PatchKernel-3.16.3/kernel: kcmp.o
+Only in ../PatchKernel-3.16.3/kernel: .kcmp.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: Kconfig.freezer
 Only in ../PatchKernel-3.16.3/kernel: Kconfig.hz
 Only in ../PatchKernel-3.16.3/kernel: Kconfig.locks
 Only in ../PatchKernel-3.16.3/kernel: Kconfig.preempt
 Only in ../PatchKernel-3.16.3/kernel: kexec.c
+Only in ../PatchKernel-3.16.3/kernel: kexec.o
+Only in ../PatchKernel-3.16.3/kernel: .kexec.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: kmod.c
+Only in ../PatchKernel-3.16.3/kernel: kmod.o
+Only in ../PatchKernel-3.16.3/kernel: .kmod.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: kprobes.c
+Only in ../PatchKernel-3.16.3/kernel: kprobes.o
+Only in ../PatchKernel-3.16.3/kernel: .kprobes.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: ksysfs.c
+Only in ../PatchKernel-3.16.3/kernel: ksysfs.o
+Only in ../PatchKernel-3.16.3/kernel: .ksysfs.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: kthread.c
+Only in ../PatchKernel-3.16.3/kernel: kthread.o
+Only in ../PatchKernel-3.16.3/kernel: .kthread.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: latencytop.c
+Only in ../PatchKernel-3.16.3/kernel: latencytop.o
+Only in ../PatchKernel-3.16.3/kernel: .latencytop.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: locking
 Only in ../PatchKernel-3.16.3/kernel: Makefile
 Only in ../PatchKernel-3.16.3/kernel: module.c
 Only in ../PatchKernel-3.16.3/kernel: module-internal.h
+Only in ../PatchKernel-3.16.3/kernel: module.o
+Only in ../PatchKernel-3.16.3/kernel: .module.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: modules.builtin
 Only in ../PatchKernel-3.16.3/kernel: module_signing.c
+Only in ../PatchKernel-3.16.3/kernel: module_signing.o
+Only in ../PatchKernel-3.16.3/kernel: .module_signing.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: modules.order
 Only in ../PatchKernel-3.16.3/kernel: notifier.c
+Only in ../PatchKernel-3.16.3/kernel: notifier.o
+Only in ../PatchKernel-3.16.3/kernel: .notifier.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: nsproxy.c
+Only in ../PatchKernel-3.16.3/kernel: nsproxy.o
+Only in ../PatchKernel-3.16.3/kernel: .nsproxy.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: padata.c
+Only in ../PatchKernel-3.16.3/kernel: padata.o
+Only in ../PatchKernel-3.16.3/kernel: .padata.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: panic.c
+Only in ../PatchKernel-3.16.3/kernel: panic.o
+Only in ../PatchKernel-3.16.3/kernel: .panic.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: params.c
+Only in ../PatchKernel-3.16.3/kernel: params.o
+Only in ../PatchKernel-3.16.3/kernel: .params.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: pid.c
 Only in ../PatchKernel-3.16.3/kernel: pid_namespace.c
+Only in ../PatchKernel-3.16.3/kernel: pid_namespace.o
+Only in ../PatchKernel-3.16.3/kernel: .pid_namespace.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: pid.o
+Only in ../PatchKernel-3.16.3/kernel: .pid.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: posix-cpu-timers.c
+Only in ../PatchKernel-3.16.3/kernel: posix-cpu-timers.o
+Only in ../PatchKernel-3.16.3/kernel: .posix-cpu-timers.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: posix-timers.c
+Only in ../PatchKernel-3.16.3/kernel: posix-timers.o
+Only in ../PatchKernel-3.16.3/kernel: .posix-timers.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: power
 Only in ../PatchKernel-3.16.3/kernel: printk
 Only in ../PatchKernel-3.16.3/kernel: profile.c
+Only in ../PatchKernel-3.16.3/kernel: profile.o
+Only in ../PatchKernel-3.16.3/kernel: .profile.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: ptrace.c
+Only in ../PatchKernel-3.16.3/kernel: ptrace.o
+Only in ../PatchKernel-3.16.3/kernel: .ptrace.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: range.c
+Only in ../PatchKernel-3.16.3/kernel: range.o
+Only in ../PatchKernel-3.16.3/kernel: .range.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: rcu
 Only in ../PatchKernel-3.16.3/kernel: reboot.c
+Only in ../PatchKernel-3.16.3/kernel: reboot.o
+Only in ../PatchKernel-3.16.3/kernel: .reboot.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: relay.c
+Only in ../PatchKernel-3.16.3/kernel: relay.o
+Only in ../PatchKernel-3.16.3/kernel: .relay.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: res_counter.c
+Only in ../PatchKernel-3.16.3/kernel: res_counter.o
+Only in ../PatchKernel-3.16.3/kernel: .res_counter.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: resource.c
+Only in ../PatchKernel-3.16.3/kernel: resource.o
+Only in ../PatchKernel-3.16.3/kernel: .resource.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: sched
 Only in ../PatchKernel-3.16.3/kernel: seccomp.c
+Only in ../PatchKernel-3.16.3/kernel: seccomp.o
+Only in ../PatchKernel-3.16.3/kernel: .seccomp.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: signal.c
+Only in ../PatchKernel-3.16.3/kernel: signal.o
+Only in ../PatchKernel-3.16.3/kernel: .signal.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: smpboot.c
 Only in ../PatchKernel-3.16.3/kernel: smpboot.h
+Only in ../PatchKernel-3.16.3/kernel: smpboot.o
+Only in ../PatchKernel-3.16.3/kernel: .smpboot.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: smp.c
+Only in ../PatchKernel-3.16.3/kernel: smp.o
+Only in ../PatchKernel-3.16.3/kernel: .smp.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: softirq.c
+Only in ../PatchKernel-3.16.3/kernel: softirq.o
+Only in ../PatchKernel-3.16.3/kernel: .softirq.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: stacktrace.c
+Only in ../PatchKernel-3.16.3/kernel: stacktrace.o
+Only in ../PatchKernel-3.16.3/kernel: .stacktrace.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: stop_machine.c
+Only in ../PatchKernel-3.16.3/kernel: stop_machine.o
+Only in ../PatchKernel-3.16.3/kernel: .stop_machine.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: sys.c
 Only in ../PatchKernel-3.16.3/kernel: sysctl_binary.c
+Only in ../PatchKernel-3.16.3/kernel: sysctl_binary.o
+Only in ../PatchKernel-3.16.3/kernel: .sysctl_binary.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: sysctl.c
+Only in ../PatchKernel-3.16.3/kernel: sysctl.o
+Only in ../PatchKernel-3.16.3/kernel: .sysctl.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: sys_ni.c
+Only in ../PatchKernel-3.16.3/kernel: sys_ni.o
+Only in ../PatchKernel-3.16.3/kernel: .sys_ni.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: sys.o
+Only in ../PatchKernel-3.16.3/kernel: .sys.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: system_certificates.o
+Only in ../PatchKernel-3.16.3/kernel: .system_certificates.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: system_certificates.S
 Only in ../PatchKernel-3.16.3/kernel: system_keyring.c
+Only in ../PatchKernel-3.16.3/kernel: system_keyring.o
+Only in ../PatchKernel-3.16.3/kernel: .system_keyring.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: taskstats.c
+Only in ../PatchKernel-3.16.3/kernel: taskstats.o
+Only in ../PatchKernel-3.16.3/kernel: .taskstats.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: task_work.c
+Only in ../PatchKernel-3.16.3/kernel: task_work.o
+Only in ../PatchKernel-3.16.3/kernel: .task_work.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: test_kprobes.c
 Only in ../PatchKernel-3.16.3/kernel/time: alarmtimer.c
+Only in ../PatchKernel-3.16.3/kernel/time: alarmtimer.o
+Only in ../PatchKernel-3.16.3/kernel/time: .alarmtimer.o.cmd
+Only in ../PatchKernel-3.16.3/kernel/time: built-in.o
+Only in ../PatchKernel-3.16.3/kernel/time: .built-in.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: clockevents.c
+Only in ../PatchKernel-3.16.3/kernel/time: clockevents.o
+Only in ../PatchKernel-3.16.3/kernel/time: .clockevents.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: clocksource.c
+Only in ../PatchKernel-3.16.3/kernel/time: clocksource.o
+Only in ../PatchKernel-3.16.3/kernel/time: .clocksource.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: jiffies.c
+Only in ../PatchKernel-3.16.3/kernel/time: jiffies.o
+Only in ../PatchKernel-3.16.3/kernel/time: .jiffies.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: Kconfig
 Only in ../PatchKernel-3.16.3/kernel/time: Makefile
+Only in ../PatchKernel-3.16.3/kernel/time: modules.builtin
+Only in ../PatchKernel-3.16.3/kernel/time: modules.order
 Only in ../PatchKernel-3.16.3/kernel/time: ntp.c
 Only in ../PatchKernel-3.16.3/kernel/time: ntp_internal.h
+Only in ../PatchKernel-3.16.3/kernel/time: ntp.o
+Only in ../PatchKernel-3.16.3/kernel/time: .ntp.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: posix-clock.c
+Only in ../PatchKernel-3.16.3/kernel/time: posix-clock.o
+Only in ../PatchKernel-3.16.3/kernel/time: .posix-clock.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: sched_clock.c
 Only in ../PatchKernel-3.16.3/kernel/time: tick-broadcast.c
 Only in ../PatchKernel-3.16.3/kernel/time: tick-broadcast-hrtimer.c
+Only in ../PatchKernel-3.16.3/kernel/time: tick-broadcast-hrtimer.o
+Only in ../PatchKernel-3.16.3/kernel/time: .tick-broadcast-hrtimer.o.cmd
+Only in ../PatchKernel-3.16.3/kernel/time: tick-broadcast.o
+Only in ../PatchKernel-3.16.3/kernel/time: .tick-broadcast.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: tick-common.c
+Only in ../PatchKernel-3.16.3/kernel/time: tick-common.o
+Only in ../PatchKernel-3.16.3/kernel/time: .tick-common.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: tick-internal.h
 Only in ../PatchKernel-3.16.3/kernel/time: tick-oneshot.c
+Only in ../PatchKernel-3.16.3/kernel/time: tick-oneshot.o
+Only in ../PatchKernel-3.16.3/kernel/time: .tick-oneshot.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: tick-sched.c
+Only in ../PatchKernel-3.16.3/kernel/time: tick-sched.o
+Only in ../PatchKernel-3.16.3/kernel/time: .tick-sched.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timeconv.c
-diff -rup ../PatchKernel-3.16.3/kernel/time/timekeeping.c ./kernel/time/timekeeping.c
---- ../PatchKernel-3.16.3/kernel/time/timekeeping.c	2015-09-23 16:29:50.757168000 -0500
-+++ ./kernel/time/timekeeping.c	2015-09-23 15:44:00.505168000 -0500
-@@ -19,10 +19,12 @@
- #include <linux/clocksource.h>
- #include <linux/jiffies.h>
- #include <linux/time.h>
-+#include <uapi/linux/time.h>
- #include <linux/tick.h>
- #include <linux/stop_machine.h>
- #include <linux/pvclock_gtod.h>
- #include <linux/compiler.h>
-+#include <linux/math64.h> // for 64bit div
- 
- #include "tick-internal.h"
- #include "ntp_internal.h"
-@@ -73,7 +75,7 @@ static void tk_set_wall_to_mono(struct t
- 	 * before modifying anything
- 	 */
- 	set_normalized_timespec(&tmp, -tk->wall_to_monotonic.tv_sec,
--					-tk->wall_to_monotonic.tv_nsec);
-+			-tk->wall_to_monotonic.tv_nsec);
- 	WARN_ON_ONCE(tk->offs_real.tv64 != timespec_to_ktime(tmp).tv64);
- 	tk->wall_to_monotonic = wtm;
- 	set_normalized_timespec(&tmp, -wtm.tv_sec, -wtm.tv_nsec);
-@@ -129,7 +131,7 @@ static void tk_setup_internals(struct ti
- 	tk->raw_interval =
- 		((u64) interval * clock->mult) >> clock->shift;
- 
--	 /* if changing clocks, convert xtime_nsec shift units */
-+	/* if changing clocks, convert xtime_nsec shift units */
- 	if (old_clock) {
- 		int shift_change = clock->shift - old_clock->shift;
- 		if (shift_change < 0)
-@@ -290,6 +292,57 @@ static void timekeeping_forward_now(stru
- 	timespec_add_ns(&tk->raw_time, nsec);
- }
- 
-+/* Delta virtual time = delta physical time / TDF */
-+static void do_dilatetimeofday(struct timespec *ts)
-+{
-+	int tdf;
-+	struct timespec dilated_ts;
-+	s64 now;
-+	s64 physical_past_nsec;
-+	s64 virtual_past_nsec;
-+	s64 dividend;
-+	s64 quotient;
-+	s64 dilated_now;
-+	struct task_struct *leader; // current's group leader
-+
-+	tdf = current->dilation;
-+	leader = current->group_leader; // is this one current's leader in the same process group?
-+	// make sure vt has been inited && dilation in the range of (0,100], but "1000==1"
-+	if( current->virtual_start_nsec > 0 && tdf > 0 && tdf <= 100000 ) {
-+		now = timespec_to_ns(ts);
-+		physical_past_nsec = now - current->virtual_start_nsec;
-+
-+		// substract freezed time
-+		if ( current->freeze_past_nsec != 0 ) {
-+			physical_past_nsec -= current->freeze_past_nsec;
-+		} else if ( leader->freeze_past_nsec != 0 ) {
-+			// only READ group leader's fields 
-+			physical_past_nsec -= leader->freeze_past_nsec;
-+		}
-+
-+		// go through following calculations even if TDF=1
-+		dividend = physical_past_nsec - current->physical_past_nsec; // delta physical time
-+		quotient = dividend * 1000 / tdf; // delta virtual time
-+		virtual_past_nsec = current->virtual_past_nsec + quotient;
-+		dilated_now = current->virtual_start_nsec + virtual_past_nsec;
-+		
-+		if ( (tdf > 1 && dilated_now > now) || dividend < 0 ) {
-+			printk("[panic: process %d] VT(dilated_now = %lld) > RT (now = %lld) when tdf = %d\n", current->pid, dilated_now, now, tdf);
-+			printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, quotient, physical_past_nsec, dividend);
-+			printk("[return normal time(%lld:%lld)\n", ts->tv_sec, ts->tv_nsec);
-+			return;
-+		}
-+
-+		dilated_ts = ns_to_timespec(dilated_now);
-+
-+		ts->tv_sec = dilated_ts.tv_sec;
-+		ts->tv_nsec = dilated_ts.tv_nsec;
-+		
-+		current->physical_past_nsec = physical_past_nsec;
-+		current->virtual_past_nsec = virtual_past_nsec;
-+	}
-+}
-+
- /**
-  * __getnstimeofday - Returns the time of day in a timespec.
-  * @ts:		pointer to the timespec to be set
-@@ -320,6 +373,10 @@ int __getnstimeofday(struct timespec *ts
- 	 */
- 	if (unlikely(timekeeping_suspended))
- 		return -EAGAIN;
-+
-+	/* Dilate time */
-+	do_dilatetimeofday(ts);
-+
- 	return 0;
- }
- EXPORT_SYMBOL(__getnstimeofday);
-@@ -355,6 +412,18 @@ ktime_t ktime_get(void)
- 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
- 	 */
- 	return ktime_add_ns(ktime_set(secs, 0), nsecs);
-+
-+	/* Dilated time
-+	   struct timespec ts = ktime_to_timespec(ktime_add_ns(ktime_set(secs, 0), nsecs));
-+
-+	// s64 now = timespec_to_ns(&ts);
-+	// printk("[info] ktime_get before do_dilatetimeofday: %ld nano seconds\n", now);
-+	// do_dilatetimeofday(&ts);
-+	// now = timespec_to_ns(&ts);
-+	// printk("[info] ktime_get after do_dilatetimeofday: %ld nano seconds\n", now);
-+
-+	return timespec_to_ktime(ts);
-+	 */
- }
- EXPORT_SYMBOL_GPL(ktime_get);
- 
-@@ -796,7 +865,7 @@ void __init timekeeping_init(void)
- 
- 	if (!timespec_valid_strict(&now)) {
- 		pr_warn("WARNING: Persistent clock returned invalid value!\n"
--			"         Check your CMOS/BIOS settings.\n");
-+				"         Check your CMOS/BIOS settings.\n");
- 		now.tv_sec = 0;
- 		now.tv_nsec = 0;
- 	} else if (now.tv_sec || now.tv_nsec)
-@@ -805,7 +874,7 @@ void __init timekeeping_init(void)
- 	read_boot_clock(&boot);
- 	if (!timespec_valid_strict(&boot)) {
- 		pr_warn("WARNING: Boot clock returned invalid value!\n"
--			"         Check your CMOS/BIOS settings.\n");
-+				"         Check your CMOS/BIOS settings.\n");
- 		boot.tv_sec = 0;
- 		boot.tv_nsec = 0;
- 	}
-@@ -849,7 +918,7 @@ static struct timespec timekeeping_suspe
-  * adds the sleep offset to the timekeeping variables.
-  */
- static void __timekeeping_inject_sleeptime(struct timekeeper *tk,
--							struct timespec *delta)
-+		struct timespec *delta)
- {
- 	if (!timespec_valid_strict(delta)) {
- 		printk_deferred(KERN_WARNING
-@@ -939,7 +1008,7 @@ static void timekeeping_resume(void)
- 	 */
- 	cycle_now = clock->read(clock);
- 	if ((clock->flags & CLOCK_SOURCE_SUSPEND_NONSTOP) &&
--		cycle_now > clock->cycle_last) {
-+			cycle_now > clock->cycle_last) {
- 		u64 num, max = ULLONG_MAX;
- 		u32 mult = clock->mult;
- 		u32 shift = clock->shift;
-@@ -1058,8 +1127,8 @@ device_initcall(timekeeping_init_ops);
-  * to compensate for late or lost adjustments.
-  */
- static __always_inline int timekeeping_bigadjust(struct timekeeper *tk,
--						 s64 error, s64 *interval,
--						 s64 *offset)
-+		s64 error, s64 *interval,
-+		s64 *offset)
- {
- 	s64 tick_error, i;
- 	u32 look_ahead, adj;
-@@ -1157,11 +1226,11 @@ static void timekeeping_adjust(struct ti
- 	}
- 
- 	if (unlikely(tk->clock->maxadj &&
--		(tk->mult + adj > tk->clock->mult + tk->clock->maxadj))) {
-+				(tk->mult + adj > tk->clock->mult + tk->clock->maxadj))) {
- 		printk_deferred_once(KERN_WARNING
--			"Adjusting %s more than 11%% (%ld vs %ld)\n",
--			tk->clock->name, (long)tk->mult + adj,
--			(long)tk->clock->mult + tk->clock->maxadj);
-+				"Adjusting %s more than 11%% (%ld vs %ld)\n",
-+				tk->clock->name, (long)tk->mult + adj,
-+				(long)tk->clock->mult + tk->clock->maxadj);
- 	}
- 	/*
- 	 * So the following can be confusing.
-@@ -1269,7 +1338,7 @@ static inline unsigned int accumulate_ns
- 			ts.tv_sec = leap;
- 			ts.tv_nsec = 0;
- 			tk_set_wall_to_mono(tk,
--				timespec_sub(tk->wall_to_monotonic, ts));
-+					timespec_sub(tk->wall_to_monotonic, ts));
- 
- 			__timekeeping_set_tai_offset(tk, tk->tai_offset - leap);
- 
-@@ -1289,8 +1358,8 @@ static inline unsigned int accumulate_ns
-  * Returns the unconsumed cycles.
-  */
- static cycle_t logarithmic_accumulation(struct timekeeper *tk, cycle_t offset,
--						u32 shift,
--						unsigned int *clock_set)
-+		u32 shift,
-+		unsigned int *clock_set)
- {
- 	cycle_t interval = tk->cycle_interval << shift;
- 	u64 raw_nsecs;
-@@ -1319,7 +1388,7 @@ static cycle_t logarithmic_accumulation(
- 	/* Accumulate error between NTP and clock interval */
- 	tk->ntp_error += ntp_tick_length() << shift;
- 	tk->ntp_error -= (tk->xtime_interval + tk->xtime_remainder) <<
--						(tk->ntp_error_shift + shift);
-+		(tk->ntp_error_shift + shift);
- 
- 	return offset;
- }
-@@ -1330,15 +1399,15 @@ static inline void old_vsyscall_fixup(st
- 	s64 remainder;
- 
- 	/*
--	* Store only full nanoseconds into xtime_nsec after rounding
--	* it up and add the remainder to the error difference.
--	* XXX - This is necessary to avoid small 1ns inconsistnecies caused
--	* by truncating the remainder in vsyscalls. However, it causes
--	* additional work to be done in timekeeping_adjust(). Once
--	* the vsyscall implementations are converted to use xtime_nsec
--	* (shifted nanoseconds), and CONFIG_GENERIC_TIME_VSYSCALL_OLD
--	* users are removed, this can be killed.
--	*/
-+	 * Store only full nanoseconds into xtime_nsec after rounding
-+	 * it up and add the remainder to the error difference.
-+	 * XXX - This is necessary to avoid small 1ns inconsistnecies caused
-+	 * by truncating the remainder in vsyscalls. However, it causes
-+	 * additional work to be done in timekeeping_adjust(). Once
-+	 * the vsyscall implementations are converted to use xtime_nsec
-+	 * (shifted nanoseconds), and CONFIG_GENERIC_TIME_VSYSCALL_OLD
-+	 * users are removed, this can be killed.
-+	 */
- 	remainder = tk->xtime_nsec & ((1ULL << tk->shift) - 1);
- 	tk->xtime_nsec -= remainder;
- 	tk->xtime_nsec += 1ULL << tk->shift;
-@@ -1398,7 +1467,7 @@ void update_wall_time(void)
- 	shift = min(shift, maxshift);
- 	while (offset >= tk->cycle_interval) {
- 		offset = logarithmic_accumulation(tk, offset, shift,
--							&clock_set);
-+				&clock_set);
- 		if (offset < tk->cycle_interval<<shift)
- 			shift--;
- 	}
-@@ -1457,9 +1526,9 @@ void getboottime(struct timespec *ts)
- 	struct timekeeper *tk = &timekeeper;
- 	struct timespec boottime = {
- 		.tv_sec = tk->wall_to_monotonic.tv_sec +
--				tk->total_sleep_time.tv_sec,
-+			tk->total_sleep_time.tv_sec,
- 		.tv_nsec = tk->wall_to_monotonic.tv_nsec +
--				tk->total_sleep_time.tv_nsec
-+			tk->total_sleep_time.tv_nsec
- 	};
- 
- 	set_normalized_timespec(ts, -boottime.tv_sec, -boottime.tv_nsec);
-@@ -1573,7 +1642,7 @@ struct timespec get_monotonic_coarse(voi
- 	} while (read_seqcount_retry(&timekeeper_seq, seq));
- 
- 	set_normalized_timespec(&now, now.tv_sec + mono.tv_sec,
--				now.tv_nsec + mono.tv_nsec);
-+			now.tv_nsec + mono.tv_nsec);
- 	return now;
- }
- 
-@@ -1594,7 +1663,7 @@ void do_timer(unsigned long ticks)
-  * @sleep:	pointer to timespec to be set with time in suspend
-  */
- void get_xtime_and_monotonic_and_sleep_offset(struct timespec *xtim,
--				struct timespec *wtom, struct timespec *sleep)
-+		struct timespec *wtom, struct timespec *sleep)
- {
- 	struct timekeeper *tk = &timekeeper;
- 	unsigned long seq;
-@@ -1618,7 +1687,7 @@ void get_xtime_and_monotonic_and_sleep_o
-  * Called from hrtimer_interrupt() or retrigger_next_event()
-  */
- ktime_t ktime_get_update_offsets(ktime_t *offs_real, ktime_t *offs_boot,
--							ktime_t *offs_tai)
-+		ktime_t *offs_tai)
- {
- 	struct timekeeper *tk = &timekeeper;
- 	ktime_t now;
+Only in ../PatchKernel-3.16.3/kernel/time: timeconv.o
+Only in ../PatchKernel-3.16.3/kernel/time: .timeconv.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timekeeping_debug.c
+Only in ../PatchKernel-3.16.3/kernel/time: timekeeping_debug.o
+Only in ../PatchKernel-3.16.3/kernel/time: .timekeeping_debug.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timekeeping_internal.h
+Only in ../PatchKernel-3.16.3/kernel/time: timekeeping.o
+Only in ../PatchKernel-3.16.3/kernel/time: .timekeeping.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timer_list.c
+Only in ../PatchKernel-3.16.3/kernel/time: timer_list.o
+Only in ../PatchKernel-3.16.3/kernel/time: .timer_list.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timer_stats.c
-diff -rup ../PatchKernel-3.16.3/kernel/time.c ./kernel/time.c
---- ../PatchKernel-3.16.3/kernel/time.c	2015-09-23 16:29:50.757168000 -0500
-+++ ./kernel/time.c	2015-09-23 16:10:02.613168000 -0500
-@@ -37,7 +37,7 @@
- #include <linux/fs.h>
- #include <linux/math64.h>
- #include <linux/ptrace.h>
--
-+#include <linux/rcupdate.h> // for accessing current's parent
- #include <asm/uaccess.h>
- #include <asm/unistd.h>
- 
-@@ -98,12 +98,15 @@ SYSCALL_DEFINE1(stime, time_t __user *,
- 
- #endif /* __ARCH_WANT_SYS_TIME */
- 
-+
- SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
- 		struct timezone __user *, tz)
- {
--	if (likely(tv != NULL)) {
-+	// printk("[info] [process %d] in normal gettimeofday\n", current->pid);
-+    if (likely(tv != NULL)) {
- 		struct timeval ktv;
- 		do_gettimeofday(&ktv);
-+
- 		if (copy_to_user(tv, &ktv, sizeof(ktv)))
- 			return -EFAULT;
- 	}
-@@ -115,6 +118,68 @@ SYSCALL_DEFINE2(gettimeofday, struct tim
- }
- 
- /*
-+ * Change current process's time dilation factor --- Jiaqi Yan
-+ * Operation fail when "dilation" is less than 0
-+ */
-+int set_dilation(unsigned long dilation, pid_t ppid)
-+{
-+	struct timeval now;
-+	struct timespec ts;
-+	
-+	if (dilation > 0) {
-+		/* reset virtual_start so that we can get original time */
-+		current->dilation = 0;
-+		current->virtual_start_nsec = 0;
-+		
-+		__getnstimeofday(&ts);	
-+		
-+		current->virtual_start_nsec = timespec_to_ns(&ts);
-+		current->physical_past_nsec = 0;
-+		current->virtual_past_nsec = 0;
-+		current->dilation = dilation * 1000;
-+		return 0;
-+	} else {
-+		return -EINVAL;
-+	}
-+}
-+EXPORT_SYMBOL(set_dilation);
-+
-+void freeze_time(struct task_struct *group_leader)
-+{
-+	struct timespec ts;
-+	s64 now;
-+
-+	__getnstimeofday(&ts);
-+	now = timespec_to_ns(&ts);
-+	
-+	rcu_read_lock();
-+	group_leader->freeze_start_nsec = now;
-+	rcu_read_unlock();
-+	// maybe need to manually freeze this "group_leader"'s children
-+
-+	kill_pgrp(task_pgrp(group_leader), SIGSTOP, 1);
-+}
-+EXPORT_SYMBOL(freeze_time);
-+
-+void unfreeze_time(struct task_struct *group_leader)
-+{
-+	struct timespec ts;
-+	s64 now;
-+
-+	__getnstimeofday(&ts);
-+	now = timespec_to_ns(&ts);
-+	
-+	rcu_read_lock();
-+	group_leader->freeze_past_nsec += (now - group_leader->freeze_start_nsec);
-+	group_leader->freeze_start_nsec = 0;
-+	rcu_read_unlock();
-+	// maybe need to manually freeze this "group_leader"'s children
-+
-+	kill_pgrp(task_pgrp(group_leader), SIGCONT, 1);
-+}
-+EXPORT_SYMBOL(unfreeze_time);
-+
-+/*
-  * Indicates if there is an offset between the system clock and the hardware
-  * clock/persistent clock/rtc.
-  */
-@@ -396,7 +461,7 @@ struct timespec ns_to_timespec(const s64
- 		ts.tv_sec--;
- 		rem += NSEC_PER_SEC;
- 	}
--	ts.tv_nsec = rem;
-+    ts.tv_nsec = rem;
- 
- 	return ts;
- }
+Only in ../PatchKernel-3.16.3/kernel/time: timer_stats.o
+Only in ../PatchKernel-3.16.3/kernel/time: .timer_stats.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: timeconst.bc
+Only in ../PatchKernel-3.16.3/kernel: timeconst.h
+Only in ../PatchKernel-3.16.3/kernel: .timeconst.h.cmd
+Only in ../PatchKernel-3.16.3/kernel: time.o
+Only in ../PatchKernel-3.16.3/kernel: .time.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: timer.c
+Only in ../PatchKernel-3.16.3/kernel: timer.o
+Only in ../PatchKernel-3.16.3/kernel: .timer.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: torture.c
 Only in ../PatchKernel-3.16.3/kernel: trace
 Only in ../PatchKernel-3.16.3/kernel: tracepoint.c
+Only in ../PatchKernel-3.16.3/kernel: tracepoint.o
+Only in ../PatchKernel-3.16.3/kernel: .tracepoint.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: tsacct.c
+Only in ../PatchKernel-3.16.3/kernel: tsacct.o
+Only in ../PatchKernel-3.16.3/kernel: .tsacct.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: uid16.c
+Only in ../PatchKernel-3.16.3/kernel: uid16.o
+Only in ../PatchKernel-3.16.3/kernel: .uid16.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: up.c
 Only in ../PatchKernel-3.16.3/kernel: user.c
 Only in ../PatchKernel-3.16.3/kernel: user_namespace.c
+Only in ../PatchKernel-3.16.3/kernel: user_namespace.o
+Only in ../PatchKernel-3.16.3/kernel: .user_namespace.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: user.o
+Only in ../PatchKernel-3.16.3/kernel: .user.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: user-return-notifier.c
+Only in ../PatchKernel-3.16.3/kernel: user-return-notifier.o
+Only in ../PatchKernel-3.16.3/kernel: .user-return-notifier.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: utsname.c
+Only in ../PatchKernel-3.16.3/kernel: utsname.o
+Only in ../PatchKernel-3.16.3/kernel: .utsname.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: utsname_sysctl.c
+Only in ../PatchKernel-3.16.3/kernel: utsname_sysctl.o
+Only in ../PatchKernel-3.16.3/kernel: .utsname_sysctl.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: watchdog.c
+Only in ../PatchKernel-3.16.3/kernel: watchdog.o
+Only in ../PatchKernel-3.16.3/kernel: .watchdog.o.cmd
 Only in ../PatchKernel-3.16.3/kernel: workqueue.c
 Only in ../PatchKernel-3.16.3/kernel: workqueue_internal.h
+Only in ../PatchKernel-3.16.3/kernel: workqueue.o
+Only in ../PatchKernel-3.16.3/kernel: .workqueue.o.cmd
+Only in ../PatchKernel-3.16.3/kernel: x509_certificate_list
+Only in ../PatchKernel-3.16.3/kernel: .x509_certificate_list.cmd
+Only in ../PatchKernel-3.16.3/kernel: .x509.list
 Only in ../PatchKernel-3.16.3/: lib
 Only in ../PatchKernel-3.16.3/: .mailmap
 Only in ../PatchKernel-3.16.3/: MAINTAINERS
+Only in ../PatchKernel-3.16.3/: .missing-syscalls.d
 Only in ../PatchKernel-3.16.3/: mm
+Only in ../PatchKernel-3.16.3/: modules.builtin
+Only in ../PatchKernel-3.16.3/: modules.order
 Only in ../PatchKernel-3.16.3/net: 802
 Only in ../PatchKernel-3.16.3/net: 8021q
 Only in ../PatchKernel-3.16.3/net: 9p
@@ -3089,17 +2487,6 @@ Only in ../PatchKernel-3.16.3/net: ceph
 Only in ../PatchKernel-3.16.3/net: compat.c
 Only in ../PatchKernel-3.16.3/net/core: datagram.c
 Only in ../PatchKernel-3.16.3/net/core: dev_addr_lists.c
-diff -rup ../PatchKernel-3.16.3/net/core/dev.c ./net/core/dev.c
---- ../PatchKernel-3.16.3/net/core/dev.c	2015-09-23 16:29:50.825168000 -0500
-+++ ./net/core/dev.c	2015-09-23 16:03:13.049168000 -0500
-@@ -3272,6 +3272,7 @@ enqueue:
- 	}
- 
- 	sd->dropped++;
-+	trace_printk("backlog full with %u skb dropped", sd->dropped); // for trace-cmd or ftrace
- 	rps_unlock(sd);
- 
- 	local_irq_restore(flags);
 Only in ../PatchKernel-3.16.3/net/core: dev_ioctl.c
 Only in ../PatchKernel-3.16.3/net/core: drop_monitor.c
 Only in ../PatchKernel-3.16.3/net/core: dst.c
@@ -3113,6 +2500,7 @@ Only in ../PatchKernel-3.16.3/net/core: gen_stats.c
 Only in ../PatchKernel-3.16.3/net/core: iovec.c
 Only in ../PatchKernel-3.16.3/net/core: link_watch.c
 Only in ../PatchKernel-3.16.3/net/core: Makefile
+Only in ../PatchKernel-3.16.3/net/core: modules.builtin
 Only in ../PatchKernel-3.16.3/net/core: neighbour.c
 Only in ../PatchKernel-3.16.3/net/core: netclassid_cgroup.c
 Only in ../PatchKernel-3.16.3/net/core: netevent.c
@@ -3159,6 +2547,7 @@ Only in ../PatchKernel-3.16.3/net: llc
 Only in ../PatchKernel-3.16.3/net: mac80211
 Only in ../PatchKernel-3.16.3/net: mac802154
 Only in ../PatchKernel-3.16.3/net: Makefile
+Only in ../PatchKernel-3.16.3/net: modules.builtin
 Only in ../PatchKernel-3.16.3/net: mpls
 Only in ../PatchKernel-3.16.3/net: netfilter
 Only in ../PatchKernel-3.16.3/net: netlabel
@@ -3205,6 +2594,7 @@ Only in ../PatchKernel-3.16.3/net/sched: em_text.c
 Only in ../PatchKernel-3.16.3/net/sched: em_u32.c
 Only in ../PatchKernel-3.16.3/net/sched: Kconfig
 Only in ../PatchKernel-3.16.3/net/sched: Makefile
+Only in ../PatchKernel-3.16.3/net/sched: modules.builtin
 Only in ../PatchKernel-3.16.3/net/sched: sch_api.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_atm.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_blackhole.c
@@ -3216,175 +2606,9 @@ Only in ../PatchKernel-3.16.3/net/sched: sch_dsmark.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_fifo.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_fq.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_fq_codel.c
-diff -rup ../PatchKernel-3.16.3/net/sched/sch_generic.c ./net/sched/sch_generic.c
---- ../PatchKernel-3.16.3/net/sched/sch_generic.c	2015-09-23 16:29:50.849168000 -0500
-+++ ./net/sched/sch_generic.c	2015-09-23 15:52:27.909168000 -0500
-@@ -917,7 +917,14 @@ void psched_ratecfg_precompute(struct ps
- {
- 	memset(r, 0, sizeof(*r));
- 	r->overhead = conf->overhead;
-+	r->undilated_rate_bytes_ps = max_t(u64, conf->rate, rate64);
- 	r->rate_bytes_ps = max_t(u64, conf->rate, rate64);
-+	if ( current && current->dilation > 1 ) {
-+		r->rate_bytes_ps = r->undilated_rate_bytes_ps / current->dilation * 1000;
-+		printk("[process %d] in psched_ratecfg_precompute: rate(%llu) dilated(%d) from origin(%llu)\n", 
-+				current->pid, r->rate_bytes_ps, current->dilation / 1000, r->undilated_rate_bytes_ps);
-+	}
-+
- 	r->linklayer = (conf->linklayer & TC_LINKLAYER_MASK);
- 	r->mult = 1;
- 	/*
-@@ -946,3 +953,30 @@ void psched_ratecfg_precompute(struct ps
- 	}
- }
- EXPORT_SYMBOL(psched_ratecfg_precompute);
-+
-+void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation)
-+{
-+	if (r && dilation > 1)
-+	{
-+		r->rate_bytes_ps = r->undilated_rate_bytes_ps / dilation * 1000;
-+		printk("[process %d] in psched_ratecfg_dilate: change rate to %llu due to change of tdf(%d)\n",
-+				current->pid, r->rate_bytes_ps, dilation / 1000);
-+
-+		r->mult = 1;
-+		r->shift = 0;
-+		if (r->rate_bytes_ps > 0)
-+		{
-+			/* not sure what this code does, but better redo it after updating rate_bytes_ps */
-+			u64 factor = NSEC_PER_SEC;
-+			for (;;) {
-+				r->mult = div64_u64(factor, r->rate_bytes_ps);
-+				if (r->mult & (1U << 31) || factor & (1ULL << 63))
-+					break;
-+				factor <<= 1;
-+				r->shift++;
-+			}
-+		}
-+	}
-+}
-+EXPORT_SYMBOL(psched_ratecfg_dilate);
-+
 Only in ../PatchKernel-3.16.3/net/sched: sch_gred.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_hfsc.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_hhf.c
-diff -rup ../PatchKernel-3.16.3/net/sched/sch_htb.c ./net/sched/sch_htb.c
---- ../PatchKernel-3.16.3/net/sched/sch_htb.c	2015-09-23 16:29:50.841168000 -0500
-+++ ./net/sched/sch_htb.c	2015-09-23 15:55:31.917168000 -0500
-@@ -37,6 +37,9 @@
- #include <linux/rbtree.h>
- #include <linux/workqueue.h>
- #include <linux/slab.h>
-+#include <linux/rcupdate.h> // for accessing parent process
-+#include <linux/sched.h> // for accessing current
-+
- #include <net/netlink.h>
- #include <net/sch_generic.h>
- #include <net/pkt_sched.h>
-@@ -97,6 +100,7 @@ struct htb_prio {
- struct htb_class {
- 	struct Qdisc_class_common common;
- 	struct psched_ratecfg	rate;
-+	int dilation;
- 	struct psched_ratecfg	ceil;
- 	s64			buffer, cbuffer;/* token bucket depth/rate */
- 	s64			mbuffer;	/* max wait time */
-@@ -857,6 +861,23 @@ next:
- 
- 	} while (cl != start);
- 
-+	/* polling host process about dilation info; update rate when necessary */
-+	int dilation = 0;
-+	if ( current ) {
-+		/* get tdf, possibly an updated one */
-+		rcu_read_lock();
-+		struct task_struct *parent = rcu_dereference(current->real_parent);
-+		dilation = parent->dilation;
-+		rcu_read_unlock();
-+	}
-+
-+	/* until now, still not sure if this the should-dilated htb class */
-+	if ( dilation > 0 && dilation != cl->dilation ) {
-+		cl->dilation = dilation; // update dilation
-+		printk("[process %d] in htb_dequeue_tree: change tdf to %d\n", current->pid, cl->dilation);
-+		psched_ratecfg_dilate(&cl->rate, cl->dilation); // update rate
-+	}
-+
- 	if (likely(skb != NULL)) {
- 		bstats_update(&cl->bstats, skb);
- 		cl->un.leaf.deficit[level] -= qdisc_pkt_len(skb);
-@@ -895,10 +916,13 @@ ok:
- 
- 	if (!sch->q.qlen)
- 		goto fin;
-+
- 	q->now = ktime_to_ns(ktime_get());
-+	// printk("[info] in htb_dequeue q->now in ns: %lld\n", q->now);
- 	start_at = jiffies;
- 
- 	next_event = q->now + 5LLU * NSEC_PER_SEC;
-+	// printk("[info] in htb_dequeue next_event in ns: %lld\n", next_event);
- 
- 	for (level = 0; level < TC_HTB_MAXDEPTH; level++) {
- 		/* common case optimization - skip event handler quickly */
-@@ -925,6 +949,8 @@ ok:
- 				goto ok;
- 		}
- 	}
-+	// printk("[info] in htb_dequeue next_event in ns: %lld\n", next_event);
-+
- 	sch->qstats.overlimits++;
- 	if (likely(next_event > q->now)) {
- 		if (!test_bit(__QDISC_STATE_DEACTIVATED,
-@@ -1057,6 +1083,23 @@ static int htb_init(struct Qdisc *sch, s
- 		q->rate2quantum = 1;
- 	q->defcls = gopt->defcls;
- 
-+	/*
-+	int copy = -1;
-+	if (current)
-+	{
-+		if (current->dilation > 0)
-+		{
-+			copy = q->rate2quantum;
-+			// wrong!!! modify rate2quantum will crash OS
-+			// q->rate2quantum = q->rate2quantum / current->dilation;
-+		}
-+	} else {
-+		printk("[panic] in htb_init current is NULL");
-+	}
-+
-+	printk("[info] in htb_init: q->rate2quantum(%d), old copy(%d)", q->rate2quantum, copy);
-+	*/
-+	
- 	return 0;
- }
- 
-@@ -1111,7 +1154,12 @@ static int htb_dump_class(struct Qdisc *
- 
- 	memset(&opt, 0, sizeof(opt));
- 
-+	// printk("[info] in htb_dump_class: cl->rate.rate_bytes_ps(%llu)\n", cl->rate.rate_bytes_ps);
-+	// printk("[info] in htb_dump_class: opt.rate.rate(%u)\n", opt.rate.rate);
- 	psched_ratecfg_getrate(&opt.rate, &cl->rate);
-+	// printk("[info] in htb_dump_class: cl->rate.rate_bytes_ps(%llu)\n", cl->rate.rate_bytes_ps);
-+	// printk("[info] in htb_dump_class: opt.rate.rate(%u)\n", opt.rate.rate);
-+
- 	opt.buffer = PSCHED_NS2TICKS(cl->buffer);
- 	psched_ratecfg_getrate(&opt.ceil, &cl->ceil);
- 	opt.cbuffer = PSCHED_NS2TICKS(cl->cbuffer);
-@@ -1477,7 +1525,11 @@ static int htb_change_class(struct Qdisc
- 
- 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
- 
-+	// printk("[info] in htb_change_class: rate64(%llu)\n", rate64);
-+	// printk("[info] in htb_change_class: 1. write hopt->rate.rate(%u) to cl->rate.rate_bytes_ps\n", hopt->rate.rate);
- 	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);
-+	// printk("[info] in htb_change_class: 2. after dilation, cl->rate.rate_bytes_ps = %llu\n", cl->rate.rate_bytes_ps);
-+
- 	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
- 
- 	/* it used to be a nasty bug here, we have to check that node
 Only in ../PatchKernel-3.16.3/net/sched: sch_ingress.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_mq.c
 Only in ../PatchKernel-3.16.3/net/sched: sch_mqprio.c
@@ -3417,11 +2641,16 @@ Only in ../PatchKernel-3.16.3/: REPORTING-BUGS
 Only in ../PatchKernel-3.16.3/: samples
 Only in ../PatchKernel-3.16.3/: scripts
 Only in ../PatchKernel-3.16.3/: security
+Only in ../PatchKernel-3.16.3/: signing_key.priv
+Only in ../PatchKernel-3.16.3/: signing_key.x509
 Only in ../PatchKernel-3.16.3/: sound
 Only in ./: syscall_wrapper
+Only in ../PatchKernel-3.16.3/: .tmp_versions
 Only in ../PatchKernel-3.16.3/: tools
 Only in ./: transfer.sh
 Only in ../PatchKernel-3.16.3/: usr
+Only in ../PatchKernel-3.16.3/: .version
 Only in ../PatchKernel-3.16.3/: virt
 Only in ./: virtual_time
 Only in ./: VirtualTime.patch
+Only in ../PatchKernel-3.16.3/: x509.genkey
