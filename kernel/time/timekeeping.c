@@ -306,32 +306,27 @@ static void do_dilatetimeofday(struct timespec *ts)
 	struct task_struct *leader; // current's group leader
 
 	tdf = current->dilation;
-	leader = current->group_leader;
-	// make sure vt has been inited && dilation in the range of (0,1000]
-	if( current->virtual_start_nsec > 0 && tdf > 0 && tdf <= 1000 ) {
-		// if dilation is one, do not go through following calculations
-		if ( tdf == 1 ) {
-			return;
-		}
-
+	leader = current->group_leader; // is this one current's leader in the same process group?
+	// make sure vt has been inited && dilation in the range of (0,100], but "1000==1"
+	if( current->virtual_start_nsec > 0 && tdf > 0 && tdf <= 100000 ) {
 		now = timespec_to_ns(ts);
 		physical_past_nsec = now - current->virtual_start_nsec;
+
+		// substract freezed time
 		if ( current->freeze_past_nsec != 0 ) {
 			physical_past_nsec -= current->freeze_past_nsec;
-		} else {
-			// only READ group leader's fields
-			if ( leader->freeze_past_nsec != 0 ) {
-				physical_past_nsec -= leader->freeze_past_nsec;
-			}	
+		} else if ( leader->freeze_past_nsec != 0 ) {
+			// only READ group leader's fields 
+			physical_past_nsec -= leader->freeze_past_nsec;
 		}
+
+		// go through following calculations even if TDF=1
 		dividend = physical_past_nsec - current->physical_past_nsec; // delta physical time
-
-		quotient = dividend / tdf; // delta virtual time
+		quotient = dividend * 1000 / tdf; // delta virtual time
 		virtual_past_nsec = current->virtual_past_nsec + quotient;
-
 		dilated_now = current->virtual_start_nsec + virtual_past_nsec;
-
-		if ( tdf > 1 && dilated_now > now ) {
+		
+		if ( (tdf > 1 && dilated_now > now) || dividend < 0 ) {
 			printk("[panic: process %d] VT(dilated_now = %lld) > RT (now = %lld) when tdf = %d\n", current->pid, dilated_now, now, tdf);
 			printk("VT total past %lld, delta past %lld; RT total past %lld, delta past %lld\n", virtual_past_nsec, quotient, physical_past_nsec, dividend);
 			printk("[return normal time(%lld:%lld)\n", ts->tv_sec, ts->tv_nsec);
@@ -342,6 +337,7 @@ static void do_dilatetimeofday(struct timespec *ts)
 
 		ts->tv_sec = dilated_ts.tv_sec;
 		ts->tv_nsec = dilated_ts.tv_nsec;
+		
 		current->physical_past_nsec = physical_past_nsec;
 		current->virtual_past_nsec = virtual_past_nsec;
 	}

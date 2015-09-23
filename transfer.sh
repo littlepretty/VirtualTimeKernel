@@ -20,22 +20,20 @@ diff -rup $DST ./ > ${PATCH}
 echo ""
 
 
-FILES="kernel/fork.c \
-kernel/time.c \
-kernel/time/timekeeping.c \
-arch/x86/syscalls/syscall_64.tbl \
-arch/x86/vdso/vclock_gettime.c \
-include/uapi/asm-generic/unistd.h include/uapi/linux/sched.h \
-include/linux/sched.h \
-include/linux/init_task.h \
-include/linux/syscalls.h \
-include/net/sch_generic.h \
-net/sched/sch_generic.c \
-net/sched/sch_htb.c \
-net/sched/act_police.c \
-net/sched/sch_api.c \
-net/core/dev.c \
-Makefile \
+FILES="kernel/fork.c		\
+kernel/time.c			\
+kernel/time/timekeeping.c	\
+arch/x86/vdso/vclock_gettime.c	\
+include/uapi/linux/sched.h	\
+include/linux/sched.h		\
+include/linux/init_task.h	\
+include/linux/time.h		\
+include/net/sch_generic.h	\
+net/sched/sch_generic.c		\
+net/sched/sch_htb.c		\
+net/core/dev.c			\
+fs/proc/base.c			\
+Makefile			\
 build_all.sh"
 
 # if [ ! -e $DST/virtual_time ]; then

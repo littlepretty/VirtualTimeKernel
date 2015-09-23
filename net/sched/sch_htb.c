@@ -863,23 +863,20 @@ next:
 
 	/* polling host process about dilation info; update rate when necessary */
 	int dilation = 0;
-	if (current)
-	{
+	if ( current ) {
 		/* get tdf, possibly an updated one */
 		rcu_read_lock();
 		struct task_struct *parent = rcu_dereference(current->real_parent);
-		// printk("[info] [process %d] in htb_dequeue_tree: current's parent(%d) dilation(%d)\n", current->pid, parent->pid, parent->dilation);
 		dilation = parent->dilation;
 		rcu_read_unlock();
 	}
+
 	/* until now, still not sure if this the should-dilated htb class */
-	if (dilation > 0 && dilation != cl->dilation)
-	{
+	if ( dilation > 0 && dilation != cl->dilation ) {
 		cl->dilation = dilation; // update dilation
-		printk("[info] [process %d] in htb_dequeue_tree: change tdf to %d\n", current->pid, cl->dilation);
+		printk("[process %d] in htb_dequeue_tree: change tdf to %d\n", current->pid, cl->dilation);
 		psched_ratecfg_dilate(&cl->rate, cl->dilation); // update rate
 	}
-
 
 	if (likely(skb != NULL)) {
 		bstats_update(&cl->bstats, skb);

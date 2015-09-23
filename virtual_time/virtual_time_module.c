@@ -1,30 +1,35 @@
-#include "virtual_time_module.h"
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/proc_fs.h>
+#include <linux/init.h>
+#include <linux/sched.h> // find_task_by_vpid
+#include <linux/pid.h>
+#include <linux/time.h> // __getnstimeofday
+#include <asm/uaccess.h> // copy_to_user etc.
 
 MODULE_LICENSE("GPL");
 
-int vt_module_init(void)
+static int __init vt_module_init(void)
 {
 	printk(KERN_INFO "Virtual time module is loaded.\n");
 	return 0;
 }
 
-void vt_module_cleanup(void)
+static void __exit vt_module_cleanup(void)
 {
 	printk(KERN_INFO "Virtual time module is unloaded.\n");
 	return;
 }
 
-#ifndef __NR_set_tdf
-#define __NR_set_tdf 317
-#endif
 /*
  * ppid == 0 : change caller itself's dilation
  * ppid != 0 : change caller's parent's dilation
  */
 int change_tdf(int dilation, int ppid)
 {
-	return set_tdf(dilation, ppid);
+	return settdf(dilation, ppid);
 }
+EXPORT_SYMBOL(change_tdf);
 
 void freeze(int* pgid_list, size_t length)
 {
@@ -51,6 +56,7 @@ void freeze(int* pgid_list, size_t length)
 		}
 	}
 }
+EXPORT_SYMBOL(freeze);
 
 void unfreeze(int* pgid_list, size_t length)
 {
@@ -76,8 +82,8 @@ void unfreeze(int* pgid_list, size_t length)
 		}
 	}
 }
+EXPORT_SYMBOL(unfreeze);
 
 module_init(vt_module_init);
 module_exit(vt_module_cleanup);
-
 

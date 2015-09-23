@@ -119,62 +119,65 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 
 /*
  * Change current process's time dilation factor --- Jiaqi Yan
- * Operation fail when "dilation" is zero
+ * Operation fail when "dilation" is less than 0
  */
-int set_tdf(unsigned long dilation, pid_t ppid)
+int set_dilation(unsigned long dilation, pid_t ppid)
 {
+	struct timeval now;
+	struct timespec ts;
+	
 	if (dilation > 0) {
-
-		struct timeval now;
-		struct timespec ts;
-
-		if (ppid == 0) { // change current's tdf
-			/* reset virtual_start so that we can get original time */
-			current->dilation = 0;
-			current->virtual_start_nsec = 0;
-			
-			__getnstimeofday(&ts);
-			
-			current->virtual_start_nsec = timespec_to_ns(&ts);
-			current->physical_past_nsec = 0;
-			current->virtual_past_nsec = 0;
-			current->dilation = dilation;
-
-		} else { // change current's parent's dilation
-
-			/*
-			 * To access parent's data, we need to lock and unlock;
-			 * see https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt for more details
-			 */
-			rcu_read_lock();
-
-			struct task_struct* parent = rcu_dereference(current->real_parent);
-
-			/* type equivalence: pid_t == __kernel_pid_t == int */
-			if (!parent || parent->pid != ppid)
-			{
-				rcu_read_unlock();
-				return -1;
-			}
-
-			parent->dilation = 0;
-			parent->virtual_start_nsec = 0;
-
-			__getnstimeofday(&ts);
-
-			parent->virtual_start_nsec = timespec_to_ns(&ts);
-			parent->physical_past_nsec = 0;
-			parent->virtual_past_nsec = 0;
-			parent->dilation = dilation;
-
-			rcu_read_unlock();
-		}
+		/* reset virtual_start so that we can get original time */
+		current->dilation = 0;
+		current->virtual_start_nsec = 0;
+		
+		__getnstimeofday(&ts);	
+		
+		current->virtual_start_nsec = timespec_to_ns(&ts);
+		current->physical_past_nsec = 0;
+		current->virtual_past_nsec = 0;
+		current->dilation = dilation * 1000;
 		return 0;
 	} else {
 		return -EINVAL;
 	}
 }
-EXPORT_SYMBOL(set_tdf);
+EXPORT_SYMBOL(set_dilation);
+
+void freeze_time(struct task_struct *group_leader)
+{
+	struct timespec ts;
+	s64 now;
+
+	__getnstimeofday(&ts);
+	now = timespec_to_ns(&ts);
+	
+	rcu_read_lock();
+	group_leader->freeze_start_nsec = now;
+	rcu_read_unlock();
+	// maybe need to manually freeze this "group_leader"'s children
+
+	kill_pgrp(task_pgrp(group_leader), SIGSTOP, 1);
+}
+EXPORT_SYMBOL(freeze_time);
+
+void unfreeze_time(struct task_struct *group_leader)
+{
+	struct timespec ts;
+	s64 now;
+
+	__getnstimeofday(&ts);
+	now = timespec_to_ns(&ts);
+	
+	rcu_read_lock();
+	group_leader->freeze_past_nsec += (now - group_leader->freeze_start_nsec);
+	group_leader->freeze_start_nsec = 0;
+	rcu_read_unlock();
+	// maybe need to manually freeze this "group_leader"'s children
+
+	kill_pgrp(task_pgrp(group_leader), SIGCONT, 1);
+}
+EXPORT_SYMBOL(unfreeze_time);
 
 /*
  * Indicates if there is an offset between the system clock and the hardware

@@ -684,7 +684,7 @@ static inline struct sk_buff *skb_act_clone(struct sk_buff *skb, gfp_t gfp_mask,
 
 struct psched_ratecfg {
 	u64	rate_bytes_ps; /* bytes per second */
-	u64 undilated_rate_bytes_ps; /* undilated Bps, should never overwrite after init in htb_change_class() */
+	u64	undilated_rate_bytes_ps; /* undilated Bps, should never overwrite after init in htb_change_class() */
 	u32	mult;
 	u16	overhead;
 	u8	linklayer;
@@ -720,10 +720,8 @@ static inline void psched_ratecfg_getrate(struct tc_ratespec *res,
 	res->rate = min_t(u64, r->rate_bytes_ps, ~0U);
 
 	/*
-	if (current)
-	{
-		if (current->dilation > 0)
-		{
+	if ( current ) {
+		if ( current->dilation > 0 ) {
 			// r->rate_bytes_ps = r->rate_bytes_ps / current->dilation * 1000;
 		}
 		printk("[info] in psched_ratecfg_getrate res->rate(%llu), r->rate_bytes_ps(%llu)\n", res->rate, r->rate_bytes_ps, current->dilation);

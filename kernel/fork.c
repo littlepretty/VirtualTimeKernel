@@ -1571,37 +1571,24 @@ struct task_struct *fork_idle(int cpu)
  */
 static int init_virtual_start_time(struct task_struct *task, int dilation)
 {
-	// if(likely(dilation != 0))
-	if(dilation > 0) {
+	struct timespec ts;
+	s64 getnstimeofday_nsec;
+
+	if( likely(dilation > 0) ) {
 		/* must make sure further get(ns)timeofday return original time */
 		task->virtual_start_nsec = 0;
 		task->dilation = 0;
 
-		/* method 1: will return nano seconds since Epoch 1970 */
-		struct timespec ts;
+		/* method: will return nano seconds since Epoch 1970 */
 		__getnstimeofday(&ts);
-		s64 getnstimeofday_nsec= timespec_to_ns(&ts);
+		getnstimeofday_nsec= timespec_to_ns(&ts);
 		/* printk("[info] [process %d] getnstimeofday virtual start time = %lld nano secs\n", task->pid, getnstimeofday_nsec); */
-
-		/* method 2: will return nano seconds since system boot
-		   s64 ktime_nsec = ktime_to_ns(ktime_get());
-		   printk("[info] [process %d] ktime_get virtual start time = %lld nano secs\n", task->pid, ktime_nsec);
-		 */
-
-		/* method 3: as the same as method 1
-		   struct timeval tv;
-		   do_gettimeofday(&tv);
-		   s64 do_gettimeofday_nsec = timeval_to_ns(&tv);
-		   printk("[info] [process %d] do_gettimeofday virtual start time = %lld\n", task->pid, do_gettimeofday_nsec);
-		 */
-
+		
 		/* initialize fields of nsec */
 		task->virtual_start_nsec = getnstimeofday_nsec;
-		// task->virtual_start_nsec = ktime_nsec;
-		// task->virtual_start_nsec = do_gettimeofday_nsec;
 		task->physical_past_nsec = 0;
 		task->virtual_past_nsec = 0;
-		task->dilation = dilation;
+		task->dilation = dilation * 1000;
 	} else {
 		return -EINVAL;
 	}
@@ -1856,7 +1843,7 @@ static int unshare_virtual_time(unsigned long unshare_flags)
 	 */
 	int error = 0;
 	if (unshare_flags & CLONE_NEWTIME) {
-		error = init_virtual_start_time(current, 1);
+		error = init_virtual_start_time(current, 1); // default TDF=1(actually, it is 1000)
 	}
 	return error;
 }
@@ -1924,7 +1911,7 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 		goto bad_unshare_cleanup_cred;
 	err = unshare_virtual_time(unshare_flags);
 	if (err)
-		goto bad_unshare_cleanup_vt;		 
+		goto bad_unshare_cleanup_vt;
 	if (new_fs || new_fd || do_sysvsem || new_cred || new_nsproxy) {
 		if (do_sysvsem) {
 			/*

@@ -3272,8 +3272,8 @@ enqueue:
 	}
 
 	sd->dropped++;
-	trace_printk("backlog full with %u skb dropped", sd->dropped);
-    rps_unlock(sd);
+	trace_printk("backlog full with %u skb dropped", sd->dropped); // for trace-cmd or ftrace
+	rps_unlock(sd);
 
 	local_irq_restore(flags);
 

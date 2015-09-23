@@ -319,7 +319,8 @@ int clock_gettime(clockid_t, struct timespec *)
 
 notrace int __vdso_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-    return vdso_fallback_gtod(tv, tz);
+	// bypass vdso && always fall back to normal gettimeofday
+	return vdso_fallback_gtod(tv, tz);
 
 	/*
 	if (likely(tv != NULL)) {
