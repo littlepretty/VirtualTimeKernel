@@ -1451,7 +1451,7 @@ static int freeze_show(struct seq_file *m, void *v)
 		return -ESRCH;
 
 	task_lock(p);
-	freezed = (p->freeze_start_nsec == 0);
+	freezed = (p->freeze_start_nsec != 0);
 	task_unlock(p);
 	seq_printf(m, "%d\n", freezed);
 
