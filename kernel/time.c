@@ -103,7 +103,7 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 		struct timezone __user *, tz)
 {
 	// printk("[info] [process %d] in normal gettimeofday\n", current->pid);
-    if (likely(tv != NULL)) {
+	if (likely(tv != NULL)) {
 		struct timeval ktv;
 		do_gettimeofday(&ktv);
 
@@ -125,14 +125,14 @@ int set_dilation(unsigned long dilation, pid_t ppid)
 {
 	struct timeval now;
 	struct timespec ts;
-	
+
 	if (dilation > 0) {
 		/* reset virtual_start so that we can get original time */
 		current->dilation = 0;
 		current->virtual_start_nsec = 0;
-		
+
 		__getnstimeofday(&ts);	
-		
+
 		current->virtual_start_nsec = timespec_to_ns(&ts);
 		current->physical_past_nsec = 0;
 		current->virtual_past_nsec = 0;
@@ -151,7 +151,7 @@ void freeze_time(struct task_struct *group_leader)
 
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
-	
+
 	rcu_read_lock();
 	group_leader->freeze_start_nsec = now;
 	rcu_read_unlock();
@@ -168,7 +168,7 @@ void unfreeze_time(struct task_struct *group_leader)
 
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
-	
+
 	rcu_read_lock();
 	group_leader->freeze_past_nsec += (now - group_leader->freeze_start_nsec);
 	group_leader->freeze_start_nsec = 0;
@@ -383,10 +383,10 @@ EXPORT_SYMBOL(timespec_trunc);
  * machines where long is 32-bit! (However, as time_t is signed, we
  * will already get problems at other places on 2038-01-19 03:14:08)
  */
-unsigned long
+	unsigned long
 mktime(const unsigned int year0, const unsigned int mon0,
-       const unsigned int day, const unsigned int hour,
-       const unsigned int min, const unsigned int sec)
+		const unsigned int day, const unsigned int hour,
+		const unsigned int min, const unsigned int sec)
 {
 	unsigned int mon = mon0, year = year0;
 
@@ -397,11 +397,11 @@ mktime(const unsigned int year0, const unsigned int mon0,
 	}
 
 	return ((((unsigned long)
-		  (year/4 - year/100 + year/400 + 367*mon/12 + day) +
-		  year*365 - 719499
-	    )*24 + hour /* now have hours */
-	  )*60 + min /* now have minutes */
-	)*60 + sec; /* finally seconds */
+					(year/4 - year/100 + year/400 + 367*mon/12 + day) +
+					year*365 - 719499
+		 )*24 + hour /* now have hours */
+		)*60 + min /* now have minutes */
+	       )*60 + sec; /* finally seconds */
 }
 
 EXPORT_SYMBOL(mktime);
@@ -461,7 +461,7 @@ struct timespec ns_to_timespec(const s64 nsec)
 		ts.tv_sec--;
 		rem += NSEC_PER_SEC;
 	}
-    ts.tv_nsec = rem;
+	ts.tv_nsec = rem;
 
 	return ts;
 }
@@ -567,7 +567,7 @@ EXPORT_SYMBOL(usecs_to_jiffies);
  * The >> (NSEC_JIFFIE_SC - SEC_JIFFIE_SC) converts the scaled nsec
  * value to a scaled second value.
  */
-unsigned long
+	unsigned long
 timespec_to_jiffies(const struct timespec *value)
 {
 	unsigned long sec = value->tv_sec;
@@ -578,13 +578,13 @@ timespec_to_jiffies(const struct timespec *value)
 		nsec = 0;
 	}
 	return (((u64)sec * SEC_CONVERSION) +
-		(((u64)nsec * NSEC_CONVERSION) >>
-		 (NSEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
+			(((u64)nsec * NSEC_CONVERSION) >>
+			 (NSEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
 
 }
 EXPORT_SYMBOL(timespec_to_jiffies);
 
-void
+	void
 jiffies_to_timespec(const unsigned long jiffies, struct timespec *value)
 {
 	/*
@@ -593,7 +593,7 @@ jiffies_to_timespec(const unsigned long jiffies, struct timespec *value)
 	 */
 	u32 rem;
 	value->tv_sec = div_u64_rem((u64)jiffies * TICK_NSEC,
-				    NSEC_PER_SEC, &rem);
+			NSEC_PER_SEC, &rem);
 	value->tv_nsec = rem;
 }
 EXPORT_SYMBOL(jiffies_to_timespec);
@@ -610,7 +610,7 @@ EXPORT_SYMBOL(jiffies_to_timespec);
  * Instruction wise, this should cost only an additional add with carry
  * instruction above the way it was done above.
  */
-unsigned long
+	unsigned long
 timeval_to_jiffies(const struct timeval *value)
 {
 	unsigned long sec = value->tv_sec;
@@ -621,8 +621,8 @@ timeval_to_jiffies(const struct timeval *value)
 		usec = 0;
 	}
 	return (((u64)sec * SEC_CONVERSION) +
-		(((u64)usec * USEC_CONVERSION + USEC_ROUND) >>
-		 (USEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
+			(((u64)usec * USEC_CONVERSION + USEC_ROUND) >>
+			 (USEC_JIFFIE_SC - SEC_JIFFIE_SC))) >> SEC_JIFFIE_SC;
 }
 EXPORT_SYMBOL(timeval_to_jiffies);
 
@@ -635,7 +635,7 @@ void jiffies_to_timeval(const unsigned long jiffies, struct timeval *value)
 	u32 rem;
 
 	value->tv_sec = div_u64_rem((u64)jiffies * TICK_NSEC,
-				    NSEC_PER_SEC, &rem);
+			NSEC_PER_SEC, &rem);
 	value->tv_usec = rem / NSEC_PER_USEC;
 }
 EXPORT_SYMBOL(jiffies_to_timeval);
@@ -704,10 +704,10 @@ u64 nsec_to_clock_t(u64 x)
 	return div_u64(x * USER_HZ / 512, NSEC_PER_SEC / 512);
 #else
 	/*
-         * max relative error 5.7e-8 (1.8s per year) for USER_HZ <= 1024,
-         * overflow after 64.99 years.
-         * exact for HZ=60, 72, 90, 120, 144, 180, 300, 600, 900, ...
-         */
+	 * max relative error 5.7e-8 (1.8s per year) for USER_HZ <= 1024,
+	 * overflow after 64.99 years.
+	 * exact for HZ=60, 72, 90, 120, 144, 180, 300, 600, 900, ...
+	 */
 	return div_u64(x * 9, (9ull * NSEC_PER_SEC + (USER_HZ / 2)) / USER_HZ);
 #endif
 }
@@ -765,12 +765,12 @@ unsigned long nsecs_to_jiffies(u64 n)
  * It's assumed that both values are valid (>= 0)
  */
 struct timespec timespec_add_safe(const struct timespec lhs,
-				  const struct timespec rhs)
+		const struct timespec rhs)
 {
 	struct timespec res;
 
 	set_normalized_timespec(&res, lhs.tv_sec + rhs.tv_sec,
-				lhs.tv_nsec + rhs.tv_nsec);
+			lhs.tv_nsec + rhs.tv_nsec);
 
 	if (res.tv_sec < lhs.tv_sec || res.tv_sec < rhs.tv_sec)
 		res.tv_sec = TIME_T_MAX;
