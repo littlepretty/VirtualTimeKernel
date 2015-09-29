@@ -3,4 +3,6 @@
 *.symvers
 *.o
 *.order
+*.mod.c
+.tmp_versions
 
