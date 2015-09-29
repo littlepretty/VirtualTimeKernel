@@ -1569,26 +1569,28 @@ struct task_struct *fork_idle(int cpu)
 /*
  * Initialize virtual start time as this moment
  */
-static int init_virtual_start_time(struct task_struct *task, int dilation)
+static int init_virtual_start_time(struct task_struct *tsk, int tdf)
 {
 	struct timespec ts;
-	s64 getnstimeofday_nsec;
+	s64 now;
 
 	if( likely(dilation > 0) ) {
-		/* must make sure further get(ns)timeofday return original time */
-		task->virtual_start_nsec = 0;
-		task->dilation = 0;
+		/* must make sure __getnstimeofday return original time */
+		// should be fine even without following assignment
+        tsk->virtual_start_nsec = 0;
+		tsk->dilation = 0;
 
-		/* method: will return nano seconds since Epoch 1970 */
+		/* now = nano seconds since Epoch 1970 */
 		__getnstimeofday(&ts);
-		getnstimeofday_nsec= timespec_to_ns(&ts);
-		/* printk("[info] [process %d] getnstimeofday virtual start time = %lld nano secs\n", task->pid, getnstimeofday_nsec); */
-		
+		now = timespec_to_ns(&ts);
+
 		/* initialize fields of nsec */
-		task->virtual_start_nsec = getnstimeofday_nsec;
-		task->physical_past_nsec = 0;
-		task->virtual_past_nsec = 0;
-		task->dilation = dilation * 1000;
+		tsk->virtual_start_nsec = now;
+		tsk->virtual_past_nsec = 0;
+        tsk->physical_start_nsec = now;
+        tsk->physical_past_nsec = 0;
+
+		tsk->dilation = tdf * 1000;
 	} else {
 		return -EINVAL;
 	}

@@ -295,74 +295,80 @@ static void timekeeping_forward_now(struct timekeeper *tk)
 /**
  * Add support of freeze
  */
-static void update_physcial_past_nsec(struct timespec *ts)
+static s64 update_physcial_past_nsec(struct timespec *ts)
 {
 	s64 now;
-	struct task_struct *leader;
-	
+	s64 delta_ppn; // delta physical_past_nsec
+    struct task_struct *leader;
+
 	leader = currrent->group_leader;
-	now = timespec_to_ns(ts)
-	current->physical_past_nsec = 
-			now - current->virtual_start_nsec;
+	now = timespec_to_ns(ts);
+    delta_ppn = now;
+    delta_ppn -= current->physical_past_nsec;
+    delta_ppn -= current->physical_start_nsec;
 	// substract freezed time
 	if ( current->freeze_past_nsec != 0 ) {
-		current->physical_past_nsec -= 
-			current->freeze_past_nsec;
+		delta_ppn -= current->freeze_past_nsec;
 	} else if ( leader->freeze_past_nsec != 0 ) {
-		// only READ group leader's fields 
-		current->physical_past_nsec -= 
-			leader->freeze_past_nsec;
+		// only READ group leader's fields
+		delta_ppn -= leader->freeze_past_nsec;
 	}
+    current->physical_past_nsec += delta_ppn;
+    return delta_ppn;
 }
 
 /**
  * Invariant: for processes(task_struct):
  * virtual_past_nsec = physical_past_nsec / TDF
  */
-static void update_virtual_past_nsec(struct timespec *ts)
+static void update_virtual_past_nsec(struct timespec *ts,
+        s64 delta_ppn, int tdf)
 {
 	s32 rem;
+    s64 delta_vpn; // delta virtual_past_nsec
 	// actual dilation in the range of (0,100], but "1000==1"
 	if( tdf > 0 && tdf <= 100000 ) {
 		// go through following calculations even if TDF=1
-		current->virtual_past_nsec =
-		       div_s64_rem(current->physcial_past_nsec * 1000, 
-				       current->dilation, &rem);
-		// Accuracy of s64 for nanoseconds: 
+		delta_ppn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
+		// Accuracy of s64 for nanoseconds:
 		// 2^64ns > 1*10^19ns => 10^10s
 		// To guarantee (physical_past_nsec * 1000) won't overflow:
 		// 10^10s / 1000 = 10^7s => 2777.77h > 115d
-	}
+	    current->virtual_past_nsec += delta_ppn;
+    }
 }
 
 static void do_virtual_time_keeping(struct timespec* ts)
 {
-	struct timespec dilated_ts;
-	s64 dilated_now;
-	
+	struct timespec virtual_ts;
+	s64 virtual_now;
+    s64 delta_ppn;
+    int tdf;
+
 	// make sure vt has been initialized
-	if ( current->virtual_start_nsec > 0 ) { 
+	if ( current->virtual_start_nsec > 0 ) {
 		// if current use virtual time
-		update_physical_past_nsec(ts);
-		
-		// if tdf=1, 
+		tdf = current->dilation;
+        delta_ppn = update_physical_past_nsec(ts);
+
+		// if tdf=1,
 		// virtual_past_nsec almost = physcial_past_nsec
-		update_virtual_past_nsec(ts); 
-		
-		dilated_now = current->virtual_start_nsec + 
+		update_virtual_past_nsec(ts, delta_ppn, tdf);
+
+		virtual_now = current->virtual_start_nsec +
 			current->virtual_past_nsec;
-		dilated_ts = ns_to_timespec(dilated_now);	
+		virtual_ts = ns_to_timespec(virtual_now);
 
 		// for debug
-		printk("[VT process %d] %lld, tdf = %d\n", 
-				current->pid, dilated_now, tdf);
-		printk("VT past %lld, RT past %lld\n", 
-				current->virtual_past_nsec, 
+		printk("[VT process %d] %lld, tdf = %d\n",
+				current->pid, virtual_now, tdf);
+		printk("VT past %lld, RT past %lld\n",
+				current->virtual_past_nsec,
 				current->physical_past_nsec);
 
 		// update __getnstimeofday's return ts
-		ts->tv_sec = dilated_ts.tv_sec;
-		ts->tv_nsec = dilated_ts.tv_nsec;
+		ts->tv_sec = virtual_ts.tv_sec;
+		ts->tv_nsec = virtual_ts.tv_nsec;
 	}
 }
 

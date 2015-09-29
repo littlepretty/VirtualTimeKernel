@@ -1408,10 +1408,14 @@ struct task_struct {
 
 /* virtual time variables ---Jiaqi */
 	int dilation; // for fraction support, here dilation's base is 1000 (e.g. TDF=1)
+
+    s64 physical_start_nsec;
+    s64 physical_past_nsec;
+
 	s64 virtual_start_nsec;
-	s64 physical_past_nsec;
-	s64 virtual_past_nsec;
-	s64 freeze_start_nsec;
+    s64 virtual_past_nsec;
+
+    s64 freeze_start_nsec;
 	s64 freeze_past_nsec;
 
 	sigset_t blocked, real_blocked;

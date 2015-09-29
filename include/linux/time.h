@@ -184,7 +184,7 @@ extern void timekeeping_clocktai(struct timespec *ts);
 struct tms;
 extern void do_sys_times(struct tms *);
 
-extern int set_dilation(unsigned long dilation, pid_t pid);
+extern int set_dilation(struct task_struct *tsk, int new_tdf);
 extern void freeze_time(struct task_struct *group_leader);
 extern void unfreeze_time(struct task_struct *group_leader);
 

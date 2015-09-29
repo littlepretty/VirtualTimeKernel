@@ -102,7 +102,6 @@ SYSCALL_DEFINE1(stime, time_t __user *, tptr)
 SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 		struct timezone __user *, tz)
 {
-	// printk("[info] [process %d] in normal gettimeofday\n", current->pid);
 	if (likely(tv != NULL)) {
 		struct timeval ktv;
 		do_gettimeofday(&ktv);
@@ -118,32 +117,57 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 }
 
 /*
- * Change current process's time dilation factor --- Jiaqi Yan
- * Operation fail when "dilation" is less than 0
+ * Change a process's time dilation factor
+ * Operation fail when @dilation is less than 0
  */
-int set_dilation(unsigned long dilation, pid_t ppid)
+int set_dilation(struct task_struct* tsk, int new_tdf)
 {
-	struct timeval now;
 	struct timespec ts;
+    s64 now;
+    s64 delta_ppn;
+    s64 delta_vpn;
+    s64 vsn;
+    int old_tdf;
 
-	if (dilation > 0) {
-		/* reset virtual_start so that we can get original time */
-		current->dilation = 0;
-		current->virtual_start_nsec = 0;
+	if (tsk && dilation > 0) {
+		// save anything we may need
+		old_tdf = tsk->dilation;
+        vsn = tsk->virtual_start_nsec;
+        /* reset virtual_start so that we can get original time */
+        tsk->dilation = 0;
+        tsk->virtual_start_nsec = 0;
 
-		__getnstimeofday(&ts);	
+        __getnstimeofday(&ts);
 
-		current->virtual_start_nsec = timespec_to_ns(&ts);
-		current->physical_past_nsec = 0;
-		current->virtual_past_nsec = 0;
-		current->dilation = dilation * 1000;
-		return 0;
+        now = timespec_to_ns(&ts);
+        // virtual_start_nsec remains the same
+        tsk->virtual_start_nsec = vsn;
+        // advance virtual_past_nsec
+        delta_ppn = now;
+        delta_ppn -= tsk->physical_past_nsec;
+        delta_ppn -= tsk->physical_start_nsec;
+        delta_ppn -= tsk->freeze_past_nsec;
+        delta_vpn = delta_ppn * 1000 / old_tdf;
+        tsk->virtual_past_nsec += delta_vpn;
+
+        // new physcial_start_nsec from now on
+        tsk->physical_start_nsec = now;
+        if ( tsk->freeze_past_nsec > 0 ) {
+            tsk->physical_start_nsec -= tsk->freeze_past_nsec;
+        }
+		tsk->physical_past_nsec = 0;
+
+		tsk->dilation = new_tdf * 1000;
+        return 0;
 	} else {
 		return -EINVAL;
 	}
 }
 EXPORT_SYMBOL(set_dilation);
 
+/**
+ * Freeze a group of processes
+ **/
 void freeze_time(struct task_struct *group_leader)
 {
 	struct timespec ts;
@@ -161,6 +185,9 @@ void freeze_time(struct task_struct *group_leader)
 }
 EXPORT_SYMBOL(freeze_time);
 
+/**
+ * Unfreeze a group of processes
+ **/
 void unfreeze_time(struct task_struct *group_leader)
 {
 	struct timespec ts;

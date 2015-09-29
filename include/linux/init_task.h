@@ -196,9 +196,10 @@ extern struct task_group root_task_group;
 	.ptrace_entry	= LIST_HEAD_INIT(tsk.ptrace_entry),		\
 	.real_parent	= &tsk,						\
 	.dilation = 0,                              			\
-	.virtual_start_nsec = 0,                    			\
+	.physical_start_nsec = 0,                    			\
 	.physical_past_nsec = 0,                    			\
-	.virtual_past_nsec = 0,                     			\
+	.virtual_start_nsec = 0,                                \
+    .virtual_past_nsec = 0,                     			\
 	.freeze_start_nsec = 0,						\
 	.freeze_past_nsec = 0,						\
 	.parent		= &tsk,						\
