@@ -55,7 +55,7 @@ extern struct fs_struct init_fs;
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(sig.cputimer.lock),	\
 	},								\
 	.cred_guard_mutex =						\
-		 __MUTEX_INITIALIZER(sig.cred_guard_mutex),		\
+	__MUTEX_INITIALIZER(sig.cred_guard_mutex),		\
 	INIT_GROUP_RWSEM(sig)						\
 }
 
@@ -97,7 +97,7 @@ extern struct group_info init_groups;
 #ifdef CONFIG_AUDITSYSCALL
 #define INIT_IDS \
 	.loginuid = INVALID_UID, \
-	.sessionid = (unsigned int)-1,
+.sessionid = (unsigned int)-1,
 #else
 #define INIT_IDS
 #endif
@@ -117,10 +117,10 @@ extern struct group_info init_groups;
 #ifdef CONFIG_PREEMPT_RCU
 #define INIT_TASK_RCU_PREEMPT(tsk)					\
 	.rcu_read_lock_nesting = 0,					\
-	.rcu_read_unlock_special = 0,					\
-	.rcu_node_entry = LIST_HEAD_INIT(tsk.rcu_node_entry),		\
-	INIT_TASK_RCU_TREE_PREEMPT()					\
-	INIT_TASK_RCU_BOOST()
+.rcu_read_unlock_special = 0,					\
+.rcu_node_entry = LIST_HEAD_INIT(tsk.rcu_node_entry),		\
+INIT_TASK_RCU_TREE_PREEMPT()					\
+INIT_TASK_RCU_BOOST()
 #else
 #define INIT_TASK_RCU_PREEMPT(tsk)
 #endif
@@ -139,8 +139,8 @@ extern struct task_group root_task_group;
 #ifdef CONFIG_PERF_EVENTS
 # define INIT_PERF_EVENTS(tsk)						\
 	.perf_event_mutex = 						\
-		 __MUTEX_INITIALIZER(tsk.perf_event_mutex),		\
-	.perf_event_list = LIST_HEAD_INIT(tsk.perf_event_list),
+__MUTEX_INITIALIZER(tsk.perf_event_mutex),		\
+.perf_event_list = LIST_HEAD_INIT(tsk.perf_event_list),
 #else
 # define INIT_PERF_EVENTS(tsk)
 #endif
@@ -148,8 +148,8 @@ extern struct task_group root_task_group;
 #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
 # define INIT_VTIME(tsk)						\
 	.vtime_seqlock = __SEQLOCK_UNLOCKED(tsk.vtime_seqlock),	\
-	.vtime_snap = 0,				\
-	.vtime_snap_whence = VTIME_SYS,
+.vtime_snap = 0,				\
+.vtime_snap_whence = VTIME_SYS,
 #else
 # define INIT_VTIME(tsk)
 #endif
@@ -159,7 +159,7 @@ extern struct task_group root_task_group;
 #ifdef CONFIG_RT_MUTEXES
 # define INIT_RT_MUTEXES(tsk)						\
 	.pi_waiters = RB_ROOT,						\
-	.pi_waiters_leftmost = NULL,
+.pi_waiters_leftmost = NULL,
 #else
 # define INIT_RT_MUTEXES(tsk)
 #endif
@@ -198,8 +198,8 @@ extern struct task_group root_task_group;
 	.dilation = 0,                              			\
 	.physical_start_nsec = 0,                    			\
 	.physical_past_nsec = 0,                    			\
-	.virtual_start_nsec = 0,                                \
-    .virtual_past_nsec = 0,                     			\
+	.virtual_start_nsec = 0,					\
+	.virtual_past_nsec = 0,                     			\
 	.freeze_start_nsec = 0,						\
 	.freeze_past_nsec = 0,						\
 	.parent		= &tsk,						\

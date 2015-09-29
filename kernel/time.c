@@ -123,42 +123,42 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 int set_dilation(struct task_struct* tsk, int new_tdf)
 {
 	struct timespec ts;
-    s64 now;
-    s64 delta_ppn;
-    s64 delta_vpn;
-    s64 vsn;
-    int old_tdf;
+	s64 now;
+	s64 delta_ppn;
+	s64 delta_vpn;
+	s64 vsn;
+	int old_tdf;
 
-	if (tsk && dilation > 0) {
+	if (tsk && new_tdf > 0) {
 		// save anything we may need
 		old_tdf = tsk->dilation;
-        vsn = tsk->virtual_start_nsec;
-        /* reset virtual_start so that we can get original time */
-        tsk->dilation = 0;
-        tsk->virtual_start_nsec = 0;
+		vsn = tsk->virtual_start_nsec;
+		/* reset virtual_start so that we can get original time */
+		tsk->dilation = 0;
+		tsk->virtual_start_nsec = 0;
 
-        __getnstimeofday(&ts);
+		__getnstimeofday(&ts);
 
-        now = timespec_to_ns(&ts);
-        // virtual_start_nsec remains the same
-        tsk->virtual_start_nsec = vsn;
-        // advance virtual_past_nsec
-        delta_ppn = now;
-        delta_ppn -= tsk->physical_past_nsec;
-        delta_ppn -= tsk->physical_start_nsec;
-        delta_ppn -= tsk->freeze_past_nsec;
-        delta_vpn = delta_ppn * 1000 / old_tdf;
-        tsk->virtual_past_nsec += delta_vpn;
+		now = timespec_to_ns(&ts);
+		// virtual_start_nsec remains the same
+		tsk->virtual_start_nsec = vsn;
+		// advance virtual_past_nsec
+		delta_ppn = now;
+		delta_ppn -= tsk->physical_past_nsec;
+		delta_ppn -= tsk->physical_start_nsec;
+		delta_ppn -= tsk->freeze_past_nsec;
+		delta_vpn = delta_ppn * 1000 / old_tdf;
+		tsk->virtual_past_nsec += delta_vpn;
 
-        // new physcial_start_nsec from now on
-        tsk->physical_start_nsec = now;
-        if ( tsk->freeze_past_nsec > 0 ) {
-            tsk->physical_start_nsec -= tsk->freeze_past_nsec;
-        }
+		// new physcial_start_nsec from now on
+		tsk->physical_start_nsec = now;
+		if ( tsk->freeze_past_nsec > 0 ) {
+			tsk->physical_start_nsec -= tsk->freeze_past_nsec;
+		}
 		tsk->physical_past_nsec = 0;
 
 		tsk->dilation = new_tdf * 1000;
-        return 0;
+		return 0;
 	} else {
 		return -EINVAL;
 	}

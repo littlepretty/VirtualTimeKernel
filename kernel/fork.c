@@ -1574,10 +1574,10 @@ static int init_virtual_start_time(struct task_struct *tsk, int tdf)
 	struct timespec ts;
 	s64 now;
 
-	if( likely(dilation > 0) ) {
+	if( likely(tdf > 0) ) {
 		/* must make sure __getnstimeofday return original time */
 		// should be fine even without following assignment
-        tsk->virtual_start_nsec = 0;
+        	tsk->virtual_start_nsec = 0;
 		tsk->dilation = 0;
 
 		/* now = nano seconds since Epoch 1970 */
@@ -1587,8 +1587,8 @@ static int init_virtual_start_time(struct task_struct *tsk, int tdf)
 		/* initialize fields of nsec */
 		tsk->virtual_start_nsec = now;
 		tsk->virtual_past_nsec = 0;
-        tsk->physical_start_nsec = now;
-        tsk->physical_past_nsec = 0;
+		tsk->physical_start_nsec = now;
+		tsk->physical_past_nsec = 0;
 
 		tsk->dilation = tdf * 1000;
 	} else {

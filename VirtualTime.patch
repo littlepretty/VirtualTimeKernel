@@ -348,18 +348,6 @@ Only in ../PatchKernel-3.16.3/fs: .posix_acl.o.cmd
 Only in ../PatchKernel-3.16.3/fs/proc: array.c
 Only in ../PatchKernel-3.16.3/fs/proc: array.o
 Only in ../PatchKernel-3.16.3/fs/proc: .array.o.cmd
-diff -rup ../PatchKernel-3.16.3/fs/proc/base.c ./fs/proc/base.c
---- ../PatchKernel-3.16.3/fs/proc/base.c	2015-09-23 17:37:37.869168000 -0500
-+++ ./fs/proc/base.c	2015-09-23 18:30:52.344174000 -0500
-@@ -1451,7 +1451,7 @@ static int freeze_show(struct seq_file *
- 		return -ESRCH;
- 
- 	task_lock(p);
--	freezed = (p->freeze_start_nsec == 0);
-+	freezed = (p->freeze_start_nsec != 0);
- 	task_unlock(p);
- 	seq_printf(m, "%d\n", freezed);
- 
 Only in ../PatchKernel-3.16.3/fs/proc: base.o
 Only in ../PatchKernel-3.16.3/fs/proc: .base.o.cmd
 Only in ../PatchKernel-3.16.3/fs/proc: built-in.o
@@ -509,7 +497,110 @@ Only in ../PatchKernel-3.16.3/fs: xattr.o
 Only in ../PatchKernel-3.16.3/fs: .xattr.o.cmd
 Only in ../PatchKernel-3.16.3/fs: xfs
 Only in ./: .git
-Only in ../PatchKernel-3.16.3/: .gitignore
+diff -rup ../PatchKernel-3.16.3/.gitignore ./.gitignore
+--- ../PatchKernel-3.16.3/.gitignore	2015-09-23 16:29:54.377168000 -0500
++++ ./.gitignore	2015-09-28 14:14:49.693261120 -0500
+@@ -1,97 +1,6 @@
+-#
+-# NOTE! Don't add files that are generated in specific
+-# subdirectories here. Add them in the ".gitignore" file
+-# in that subdirectory instead.
+-#
+-# NOTE! Please use 'git ls-files -i --exclude-standard'
+-# command after changing this file, to see if there are
+-# any tracked files which get ignored after the change.
+-#
+-# Normal rules
+-#
+-.*
+-*.o
+-*.o.*
+-*.a
+-*.s
+ *.ko
+-*.so
+-*.so.dbg
+-*.mod.c
+-*.i
+-*.lst
+-*.symtypes
++*.cmd
++*.symvers
++*.o
+ *.order
+-*.elf
+-*.bin
+-*.gz
+-*.bz2
+-*.lzma
+-*.xz
+-*.lz4
+-*.lzo
+-*.patch
+-*.gcno
+-modules.builtin
+-Module.symvers
+-
+-#
+-# Top-level generic files
+-#
+-/tags
+-/TAGS
+-/linux
+-/vmlinux
+-/vmlinuz
+-/System.map
+-/Module.markers
+-
+-#
+-# Debian directory (make deb-pkg)
+-#
+-/debian/
+-
+-#
+-# git files that we don't want to ignore even it they are dot-files
+-#
+-!.gitignore
+-!.mailmap
+-
+-#
+-# Generated include files
+-#
+-include/config
+-include/generated
+-arch/*/include/generated
+-
+-# stgit generated dirs
+-patches-*
+-
+-# quilt's files
+-patches
+-series
+-
+-# cscope files
+-cscope.*
+-ncscope.*
+-
+-# gnu global files
+-GPATH
+-GRTAGS
+-GSYMS
+-GTAGS
+-
+-*.orig
+-*~
+-\#*#
+-
+-#
+-# Leavings from module signing
+-#
+-extra_certificates
+-signing_key.priv
+-signing_key.x509
+-x509.genkey
+ 
+-# Kconfig presets
+-all.config
 Only in ./: howto_submit_patch.md
 Only in ../PatchKernel-3.16.3/include: acpi
 Only in ../PatchKernel-3.16.3/include: asm-generic
@@ -2508,6 +2599,18 @@ Only in ../PatchKernel-3.16.3/kernel/time: .tick-sched.o.cmd
 Only in ../PatchKernel-3.16.3/kernel/time: timeconv.c
 Only in ../PatchKernel-3.16.3/kernel/time: timeconv.o
 Only in ../PatchKernel-3.16.3/kernel/time: .timeconv.o.cmd
+diff -rup ../PatchKernel-3.16.3/kernel/time/timekeeping.c ./kernel/time/timekeeping.c
+--- ../PatchKernel-3.16.3/kernel/time/timekeeping.c	2015-09-29 09:07:13.502922700 -0500
++++ ./kernel/time/timekeeping.c	2015-09-29 09:09:44.630922700 -0500
+@@ -301,7 +301,7 @@ static s64 update_physical_past_nsec(str
+ 	s64 delta_ppn; // delta physical_past_nsec
+ 	struct task_struct *leader;
+ 
+-	leader = currrent->group_leader;
++	leader = current->group_leader;
+ 	now = timespec_to_ns(ts);
+ 	delta_ppn = now;
+ 	delta_ppn -= current->physical_past_nsec;
 Only in ../PatchKernel-3.16.3/kernel/time: timekeeping_debug.c
 Only in ../PatchKernel-3.16.3/kernel/time: timekeeping_debug.o
 Only in ../PatchKernel-3.16.3/kernel/time: .timekeeping_debug.o.cmd
@@ -3208,6 +3311,7 @@ Only in ../PatchKernel-3.16.3/: usr
 Only in ../PatchKernel-3.16.3/: .version
 Only in ../PatchKernel-3.16.3/: virt
 Only in ./: virtual_time
+Only in ./: virtual_time_module
 Only in ./: VirtualTime.patch
 Only in ../PatchKernel-3.16.3/: vmlinux
 Only in ../PatchKernel-3.16.3/: .vmlinux.cmd
