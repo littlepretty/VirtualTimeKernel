@@ -1408,7 +1408,7 @@ static const struct file_operations proc_pid_set_comm_operations = {
 };
 
 /*
- * Hanle freeze/unfreeze IO under /proc 
+ * Hanle freeze/unfreeze IO under /proc/$pid/freeze 
  */
 #define FREEZE_MAX_LEN 4 
 static ssize_t freeze_write(struct file *file, const char __user *buf,
@@ -1420,18 +1420,18 @@ static ssize_t freeze_write(struct file *file, const char __user *buf,
 	const size_t maxlen = sizeof(buffer) - 1;
 
 	memset(buffer, 0, sizeof(buffer));
-	if ( copy_from_user(buffer, buf, count > maxlen ? maxlen : count) ) {
+	if (copy_from_user(buffer, buf, count > maxlen ? maxlen : count)) {
 		return -EFAULT;
 	}
 
 	p = get_proc_task(inode);
-	if ( !p ) {
+	if (!p) {
 		return -ESRCH;
 	}
 
-	if ( !strncmp(buffer, "1", 1) ) {
+	if (!strncmp(buffer, "1", 1)) {
 		freeze_time(p);
-	} else if ( !strncmp(buffer, "0", 1) ) {
+	} else if (!strncmp(buffer, "0", 1)) {
 		unfreeze_time(p);
 	} // do nothing if user input other values
 
@@ -1447,7 +1447,7 @@ static int freeze_show(struct seq_file *m, void *v)
 	int freezed;
 
 	p = get_proc_task(inode);
-	if ( !p )
+	if (!p)
 		return -ESRCH;
 
 	task_lock(p);
@@ -1469,6 +1469,73 @@ static const struct file_operations proc_pid_set_freeze_operations = {
 	.open		= freeze_open,
 	.read		= seq_read,
 	.write		= freeze_write,
+	.llseek		= seq_lseek,
+	.release	= single_release,
+};
+
+/**
+ * Handle virtual time dilation IO under /proc/$pid/tdf
+ **/
+#undef TDF_LEN
+#define TDF_LEN 4
+static ssize_t dilation_write(struct file *file, const char __user *buf, 
+				size_t count, loff_t *ppos)
+{
+	struct inode *inode = file_inode(file);
+	struct task_struct *p;
+	char buffer[TDF_LEN];
+	const size_t maxlen = sizeof(buffer) - 1;
+	int new_tdf;
+
+	memset(buffer, 0, sizeof(buffer));
+	if (copy_from_user(buffer, buf, count > maxlen ? maxlen : count)) {
+		return -EFAULT;
+	}
+	if (kstrtoint(buffer, 10, &new_tdf) < 0) {
+		return -EINVAL;
+	}
+
+	p = get_proc_task(inode);
+	if (!p) {
+		return -ESRCH;
+	}
+
+	set_dilation(p, new_tdf);
+
+	put_task_struct(p);
+	return count;
+}
+
+static int dilation_show(struct seq_file *m, void *v)
+{
+	struct inode *inode = m->private;
+	struct task_struct *p;
+	int tdf;
+
+	p = get_proc_task(inode);
+	if (!p) {
+		return -ESRCH;
+	}
+
+	task_lock(p);
+	tdf = p->dilation;
+	task_unlock(p);
+	seq_printf(m, "%d\n", tdf);
+
+	put_task_struct(p);
+
+	return 0;
+}
+
+static int dilation_open(struct inode *inode, struct file *filp)
+{
+	return single_open(filp, dilation_show, inode);
+}
+
+static const struct file_operations proc_pid_set_dilation_operations = {
+	.open		= dilation_open,
+	.read		= seq_read,
+	.write		= dilation_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
 };
@@ -2635,6 +2702,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 #endif
 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
 	REG("freeze",	S_IRUGO|S_IWUSR, proc_pid_set_freeze_operations),
+	REG("dilation",	S_IRUGO|S_IWUSR, proc_pid_set_dilation_operations),
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
 	INF("syscall",    S_IRUSR, proc_pid_syscall),
 #endif

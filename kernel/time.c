@@ -166,43 +166,36 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 EXPORT_SYMBOL(set_dilation);
 
 /**
- * Freeze a group of processes
+ * Freeze a group of processes, only call on group leader
  **/
-void freeze_time(struct task_struct *group_leader)
+void freeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
 	s64 now;
 
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
-
-	rcu_read_lock();
-	group_leader->freeze_start_nsec = now;
-	rcu_read_unlock();
-	// maybe need to manually freeze this "group_leader"'s children
-
-	kill_pgrp(task_pgrp(group_leader), SIGSTOP, 1);
+	tsk->freeze_start_nsec = now;
+	// signal STOP to freeze this @tsk's children
+	kill_pgrp(task_pgrp(tsk), SIGSTOP, 1);
 }
 EXPORT_SYMBOL(freeze_time);
 
 /**
- * Unfreeze a group of processes
+ * Unfreeze a group of processes, only call on group leader
  **/
-void unfreeze_time(struct task_struct *group_leader)
+void unfreeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
 	s64 now;
 
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
-
-	rcu_read_lock();
-	group_leader->freeze_past_nsec += (now - group_leader->freeze_start_nsec);
-	group_leader->freeze_start_nsec = 0;
-	rcu_read_unlock();
-	// maybe need to manually freeze this "group_leader"'s children
-
-	kill_pgrp(task_pgrp(group_leader), SIGCONT, 1);
+	
+	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
+	tsk->freeze_start_nsec = 0;	
+	// signal CONTINUE to unfreeze @tsk's children
+	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);
 
