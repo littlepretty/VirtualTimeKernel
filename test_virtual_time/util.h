@@ -27,9 +27,8 @@ int timeval_substract(struct timeval* result, struct timeval* x, struct timeval*
 int virtual_time_unshare(int flags); // for historical reason
 int set_new_dilation(pid_t pid, int tdf);
 int virtual_time_exit(pid_t pid);
-int show_proc_dilation(pid_t pid);
 
 // freeze helpers
 int freeze_proc(pid_t pid);
 int unfreeze_proc(pid_t pid);
-int show_proc_freeze(pid_t pid);
+

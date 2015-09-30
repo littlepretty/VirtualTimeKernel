@@ -47,8 +47,12 @@ long int timeval_to_usec(struct timeval tv)
     return tv.tv_sec * USEC_PER_SEC + tv.tv_usec;
 }
 
+
 #define TDF_MAX 100
 #define TDF_STR_LEN 5			// 4 digit number
+
+
+
 #define CLONE_NEWTIME 0x40000000
 #define _GNU_SOURCE 			// for unshare system call
 
@@ -62,6 +66,7 @@ int virtual_time_unshare(int flags)
 
 int set_new_dilation(pid_t pid, int tdf)
 {
+
 	FILE *proc_file;
 	char path[PATH_MAX];
 	int written_count = 0;
@@ -89,6 +94,8 @@ int set_new_dilation(pid_t pid, int tdf)
 /*
 int set_new_dilation(pid_t pid, int tdf)
 {
+
+
 	int proc_file;
 	char path[PATH_MAX];
 	char* tdf_str;
@@ -99,31 +106,46 @@ int set_new_dilation(pid_t pid, int tdf)
 		sprintf(path, "/proc/%d/dilation", pid);
 		proc_file = open(path, O_WRONLY);
 
+
+
+
 		if ( proc_file == -1 ) {
 			printf("cannot open %s with error %s\n", 
 					path, strerror(errno));
 			return -1;
 		}
+
 		tdf_str = malloc(sizeof(char) * TDF_STR_LEN);
+
+
 		if ( tdf_str == NULL ) {
 			return -1;
 		}
 		count = sprintf(tdf_str, "%d", tdf);
+
 		printf("tdf_str = %s\n", tdf_str);
 		// count should equal strlen(tdf_str)
 		written_count = write(proc_file, tdf_str, count);
 		printf("%d written\n", written_count);
+
+
+
+
 		close(proc_file);
 		free(tdf_str);
 	}
 	return written_count;
 }
+
 */
+
+
 
 int virtual_time_exit(pid_t pid)
 {
 	return set_new_dilation(pid, 0);
 }
+
 
 static int read_proc_field(pid_t pid, char* field)
 {
@@ -153,11 +175,17 @@ static int read_proc_field(pid_t pid, char* field)
 	return read_count;
 }
 
+
+
 static int write_proc_freeze(pid_t pid, char* val)
 {
 	int proc_file;
 	char path[PATH_MAX];
+
 	ssize_t written_count = 0;
+
+
+
 
 	sprintf(path, "/proc/%d/freeze", pid);
 	proc_file = open(path, O_WRONLY);
@@ -184,6 +212,7 @@ int unfreeze_proc(pid_t pid)
 }
 
 
+
 int show_proc_dilation(pid_t pid)
 {
 	return read_proc_field(pid, "dilation");
@@ -193,6 +222,8 @@ int show_proc_freeze(pid_t pid)
 {
 	return read_proc_field(pid, "freeze");
 }
+
+
 
 
 
