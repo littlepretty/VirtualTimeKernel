@@ -1477,7 +1477,7 @@ static const struct file_operations proc_pid_set_freeze_operations = {
  * Handle virtual time dilation IO under /proc/$pid/tdf
  **/
 #undef TDF_LEN
-#define TDF_LEN 4
+#define TDF_LEN 8
 static ssize_t dilation_write(struct file *file, const char __user *buf, 
 				size_t count, loff_t *ppos)
 {
@@ -1491,6 +1491,7 @@ static ssize_t dilation_write(struct file *file, const char __user *buf,
 	if (copy_from_user(buffer, buf, count > maxlen ? maxlen : count)) {
 		return -EFAULT;
 	}
+	// buffer now stores the value of TDF*1000
 	if (kstrtoint(buffer, 10, &new_tdf) < 0) {
 		return -EINVAL;
 	}

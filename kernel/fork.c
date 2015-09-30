@@ -1569,12 +1569,12 @@ struct task_struct *fork_idle(int cpu)
 /*
  * Initialize virtual start time as this moment
  */
-static int init_virtual_start_time(struct task_struct *tsk, int tdf)
+int init_virtual_start_time(struct task_struct *tsk, int tdf)
 {
 	struct timespec ts;
 	s64 now;
 
-	if( likely(tdf > 0) ) {
+	if(tdf > 0) {
 		/* must make sure __getnstimeofday return original time */
 		// should be fine even without following assignment
         	tsk->virtual_start_nsec = 0;
@@ -1590,11 +1590,12 @@ static int init_virtual_start_time(struct task_struct *tsk, int tdf)
 		tsk->physical_start_nsec = now;
 		tsk->physical_past_nsec = 0;
 
-		tsk->dilation = tdf * 1000;
+		tsk->dilation = tdf;
 	} else {
 		return -EINVAL;
 	}
 }
+EXPORT_SYMBOL(init_virtual_start_time);
 
 /*
  *  Ok, this is the main fork-routine.
@@ -1845,7 +1846,7 @@ static int unshare_virtual_time(unsigned long unshare_flags)
 	 */
 	int error = 0;
 	if (unshare_flags & CLONE_NEWTIME) {
-		error = init_virtual_start_time(current, 1); // default TDF=1(actually, it is 1000)
+		error = init_virtual_start_time(current, 1000); // default TDF=1(actually, it is 1000)
 	}
 	return error;
 }

@@ -1407,7 +1407,8 @@ struct task_struct {
 	struct sighand_struct *sighand;
 
 	/* virtual time variables ---Jiaqi */
-	int dilation; // for fraction support, here dilation's base is 1000 (e.g. TDF=1)
+	// to support fraction here store the value of (actual dilation)*1000
+	int dilation; 
 
 	s64 physical_start_nsec;
 	s64 physical_past_nsec;
@@ -1669,8 +1670,8 @@ struct task_struct {
 #endif
 };
 
-/* Change process's dilation */
-// extern int settdf(int dilation, int ppid);
+/* Init virtual time */
+extern int init_virtual_start_time(struct task_struct *tsk, int tdf);
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)

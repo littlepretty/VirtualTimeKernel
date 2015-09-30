@@ -123,23 +123,30 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 int set_dilation(struct task_struct* tsk, int new_tdf)
 {
 	struct timespec ts;
-	s64 now;
-	s64 delta_ppn;
-	s64 delta_vpn;
-	s64 vsn;
+	s64 now, delta_ppn, delta_vpn, vsn;
 	int old_tdf;
-
-	if (tsk && new_tdf > 0) {
-		// save anything we may need
-		old_tdf = tsk->dilation;
-		vsn = tsk->virtual_start_nsec;
+	
+	// save anything we may need
+	old_tdf = tsk->dilation;
+	vsn = tsk->virtual_start_nsec;
+	
+	if (old_tdf == new_tdf) { // no need to do anything
+		return 0;
+	} else if (old_tdf == 0) { // enter virtual time
+		return init_virtual_start_time(tsk, new_tdf);
+	} else if (new_tdf == 0) { // exit virtual time
+		tsk->dilation = 0;
+		tsk->virtual_start_nsec = 0;
+		tsk->virtual_past_nsec = 0;
+		return 0;	
+	} else if (old_tdf != 0 && new_tdf > 0) { // already in virtual time	
 		/* reset virtual_start so that we can get original time */
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
 
 		__getnstimeofday(&ts);
-
 		now = timespec_to_ns(&ts);
+		
 		// virtual_start_nsec remains the same
 		tsk->virtual_start_nsec = vsn;
 		// advance virtual_past_nsec
@@ -152,13 +159,13 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 
 		// new physcial_start_nsec from now on
 		tsk->physical_start_nsec = now;
-		if ( tsk->freeze_past_nsec > 0 ) {
-			tsk->physical_start_nsec -= tsk->freeze_past_nsec;
-		}
+		// if ( tsk->freeze_past_nsec > 0 ) {
+		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
+		// }
 		tsk->physical_past_nsec = 0;
 
-		tsk->dilation = new_tdf * 1000;
-		return 0;
+		tsk->dilation = new_tdf;
+		return 0;	
 	} else {
 		return -EINVAL;
 	}
