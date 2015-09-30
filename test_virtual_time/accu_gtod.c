@@ -1,16 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <getopt.h>
-#include <linux/sched.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-
+#include <getopt.h>		// for getopt()
+#include <time.h>		// for timeval
+#include <unistd.h>		// for getpid()
+#include <sys/types.h>
+#include <linux/sched.h>	// for CLONE_flags
 #include "util.h"
-
-#define _GNU_SOURCE
 
 #undef NR_ROUND
 #define NR_ROUND 10000
@@ -23,20 +19,22 @@ void fill_elapsed()
     struct timeval prev;
     struct timeval next;
     struct timeval diff;
-    long ret;
+    int ret;
     long int i, j;
+    long int usec;
+    
     for (i = 0; i < NR_ROUND; ++i)
     {
         ret = gettimeofday(&prev, NULL);
-        chk_sys_call_ret(ret, "gettimeofday");
+        check_syscall_status(ret, "gettimeofday");
         for (j = 0; j < CNT_SLEEP; ++j)
         {
             // do nothing
         }
         ret = gettimeofday(&next, NULL);
-        chk_sys_call_ret(ret, "gettimeofday");
+        check_syscall_status(ret, "gettimeofday");
         ret = timeval_substract(&diff, &next, &prev);
-        long int usec = timeval_to_usec(diff);
+        usec = timeval_to_usec(diff);
         elapsed[i] = usec;
     }
 }
@@ -46,27 +44,28 @@ void fill_dilated_elapsed(int dil)
     struct timeval prev;
     struct timeval next;
     struct timeval diff;
-    long ret;
+    int ret;
+    long int usec;
 
-    ret = unshare(CLONE_NEWNET|CLONE_NEWNS|CLONE_NEWTIME);
-    chk_sys_call_ret(ret, "unshare");
-    ret = change_tdf(dil, 0);
+    ret = virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+    ret = set_new_dilation(getpid(), dil);
 
     long int i, j;
     for (i = 0; i < NR_ROUND; ++i)
     {
         ret = gettimeofday(&prev, NULL);
-        chk_sys_call_ret(ret, "gettimeofday");
+        check_syscall_status(ret, "gettimeofday");
         for (j = 0; j < CNT_SLEEP; ++j)
         {
             // do nothing
         }
         ret = gettimeofday(&next, NULL);
-        chk_sys_call_ret(ret, "gettimeofday");
+        check_syscall_status(ret, "gettimeofday");
         ret = timeval_substract(&diff, &next, &prev);
-        long int usec = timeval_to_usec(diff);
+        usec = timeval_to_usec(diff);
         dilated_elapsed[i] = usec;
     }
+    ret = virtual_time_exit(getpid());
 }
 
 void actual_dilation(int dil)
@@ -90,7 +89,7 @@ void actual_dilation(int dil)
 
 const char* program_name;
 
-int main(int argc, char const *argv[])
+int main(int argc, char* const argv[])
 {
     const char* const short_options = "t:edp";
     const struct option long_options[] = {
