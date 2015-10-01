@@ -2,30 +2,42 @@ CC=gcc
 INCLUDE=-I. 
 CP=cp
 
-all: test_accuracy accu_gtod ovhd_gtod ovhd_settdf
+all: test accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
 
-test_accuracy: accu_gtod
-	OUTPUT=accuracy.log
-	sudo ./$@ -t 2 -e -d -p > accuracy.log
-	#sudo ./$@ -t 4 -e -d -p >> accuracy.log
-	#sudo ./$@ -t 8 -e -d -p >> accuracy.log
-	#sudo ./$@ -t 16 -e -d -p >> accuracy.log
-	cat $(OUTOUT)
+test: test_accuracy test_freeze_accuracy test_ovhd_dilaton test_ovhd_set_dilation
 
-test_ovhd_timekeeping: ovhd_gtod
-	sudo ./$@
+# do testing
+test_dilation_accuracy: accu_dilation
+	sudo ./$@ -t 2 -e -d -p > dilation_accuracy.log
+	sudo ./$@ -t 4 -e -d -p >> dilation_accuracy.log
+	sudo ./$@ -t 8 -e -d -p >> dilation_accuracy.log
+	sudo ./$@ -t 16 -e -d -p >> dilation_accuracy.log
+	cat dilation_accuracy.log
 
-test_ovhd_set_dilation: ovhd_settdf
-	sudo ./$@
+test_freeze_accuracy: accu_freeze
+	sudo ./$@ > freeze_accuracy.log
+	cat freeze_accuracy.log
 
-accu_gtod: util
-	$(CC) $(INCLUDE) -o test_accuracy accu_gtod.c $<.o
+test_ovhd_dilation: ovhd_dilation
+	sudo ./$@ > dilation_ovhd.log
+	cat dilation_ovhd.log
 
-ovhd_gtod: util
-	$(CC) $(INCLUDE) -o test_ovhd_timekeeping ovhd_gtod.c $<.o
+test_ovhd_set_dilation: ovhd_set_dilation
+	sudo ./$@ > set_dilation_ovhd.log
+	cat set_dilation_ovhd.log
 
-ovhd_settdf: util 
-	$(CC) $(INCLUDE) -o test_ovhd_set_dilation ovhd_settdf.c $<.o
+# compile and link
+accu_dilation: util
+	$(CC) $(INCLUDE) -o test_dilation_accuracy accu_dilation.c $<.o
+
+accu_freeze: util
+	$(CC) $(INCLUDE) -o test_freeze_accuracy accu_freeze.c $<.o
+
+ovhd_dilation: util
+	$(CC) $(INCLUDE) -o test_ovhd_dilation ovhd_dilation.c $<.o
+
+ovhd_set_dilation: util 
+	$(CC) $(INCLUDE) -o test_ovhd_set_dilation ovhd_set_dilation.c $<.o
 
 util: util.c
 	$(CC) $(INCLUDE) -c util.c
@@ -37,4 +49,6 @@ rm_vt_module:
 
 .PHONY: clean
 clean:
-	rm test_syscalls accu_gtod ovhd_gtod ovhd_settdf *.o
+	rm accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation *.o
+
+
