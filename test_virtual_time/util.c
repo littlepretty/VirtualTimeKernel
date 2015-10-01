@@ -14,14 +14,14 @@
 long check_syscall_status(long ret, char* syscall_name)
 {
     if(ret) {
-        printf("\n[error] %s fails with error: %s\n", 
+        printf("\n[error] %s fails with error: %s\n",
 			syscall_name, strerror(errno));
         exit(errno);
     }
     return ret;
 }
 
-int timeval_substract(struct timeval* result, 
+int timeval_substract(struct timeval* result,
 		struct timeval* x, struct timeval* y)
 {
     if (x->tv_usec < y->tv_usec )
@@ -47,8 +47,10 @@ long int timeval_to_usec(struct timeval tv)
     return tv.tv_sec * USEC_PER_SEC + tv.tv_usec;
 }
 
-#define TDF_MAX 100
-#define TDF_STR_LEN 5			// 4 digit number
+static const float TDF_MIN = 0.001f;
+static const int  TDF_MAX = 100;
+static const size_t TDF_STR_LEN = 5;			// 4 digit number
+
 #define _GNU_SOURCE 			// for unshare system call
 
 int virtual_time_unshare(int flags)
@@ -65,55 +67,55 @@ int set_new_dilation(pid_t pid, int tdf)
 	char path[PATH_MAX];
 	int written_count = 0;
 
-	if ( tdf < TDF_MAX ){
+	if ( tdf >= TDF_MIN && tdf < TDF_MAX ){
 		sprintf(path, "/proc/%d/dilation", pid);
 		proc_file = fopen(path, "w");
 		if ( !proc_file ) {
-			printf("cannot open %s with error %s\n", 
+			printf("cannot open %s with error %s\n",
 					path, strerror(errno));
 			return -1;
 		}
 		printf("about to set tdf to %d\n", tdf);
 		// count should equal strlen(tdf_str)
-		written_count = fprintf(proc_file, "%d", tdf);	
-		// fclose(proc_file);
+        // FIXME: echo 1000TDF to kernel
+		written_count = fprintf(proc_file, "%d", (int)(tdf * 1000));
+		fclose(proc_file);
 	}
-	printf("%d written\n", written_count);
-	char cmd[100];
+	// printf("%d written\n", written_count);
+
+    /*
+     * more straightforward way
+     */
+    /*
+    char cmd[100];
 	sprintf(cmd, "echo %d > /proc/%d/dilation", tdf, pid);
 	system(cmd);
-	return written_count;
+	*/
+    return written_count;
 }
 
 /*
-int set_new_dilation(pid_t pid, int tdf)
+int set_new_dilation(pid_t pid, float tdf)
 {
 	int proc_file;
 	char path[PATH_MAX];
-	char* tdf_str;
+	char tdf_str[TDF_STR_LEN];
 	size_t count;
 	ssize_t written_count = 0;
 
-	if ( tdf < TDF_MAX ){
+	if ( tdf >= TDF_MIN && tdf < TDF_MAX ){
 		sprintf(path, "/proc/%d/dilation", pid);
 		proc_file = open(path, O_WRONLY);
-
 		if ( proc_file == -1 ) {
-			printf("cannot open %s with error %s\n", 
+			printf("cannot open %s with error %s\n",
 					path, strerror(errno));
 			return -1;
 		}
-		tdf_str = malloc(sizeof(char) * TDF_STR_LEN);
-		if ( tdf_str == NULL ) {
-			return -1;
-		}
-		count = sprintf(tdf_str, "%d", tdf);
-		printf("tdf_str = %s\n", tdf_str);
+        // echo 1000TDF to kernel
+		count = sprintf(tdf_str, "%d", (int)(tdf * 1000));
 		// count should equal strlen(tdf_str)
 		written_count = write(proc_file, tdf_str, count);
-		printf("%d written\n", written_count);
 		close(proc_file);
-		free(tdf_str);
 	}
 	return written_count;
 }
@@ -134,7 +136,7 @@ static int read_proc_field(pid_t pid, char* field)
 	sprintf(path, "/proc/%d/%s", pid, field);
 	proc_file = open(path, O_RDONLY);
 	if ( proc_file == -1 ) {
-		printf("cannot open %s with error %s\n", 
+		printf("cannot open %s with error %s\n",
 				path, strerror(errno));
 		return -1;
 	}
@@ -145,11 +147,17 @@ static int read_proc_field(pid_t pid, char* field)
 	read_count = read(proc_file, result, TDF_MAX);
 	close(proc_file);
 	printf("%s: %s\n", path, result);
-	
+
+    /*
+     * more straightforward way
+     */
+	/*
 	char cmd[100];
 	sprintf(cmd, "cat /proc/%d/%s", pid, field);
 	system(cmd);
-	return read_count;
+	*/
+
+    return read_count;
 }
 
 static int write_proc_freeze(pid_t pid, char* val)
@@ -162,7 +170,7 @@ static int write_proc_freeze(pid_t pid, char* val)
 	sprintf(path, "/proc/%d/freeze", pid);
 	proc_file = open(path, O_WRONLY);
 	if ( proc_file == -1 ) {
-		printf("cannot open %s with error %s\n", 
+		printf("cannot open %s with error %s\n",
 				path, strerror(errno));
 		return -1;
 	}
@@ -182,8 +190,6 @@ int unfreeze_proc(pid_t pid)
 	char *val = "0";
 	return write_proc_freeze(pid, val);
 }
-
-
 
 int show_proc_dilation(pid_t pid)
 {

@@ -25,7 +25,7 @@ int timeval_substract(struct timeval* result, struct timeval* x, struct timeval*
 
 // dilation helpers
 int virtual_time_unshare(int flags); // for historical reason
-int set_new_dilation(pid_t pid, int tdf);
+int set_new_dilation(pid_t pid, float tdf); // NOTICE: 0.001 <= tdf < 100
 int virtual_time_exit(pid_t pid);
 
 // freeze helpers

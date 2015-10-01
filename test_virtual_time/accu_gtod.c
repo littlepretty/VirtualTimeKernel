@@ -22,7 +22,7 @@ void fill_elapsed()
     int ret;
     long int i, j;
     long int usec;
-    
+
     for (i = 0; i < NR_ROUND; ++i)
     {
         ret = gettimeofday(&prev, NULL);
