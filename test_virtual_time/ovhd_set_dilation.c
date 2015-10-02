@@ -7,7 +7,7 @@
 
 #include "util.h"
 
-long int repeat_set_new_dilation_for_myself()
+long int repeat_set_tdf_for_myself()
 {
 	struct timeval prev, next, diff, tmp;
 	long ret;
@@ -35,10 +35,8 @@ long int repeat_set_new_dilation_for_myself()
 		check_syscall_status(ret, "gettimeofday");
 		ret = timeval_substract(&diff, &next, &prev);
 		printf("Elapsed %ld seconds, %ld useconds\n", diff.tv_sec, diff.tv_usec);
-
 		usec = timeval_to_usec(diff);
 		printf("Elapsed %ld useconds for change TDF\n", usec);
-
 		return usec;
 	}
 }
@@ -91,12 +89,9 @@ long int repeat_set_new_dilation_for_my_parent()
 int main(int argc, char const *argv[])
 {
 	long int usec;
-
     usec = repeat_set_new_dilation_for_myself();
 	printf("Avg overhead %f useconds for myself\n", (float)usec / NR_ROUND);
-
 	usec = repeat_set_new_dilation_for_my_parent();
 	printf("Avg overhead %f useconds for my parent\n", (float)usec / NR_ROUND);
-
 	return 0;
 }
