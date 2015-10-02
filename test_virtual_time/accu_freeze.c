@@ -15,7 +15,8 @@ long int nop_without_freeze()
     int ret, status;
     long int i, usec;
     pid_t pid;
-
+    
+    printf("****** Experiment withOUT freeze ******\n");
     pid = fork();
     if ( pid == -1 ) {
         printf("\n[error] fork fails with error: %s\n", strerror(errno));
@@ -28,8 +29,7 @@ long int nop_without_freeze()
         gettimeofday(&next, NULL);
         ret = timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("Child elapsed %ld seconds, %ld useconds\n", diff.tv_sec, diff.tv_usec);
-        printf("Child elapsed %ld useconds without freeze\n", usec);
+        printf("Child elapsed %ld micro_sec without freeze\n\n", usec);
     } else {
         pid = wait(&status);
     }
@@ -43,25 +43,37 @@ long int nop_with_freeze()
     long int i, usec;
     pid_t pid;
 
+    printf("****** Experiment with freeze ******\n");
     pid = fork();
     if ( pid == -1 ) {
         printf("[error] fork fails with error: %s\n", strerror(errno));
-    } else if ( pid = 0 ) {
+    } else if ( pid == 0 ) {
         // child process do the same thing
+        ret = virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+        
+        pid_t self = getpid();
+        pid_t pgrpid = getpgid(self);
+        printf("Child[%d]'s PGID = %d\n", self, pgrpid);
+
         gettimeofday(&prev, NULL);
         for ( i = 0; i < 4 * NR_NOP_ROUND; ++i ) {
-             // do nothing
+            // do nothing
         }
         gettimeofday(&next, NULL);
+        
         ret = timeval_substract(&diff, &next, &prev);
-        usec = timeval_to_usec(diff);
-        printf("Child elapse %ld seconds, %ld useconds\n", diff.tv_sec, diff.tv_usec);
-        printf("Child elapse %ld useconds with freeze\n", usec);
+        usec = timeval_to_usec(diff); 
+        printf("Child elapsed %ld micro_sec with freeze\n", usec);
     } else {
         // parent process freeze and unfreeze child
         for ( i = 0; i < NR_NOP_ROUND / 2; ++i ) {
             // do nothing
         }
+        
+        pid_t self = getpid();
+        pid_t pgrpid = getpgid(self);
+        printf("Parent[%d]'s PGID = %d\n", self, pgrpid);
+        
         gettimeofday(&prev, NULL);
         freeze_proc(pid);
         for ( i = 0; i < NR_NOP_ROUND * 2; ++i ) {
@@ -69,10 +81,10 @@ long int nop_with_freeze()
         }
         unfreeze_proc(pid);
         gettimeofday(&next, NULL);
+        
         ret = timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("Parent make child freeze %ld seconds, %ld useconds\n", diff.tv_sec, diff.tv_usec);
-        printf("Parent make child freeze %ld useconds\n", usec);
+        printf("Parent make child freeze %ld micro_sec\n", usec);
     }
     return usec;
 }
@@ -80,7 +92,6 @@ long int nop_with_freeze()
 int main()
 {
     long int usec;
-
     usec = nop_without_freeze();
     usec = nop_with_freeze();
     return 0;

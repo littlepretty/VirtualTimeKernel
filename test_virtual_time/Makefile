@@ -15,8 +15,7 @@ test_dilation_accuracy: accu_dilation
 	cat dilation_accuracy.log
 
 test_freeze_accuracy: accu_freeze
-	sudo ./$@ > freeze_accuracy.log
-	cat freeze_accuracy.log
+	sudo ./freeze_driver.sh	
 
 test_ovhd_dilation: ovhd_dilation
 	sudo ./$@ > dilation_ovhd.log
@@ -31,7 +30,8 @@ accu_dilation: util
 	$(CC) $(INCLUDE) -o test_dilation_accuracy accu_dilation.c $<.o
 
 accu_freeze: util
-	$(CC) $(INCLUDE) -o test_freeze_accuracy accu_freeze.c $<.o
+	$(CC) $(INCLUDE) -o run_long_loop time_long_loop.c $<.o
+	$(CC) $(INCLUDE) -o issue_freeze freeze_other.c $<.o
 
 ovhd_dilation: util
 	$(CC) $(INCLUDE) -o test_ovhd_dilation ovhd_dilation.c $<.o
