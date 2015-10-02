@@ -5,14 +5,11 @@
 #include <time.h>		// for timeval
 #include <unistd.h>		// for getpid()
 #include <sys/types.h>
-#include <linux/sched.h>	// for CLONE_flags
+
 #include "util.h"
 
-#undef NR_ROUND
-#define NR_ROUND 10000
-
-int elapsed[NR_ROUND];
-int dilated_elapsed[NR_ROUND];
+int elapsed[NR_NOP_ROUND];
+int dilated_elapsed[NR_NOP_ROUND];
 
 void fill_elapsed()
 {
@@ -23,12 +20,11 @@ void fill_elapsed()
 	long int i, j;
 	long int usec;
 
-	for (i = 0; i < NR_ROUND; ++i)
+	for (i = 0; i < NR_NOP_ROUND; ++i)
 	{
 		ret = gettimeofday(&prev, NULL);
 		check_syscall_status(ret, "gettimeofday");
-		for (j = 0; j < CNT_SLEEP; ++j)
-		{
+		for (j = 0; j < CNT_SLEEP; ++j) {
 			// do nothing
 		}
 		ret = gettimeofday(&next, NULL);
@@ -51,12 +47,10 @@ void fill_dilated_elapsed(int dil)
 	show_proc_dilation(pid);
 
 	long int i, j;
-	for (i = 0; i < NR_ROUND; ++i)
-	{
+	for (i = 0; i < NR_NOP_ROUND; ++i) {
 		ret = gettimeofday(&prev, NULL);
 		check_syscall_status(ret, "gettimeofday");
-		for (j = 0; j < CNT_SLEEP; ++j)
-		{
+		for (j = 0; j < CNT_SLEEP; ++j) {
 			// do nothing
 		}
 		ret = gettimeofday(&next, NULL);
@@ -73,11 +67,9 @@ void actual_dilation(int dil)
 	float q;
 	int i;
 	int count = 0;
-	for (i = 0; i < NR_ROUND; ++i)
-	{
+	for (i = 0; i < NR_NOP_ROUND; ++i) {
 		q = (float)elapsed[i] / (float)dilated_elapsed[i];
-		if ((q - dil)*(q - dil) > 1)
-		{
+		if ((q - dil)*(q - dil) > 1) {
 			printf("[error] round %d: %f\n", i, q);
 			++count;
 		} else {
@@ -110,8 +102,7 @@ int main(int argc, char* const argv[])
 
 	do {
 		next_option = getopt_long(argc, argv, short_options, long_options, NULL);
-		switch(next_option)
-		{
+		switch(next_option) {
 			case 't':
 				dilation = atoi(optarg);
 				break;
@@ -126,8 +117,7 @@ int main(int argc, char* const argv[])
 				run_dilated = 1;
 				break;
 			case 'p':
-				if (run_elapsed == 1 && run_dilated == 1)
-				{
+				if (run_elapsed == 1 && run_dilated == 1) {
 					print_dil = 1;
 				}
 				break;
@@ -150,7 +140,7 @@ int main(int argc, char* const argv[])
 	if (print_dil) {
 		actual_dilation(dilation);
 	}
-	
+
 	return 0;
 }
 

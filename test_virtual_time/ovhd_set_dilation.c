@@ -22,7 +22,7 @@ long int repeat_set_tdf_for_myself()
 		check_syscall_status(ret, "virtual_time_unshare");
         pid_t self = getpid();
 
-        for (i = 0; i < NR_ROUND; ++i) {
+        for (i = 0; i < NR_SET_ROUND; ++i) {
 			ret = set_new_dilation(pid, 4); // change itself
 		}
 		exit(EXIT_SUCCESS);
@@ -62,7 +62,7 @@ long int repeat_set_new_dilation_for_my_parent()
 
 			pid_t ppid = getppid();
 
-			for (i = 0; i < NR_ROUND; ++i) {
+			for (i = 0; i < NR_SET_ROUND; ++i) {
 				ret = set_new_dilation(ppid, 4); // change my parent
 				check_syscall_status(ret, "set_new_dilation");
 			}
@@ -90,8 +90,8 @@ int main(int argc, char const *argv[])
 {
 	long int usec;
     usec = repeat_set_new_dilation_for_myself();
-	printf("Avg overhead %f useconds for myself\n", (float)usec / NR_ROUND);
+	printf("Avg overhead %f useconds for myself\n", (float)usec / NR_SET_ROUND);
 	usec = repeat_set_new_dilation_for_my_parent();
-	printf("Avg overhead %f useconds for my parent\n", (float)usec / NR_ROUND);
+	printf("Avg overhead %f useconds for my parent\n", (float)usec / NR_SET_ROUND);
 	return 0;
 }

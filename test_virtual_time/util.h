@@ -1,7 +1,9 @@
 #include <linux/types.h>
 #include <linux/sched.h>
 
-#define NR_ROUND 10000000L
+#define NR_GTOD_ROUND 10000000L
+#define NR_SET_ROUND 10000000L
+#define NR_NOP_ROUND 10000L
 #define MOUNT_SYS_MIN_VERSION "2.6.35"
 #define USEC_PER_SEC 1000000
 #define CNT_SLEEP 1000000
