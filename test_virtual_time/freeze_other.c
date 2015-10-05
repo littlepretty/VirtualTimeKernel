@@ -26,7 +26,7 @@ long int issue_freeze(pid_t pid)
     return usec;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
     int pid_found, pid;
     int opt;
@@ -37,26 +37,28 @@ int main(int argc, char* argv[])
     };
     pid_found = 0;
     
-    printf("%s\n", argv[1]);
-
-    while ((opt = getopt_long(argc, argv, short_options, long_options, NULL) != -1 )) {
+    do {
+        opt = getopt_long(argc, argv, short_options, long_options, NULL);
         switch (opt) {
             case 'n':
                 break;
             case 'p':
                 pid = atoi(optarg);
-                pid_found = 1;
-                printf("Got pid argument %d\n", pid);
+                pid_found = 1;  
+                break;
+            case -1:
                 break;
             default:
                 printf("Usage: %s -p pid\n", argv[0]);
                 exit(EXIT_FAILURE);
         }
     }
+    while (opt != -1);
 
     if ( pid_found == 1 ) {
-        // issue_freeze(pid);
+        issue_freeze(pid);
     }
 
     return 0;
 }
+
