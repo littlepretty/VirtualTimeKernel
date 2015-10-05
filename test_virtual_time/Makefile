@@ -2,9 +2,9 @@ CC=gcc
 INCLUDE=-I. 
 CP=cp
 
-all: test accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
+all: accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
 
-test: test_accuracy test_freeze_accuracy test_ovhd_dilaton test_ovhd_set_dilation
+test: test_accuracy test_accu_freeze test_ovhd_dilaton test_ovhd_set_dilation
 
 # do testing
 test_accu_dilation: accu_dilation
@@ -14,7 +14,7 @@ test_accu_dilation: accu_dilation
 	sudo ./$< -t 16 -e -d -p >> accu_dilation.log
 	cat accu_dilation.log
 
-test_freeze_accuracy: accu_freeze
+test_accu_freeze: accu_freeze
 	sudo ./freeze_driver.sh	
 
 test_ovhd_dilation: ovhd_dilation

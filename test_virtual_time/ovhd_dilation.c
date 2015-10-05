@@ -76,8 +76,8 @@ int main(int argc, char const *argv[])
 {
         long int noVT = without_virtual_time();
         long int VT = with_virtual_time();
-        printf("Total Overhead = %ld usec\n", VT - noVT);
-        printf("Avgerage Overhead = %f usec\n", ((float)(VT - noVT)) / NR_GTOD_ROUND);
+        printf("Total Overhead = %ld micro_sec for %ld GTOD\n", VT - noVT, NR_GTOD_ROUND);
+        printf("Avgerage Overhead = %f micro_sec\n", ((float)(VT - noVT)) / NR_GTOD_ROUND);
         return 0;
 }
 

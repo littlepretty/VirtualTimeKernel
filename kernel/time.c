@@ -119,6 +119,8 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 /*
  * Change a process's time dilation factor
  * Operation fail when @dilation is less than 0
+ * FIXME: since @tsk should be a (thread) group leader, 
+ *        it's his job to set all its children's TDF      
  */
 int set_dilation(struct task_struct* tsk, int new_tdf)
 {
@@ -153,15 +155,13 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
 		delta_ppn -= tsk->physical_start_nsec;
-		delta_ppn -= tsk->freeze_past_nsec;
+		delta_ppn -= tsk->freeze_past_nsec;     // tsk is group leader
 		delta_vpn = delta_ppn * 1000 / old_tdf;
 		tsk->virtual_past_nsec += delta_vpn;
 
 		// new physcial_start_nsec from now on
-		tsk->physical_start_nsec = now;
-		// if ( tsk->freeze_past_nsec > 0 ) {
+		tsk->physical_start_nsec = now;	
 		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
-		// }
 		tsk->physical_past_nsec = 0;
 
 		tsk->dilation = new_tdf;

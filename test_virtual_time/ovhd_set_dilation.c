@@ -35,7 +35,6 @@ long int repeat_set_dilation_for_myself()
                 // check_syscall_status(ret, "gettimeofday");
                 ret = timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
-                printf("Elapsed %ld seconds, %ld micro_sec\n", diff.tv_sec, diff.tv_usec); 
                 printf("Elapsed %ld micro_sec for change TDF\n", usec);
                 return usec;
         }
@@ -46,7 +45,7 @@ long int repeat_set_dilation_for_my_parent()
         struct timeval prev, next, diff, tmp;
         long ret;
         int status;
-        long int i;
+        long int i, usec;
 
         pid_t pid = fork();
         if (pid == -1) {
@@ -73,9 +72,8 @@ long int repeat_set_dilation_for_my_parent()
                 pid = wait(&status);
                 ret = gettimeofday(&next, NULL);
                 // check_syscall_status(ret, "gettimeofday");
-                ret = timeval_substract(&diff, &next, &prev);
-                printf("Elapsed %ld seconds, %ld micro_sec\n", diff.tv_sec, diff.tv_usec);
-                long int usec = timeval_to_usec(diff);
+                ret = timeval_substract(&diff, &next, &prev); 
+                usec = timeval_to_usec(diff);
                 printf("Elapsed %ld micro_sec for change TDF\n", usec);
                 return usec;
         }
@@ -85,7 +83,8 @@ int main(int argc, char const *argv[])
 {
         long int usec;
         usec = repeat_set_dilation_for_myself();
-        printf("Avg overhead %f micro_sec for myself\n", (float)usec / NR_SET_ROUND);
+        printf("Total Overhead = %ld for %ld SET dilation\n", NR_SET_ROUND, usec);
+        printf("Avg Overhead = %f micro_sec\n", (float)usec / NR_SET_ROUND);
         // usec = repeat_set_dilation_for_my_parent();
         // printf("Avg overhead %f micro_sec for my parent\n", (float)usec / NR_SET_ROUND);
         return 0;

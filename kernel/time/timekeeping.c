@@ -363,11 +363,11 @@ static void do_virtual_time_keeping(struct timespec* ts)
 		virtual_ts = ns_to_timespec(virtual_now);
 
 		// for debug
-		printk("[VT process %d] %lld, tdf = %d\n",
-				current->pid, virtual_now, tdf);
-		printk("VT past %lld, RT past %lld\n",
-				current->virtual_past_nsec,
-				current->physical_past_nsec);
+		/*printk("[VT process %d] %lld, tdf = %d\n",*/
+				/*current->pid, virtual_now, tdf);*/
+		/*printk("VT past %lld, RT past %lld\n",*/
+				/*current->virtual_past_nsec,*/
+				/*current->physical_past_nsec);*/
 
 		// update __getnstimeofday's return ts
 		ts->tv_sec = virtual_ts.tv_sec;

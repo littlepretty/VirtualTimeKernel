@@ -8,8 +8,8 @@
 
 #include "util.h"
 
-int elapsed[NR_NOP_ROUND];
-int dilated_elapsed[NR_NOP_ROUND];
+int elapsed[NR_ACCU_ROUND];
+int dilated_elapsed[NR_ACCU_ROUND];
 
 void fill_elapsed()
 {
@@ -20,7 +20,7 @@ void fill_elapsed()
         long int i, j;
         long int usec;
 
-        for (i = 0; i < NR_NOP_ROUND; ++i)
+        for (i = 0; i < NR_ACCU_ROUND; ++i)
         {
                 ret = gettimeofday(&prev, NULL);
                 check_syscall_status(ret, "gettimeofday");
@@ -47,7 +47,7 @@ void fill_dilated_elapsed(int dil)
         show_proc_dilation(pid);
 
         long int i, j;
-        for (i = 0; i < NR_NOP_ROUND; ++i) {
+        for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 ret = gettimeofday(&prev, NULL);
                 check_syscall_status(ret, "gettimeofday");
                 for (j = 0; j < CNT_SLEEP; ++j) {
@@ -67,7 +67,7 @@ void actual_dilation(int dil)
         float q;
         int i;
         int count = 0;
-        for (i = 0; i < NR_NOP_ROUND; ++i) {
+        for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 q = (float)elapsed[i] / (float)dilated_elapsed[i];
                 if ((q - dil)*(q - dil) > 1) {
                         printf("[error] round %d: %f\n", i, q);
@@ -130,13 +130,19 @@ int main(int argc, char* const argv[])
                                 break;
                 }
         } while(next_option != -1);
-
+        
         if (run_elapsed) {
                 fill_elapsed();
         }
+        
+        printf("Run fill_elapsed() parameters\n"); 
+        
         if (run_dilated) {
                 fill_dilated_elapsed(dilation);
         }
+        
+        printf("Run fill_dilated_elapsed() parameters\n"); 
+        
         if (print_dil) {
                 actual_dilation(dilation);
         }

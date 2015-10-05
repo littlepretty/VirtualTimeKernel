@@ -9,12 +9,12 @@ long int issue_freeze(pid_t pid)
 {
         long int i, usec;
         struct timeval prev, next, diff;
-        for ( i = 0; i < NR_NOP_ROUND / 2; ++i) {
+        for ( i = 0; i < CNT_SLEEP / 2; ++i) {
                 // do nothing
         }
         gettimeofday(&prev, NULL);
         freeze_proc(pid);
-        for ( i = 0; i < NR_NOP_ROUND; ++i ) {
+        for ( i = 0; i < CNT_SLEEP; ++i ) {
                 // pause for a while
         }
         unfreeze_proc(pid);

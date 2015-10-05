@@ -55,7 +55,7 @@ extern struct fs_struct init_fs;
 		.lock = __RAW_SPIN_LOCK_UNLOCKED(sig.cputimer.lock),	\
 	},								\
 	.cred_guard_mutex =						\
-	__MUTEX_INITIALIZER(sig.cred_guard_mutex),		\
+	__MUTEX_INITIALIZER(sig.cred_guard_mutex),                      \
 	INIT_GROUP_RWSEM(sig)						\
 }
 
