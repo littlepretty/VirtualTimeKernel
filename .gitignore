@@ -1,3 +1,4 @@
+*.log
 *.ko
 *.cmd
 *.symvers
