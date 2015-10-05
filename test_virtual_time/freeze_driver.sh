@@ -1,7 +1,8 @@
 #!/bin/bash
 
-./run_long_loop &
-PID=$!
-echo $PID
-./issue_freeze -p $PID
+set +m
+./time_long_loop
+
+./time_long_loop -v &
+./freeze_other -p $!
 

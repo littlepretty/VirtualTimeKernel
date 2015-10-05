@@ -25,8 +25,6 @@ long int without_virtual_time()
     ret = gettimeofday(&next, NULL);
     // check_syscall_status(ret, "gettimeofday");
     ret = timeval_substract(&diff, &next, &prev);
-    printf("Elapsed %ld seconds, %ld micro_sec\n", diff.tv_sec, diff.tv_usec);
-
     usec = timeval_to_usec(diff);
     printf("Elapsed %ld micro_sec without virtual time\n", usec);
     return usec;
@@ -68,7 +66,6 @@ long int with_virtual_time()
         ret = gettimeofday(&next, NULL);
         // check_syscall_status(ret, "gettimeofday");
         ret = timeval_substract(&diff, &next, &prev);
-        printf("Elapsed %ld seconds, %ld micro_sec\n", diff.tv_sec, diff.tv_usec);
         usec = timeval_to_usec(diff);
         printf("Elapsed %ld micro_sec with virtual time\n", usec);
         return usec;
