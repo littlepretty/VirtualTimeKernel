@@ -307,10 +307,10 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
 	// substract freezed time
-	if ( leader == current 
-			&& current->freeze_past_nsec > 0 ) {
+	if ( leader == current && 
+                        current->freeze_past_nsec > 0 ) {
 		// if current is a group leader, we can use 
-		// its freeze_past_nsec
+		// its own freeze_past_nsec
 		delta_ppn -= current->freeze_past_nsec;
 	} else if ( leader && leader->freeze_past_nsec > 0 ) {
 		// only READ group leader's fields

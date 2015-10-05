@@ -12,12 +12,12 @@
 
 #define NSCLONEFLGS		\
 (				\
-	SIGCHLD         |	\
-	CLONE_NEWNS     |	\
-	CLONE_NEWUTS    |	\
-	CLONE_NEWIPC    |	\
-	CLONE_NEWPID    |	\
-	CLONE_NEWNET		\
+        SIGCHLD         |	\
+        CLONE_NEWNS     |	\
+        CLONE_NEWUTS    |	\
+        CLONE_NEWIPC    |	\
+        CLONE_NEWPID    |	\
+        CLONE_NEWNET		\
 )
 
 // general helpers
