@@ -6,4 +6,13 @@
 *.order
 *.mod.c
 .tmp_versions
+*.bbl
+*.aux
+*.blg
+*.out
+*.dvi
+*.bak
+*.swp
+
+
 
