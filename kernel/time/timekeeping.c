@@ -324,8 +324,7 @@ static s64 update_physical_past_nsec(struct timespec *ts)
  * Invariant: for processes(task_struct):
  * virtual_past_nsec = physical_past_nsec / TDF
  */
-static void update_virtual_past_nsec(struct timespec *ts,
-		s64 delta_ppn, int tdf)
+static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 {
 	s32 rem;
 	s64 delta_vpn; // delta virtual_past_nsec
@@ -356,7 +355,7 @@ static void do_virtual_time_keeping(struct timespec* ts)
 
 		// if tdf=1,
 		// virtual_past_nsec almost = physcial_past_nsec
-		update_virtual_past_nsec(ts, delta_ppn, tdf);
+		update_virtual_past_nsec(delta_ppn, tdf);
 
 		virtual_now = current->virtual_start_nsec +
 			current->virtual_past_nsec;

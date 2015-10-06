@@ -196,13 +196,12 @@ void unfreeze_time(struct task_struct *tsk)
 	struct timespec ts;
 	s64 now;
 
+	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 	__getnstimeofday(&ts);
-	now = timespec_to_ns(&ts);
-	
+	now = timespec_to_ns(&ts);	
 	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
 	tsk->freeze_start_nsec = 0;	
 	// signal CONTINUE to unfreeze @tsk's children
-	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);
 
