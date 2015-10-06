@@ -19,7 +19,7 @@ void run_long_loop(int vt_opt)
         setsid();
         printf("****** Process[%d] to be freezed ******\n", pid); 
         gettimeofday(&prev, NULL);
-        for ( i = 0; i < 25 * CNT_SLEEP; ++i ) {
+        for ( i = 0; i < 50 * CNT_SLEEP; ++i ) {
                 // do nothing
         }
         gettimeofday(&next, NULL);

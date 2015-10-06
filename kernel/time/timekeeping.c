@@ -307,12 +307,8 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
 	// substract freezed time
-	if ( leader == current && 
-                        current->freeze_past_nsec > 0 ) {
-		// if current is a group leader, we can use 
-		// its own freeze_past_nsec
-		delta_ppn -= current->freeze_past_nsec;
-	} else if ( leader && leader->freeze_past_nsec > 0 ) {
+        // @current either ==leader or not
+        if ( leader->freeze_past_nsec > 0 ) {
 		// only READ group leader's fields
 		delta_ppn -= leader->freeze_past_nsec;
 	}
@@ -331,12 +327,12 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 	// actual dilation in the range of (0,100], but "1000==1"
 	if( tdf > 0 && tdf <= 100000 ) {
 		// go through following calculations even if TDF=1
-		delta_ppn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
+		delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
 		// Accuracy of s64 for nanoseconds:
 		// 2^63ns > 9*10^18ns => 9*10^9s
 		// To guarantee (physical_past_nsec * 1000) won't overflow:
 		// 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
-		current->virtual_past_nsec += delta_ppn;
+		current->virtual_past_nsec += delta_vpn;
 	}
 }
 

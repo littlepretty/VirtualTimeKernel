@@ -1,13 +1,14 @@
 #include <linux/types.h>
 #include <linux/sched.h>
+#include <limits.h>
 
-#define NR_GTOD_ROUND 10000000L
-#define NR_SET_ROUND 10000000L
+#define NR_GTOD_ROUND 10000000UL
+#define NR_SET_ROUND 1000000UL
 #define MOUNT_SYS_MIN_VERSION "2.6.35"
-#define USEC_PER_SEC 1000000L
+#define USEC_PER_SEC 1000000UL
 
-#define NR_ACCU_ROUND 10000
-#define CNT_SLEEP 10000000L
+#define NR_ACCU_ROUND 10000UL
+#define CNT_SLEEP 10000000UL
 
 #define CLONE_NEWTIME 0x02000000
 

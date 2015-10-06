@@ -53,13 +53,14 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 
-% *** To balance reference page ***
+% *** To balance reference page **1*
 \usepackage{flushend}
 
 \begin{document}
 
 \title{The {\ttlit Virtual Time Subsystem} for Linux Kernel}
-\subtitle{A full implementation of this subsystem is available as VirtualTimeKernel\titlenote{https://github.com/littlepretty/VirtualTimeKernel}}
+\subtitle{A patch is available as VirtualTimeKernel
+\titlenote{https://github.com/littlepretty/VirtualTimeKernel}}
 %
 % You need the command \numberofauthors to handle the 'placement
 % and alignment' of the authors beneath the title.
@@ -140,19 +141,24 @@ TODO
 \section{Introduction}
 TODO
 
-\section{The Software Architecture}
+\section{The Features of Virtual Time Subsystem}
 
-\section{Algorithms}
+\section{The Interface of Virtual Time Subsystem}
+\subsection{Through Additional System Calls}
+\subsection{Through Proc Virtual File System}
+
+\section{Algorithms and Implementations}
+\subsection{Additional Data Structure}
+
 \algrenewcommand{\algorithmiccomment}[1]{\hskip3em$/*$ #1 $*/$}
-
-\subsection{Algorithm for Set/Change Virtual Time Dilation}
+\subsection{Algorithm/Implementation for Set/Change Virtual Time Dilation}
 \begin{algorithm*}[t]
 \caption{Set Time Dilation Factor}
 \label{Alg-SetTDF}
 \begin{algorithmic}[1]
 \Function{set\_dilation}{$tsk, \;new\_tdf$}\Comment{Set $new\_tdf$ to process $tsk$}
 \State $old\_tdf \gets tsk.dilation$
-\State $vsn \gets tsk.virtual\_start\_nsec$
+\State $vsn \gets tsk.virtual\_start\_ns$
 \If{$new\_tdf = old\_tdf$}
 	\State return 0\Comment{do nothing}
 \ElsIf{$old\_tdf = 0$}
@@ -161,15 +167,15 @@ TODO
 	\State return \texttt{\uppercase{clean\_up\_virtual\_time}($tsk$)}\Comment{exit virtual time}
 \ElsIf{$new\_tdf > 0$}\Comment{real works here}
 	\State $tsk.dilation \gets 0$
-	\State $tsk.virtual\_start\_nsec \gets 0$
-	\State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{$ts$: a \texttt{timespec} temp}
-	\State $now \gets$ \texttt{timespec\_to\_ns}(\&$ts$)
-	\State $tsk.virtual\_start\_nsec \gets vsn$
-	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_nsec \; - \; tsk. physical\_start\_nsec \; - \; tsk. freeze\_past\_nsec$
+	\State $tsk.virtual\_start\_ns \gets 0$
+	\State \texttt{\_\_getnstimeofday}($ts$)\Comment{$ts$: a \texttt{timespec} temp}
+	\State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
+	\State $tsk.virtual\_start\_ns \gets vsn$
+	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk. physical\_start\_ns \; - \; tsk. freeze\_past\_ns$
 	\State $delta\_vpn \gets delta\_ppn \; / \; old\_tdf$
-	\State $tsk.virtual\_past\_nsec \; += \; delta\_vpn$
-	\State $tsk.physical\_start\_nsec \gets (now \; - \; tsk\rightarrow freeze\_past\_nsec)$
-	\State $tsk.physical\_past\_nsec \gets 0$
+	\State $tsk.virtual\_past\_ns \; += \; delta\_vpn$
+	\State $tsk.physical\_start\_ns \gets (now \; - \; tsk\rightarrow freeze\_past\_ns)$
+	\State $tsk.physical\_past\_ns \gets 0$
 	\State $tk.dilation \gets new\_tdf$
 	\State return 0
 \Else
@@ -179,29 +185,29 @@ TODO
 \end{algorithmic}
 \end{algorithm*}
 
-\subsection{Algorithm for Freeze and Unfreeze}
-\begin{algorithm*}[t]
-\caption{Freeze and Unfreeze Process}%: Set \texttt{new\_tdf} to process \textt{tsk}
+\subsection{Algorithm/Implementation for Freeze and Unfreeze}
+\begin{algorithm}[t]
+\caption{Freeze and Unfreeze Process}
 \label{Alg-Freeze}
 \begin{algorithmic}[1]
 \Function{Freeze}{tsk}
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGSTOP, 1)}
-\State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{$ts$: a \texttt{timespec} temp}
-\State $now \gets$ \texttt{timespec\_to\_ns}(\&$ts$)
-\State $tsk.freeze\_start\_nsec \gets now$
+\State \texttt{\_\_getnstimeofday}($ts$)\Comment{\texttt{timespec} $ts$}
+\State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
+\State $tsk.freeze\_start\_ns \gets now$
 \EndFunction
 \\
 \Function{Unfreeze}{tsk}
-\State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{$ts$: a \texttt{timespec} temp}
-\State $now \gets$ \texttt{timespec\_to\_ns}(\&$ts$)
-\State $tsk.freeze\_past\_nsec \gets now \; - \; tsk.freeze\_start\_nsec$
-\State $tsk.freeze\_start\_nsec \gets 0$
+\State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{\texttt{timespec} $ts$}
+\State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
+\State $tsk.freeze\_past\_ns \gets now \; - \; tsk.freeze\_start\_ns$
+\State $tsk.freeze\_start\_ns \gets 0$
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGCONT, 1)}
 \EndFunction
 \end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
-\subsection{Algorithm for Virtual Time Keeping}
+\subsection{Algorithm/Implementation for Virtual Time Keeping}
 \begin{algorithm*}[t]
 \caption{Time Dilation Algorithm}%: Dilate \texttt{ts} if a current process uses virtual clock}
 \label{Alg-DilateTimeKeeping}
@@ -209,60 +215,55 @@ TODO
 \Function{init\_virtual\_time}{$tsk,\;tdf$}
 \If{$tdf>0$}
     \State $tk.dilation \gets tdf$
-    \State $tk.virtual\_start\_nsec \gets 0$
-    \State \texttt{\_\_getnstimeofday}$(\&ts)$\Comment{$ts$: a \texttt{timespec} temp}
-    \State $tk.virtual\_start\_nsec \gets $\texttt{timespec\_to\_ns}$(\&ts)$
-    \State $tk.physical\_past\_nsec \gets 0$
-    \State $tk.virtual\_past\_nsec \gets 0$
+    \State $tk.virtual\_start\_ns \gets 0$
+    \State \texttt{\_\_getnstimeofday($ts$)}\Comment{$ts$: a \texttt{timespec} temp}
+    \State $tk.virtual\_start\_ns \gets $\texttt{timespec\_to\_ns($ts$)}
+    \State $tk.physical\_past\_ns \gets 0$
+    \State $tk.virtual\_past\_ns \gets 0$
 \EndIf
 \EndFunction
 \\
-\Function{update\_physical\_time}{$tsk, \;ts$}
+\Function{update\_physical\_time}{$tsk, \;ts$}\Comment{interval between }
+\State $leader \gets tsk.group_leader$
+\State $now \gets \texttt{timespec\_to\_ns($ts$)}$
+\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk.physical\_start\_ns$
+\State $delta\_ppn \; -= \; leader.freeze\_past\_ns$
+\State $tsk.physical\_past\_ns \; += \; delta\_ppn$
+\State return $delta\_ppn$
 \EndFunction
 \\
 \Function{update\_virtual\_time}{$delta\_ppn, \;tdf$}
+\If{$tdf \neq 0$}
+	\State $delta\_vpn \gets delta\_ppn \; / \; tdf$
+	\State $tsk.virtual\_past\_ns \; += \; delta\_vpn$
+\EndIf
 \EndFunction
 \\
-\Function{do\_dilatetimeofday}{\texttt{struct timespec *ts}}
-\State{Let \texttt{p} denote the current process using virtual time} %system-wide}
-\If{\texttt{p$\rightarrow$virtual\_start\_nsec > 0  and p$\rightarrow$dilation > 0}}
-	\State \texttt{now = timespec\_to\_ns(ts)}
-	\State \texttt{physical\_past\_nsec = now - p$\rightarrow$virtual\_start\_nsec}
-	\State \texttt{virtual\_past\_nsec = (physical\_past\_nsec - p$\rightarrow$physical\_past\_nsec) / p$\rightarrow$dilation + p$\rightarrow$virtual\_past\_nsec}\Comment{virtual time computation}
-	\State \texttt{dilated\_now = virtual\_past\_nsec + p$\rightarrow$virtual\_start\_nsec}
-	\State \texttt{dilated\_ts = ns\_to\_timespec(dilated\_now)}
-	\State \texttt{ts$\rightarrow$tv\_sec = dilated\_ts.tv\_sec}
-	\State \texttt{ts$\rightarrow$tv\_nsec = dilated\_ts.tv\_nsec}
-	\State \texttt{p$\rightarrow$physical\_past\_nsec = physical\_past\_nsec}\Comment{update process's physical time}
-	\State \texttt{p$\rightarrow$virtual\_past\_nsec = virtual\_past\_nsec}\Comment{update process's virtual time}
+\Function{do\_virtual\_time\_keeping}{$tsk, \;ts$}\Comment{\texttt{timespec} $ts$ will be modified}
+\If{$tsk.virtual\_start\_ns > 0$}
+	\State $tdf \gets tsk.dilation$
+	\State $delta\_ppn \gets \texttt{\uppercase{update\_physical\_time}($ts$)}$
+	\State \texttt{\uppercase{update\_virtual\_past\_time}($delta\_ppn, \;tdf$)}
+	\State $virtual\_now \gets tsk.virtual\_start\_ns + tsk.virtual\_past\_ns$
+	\State $virtual\_ts \gets \texttt{ns\_to\_timespec(virtual\_now)}$
+	\State $ts.tv\_sec \gets virtual\_ts.tv\_sec$
+	\State $ts.tv\_nsec \gets virtual\_ts.tv\_nsec$
 \EndIf
 \EndFunction
 \end{algorithmic}
 \end{algorithm*}
 
+\section{Miscellaneous Parts}
+\subsection{Bypass virtual Dynamic Shared Object}
+\subsection{Dilate Bandwidth Rate in Traffic Control}
+
 \section{Tests and Overhead Measurements}
 
 \section{Conclusions}
-This paragraph will end the body of this sample document.
-Remember that you might still have Acknowledgments or
-Appendices; brief samples of these
-follow.  There is still the Bibliography to deal with; and
-we will make a disclaimer about that here: with the exception
-of the reference to the \LaTeX\ book, the citations in
-this paper are to articles which have nothing to
-do with the present subject and are used as
-examples only\cite{Lamport:LaTeX}.
-%\end{document}  % This is where a 'short' article might terminate
+TODO\cite{Lamport:LaTeX}.
 
-%ACKNOWLEDGMENTS are optional
 \section{Acknowledgments}
-This section is optional; it is a location for you
-to acknowledge grants, funding, editing assistance and
-what have you.  In the present case, for example, the
-authors would like to thank Gerald Murray of ACM for
-his help in codifying this \textit{Author's Guide}
-and the \textbf{.cls} and \textbf{.tex} files that it describes.
-
+TODO
 %
 % The following two commands are all you need in the
 % initial runs of your .tex file to
@@ -276,53 +277,6 @@ and the \textbf{.cls} and \textbf{.tex} files that it describes.
 %
 % ACM needs 'a single self-contained file'!
 %
-%APPENDICES are optional
-%\balancecolumns
-\appendix
-%Appendix A
-\section{Headings in Appendices}
-The rules about hierarchical headings discussed above for
-the body of the article are different in the appendices.
-In the \textbf{appendix} environment, the command
-\textbf{section} is used to
-indicate the start of each Appendix, with alphabetic order
-designation (i.e. the first is A, the second B, etc.) and
-a title (if you include one).  So, if you need
-hierarchical structure
-\textit{within} an Appendix, start with \textbf{subsection} as the
-highest level. Here is an outline of the body of this
-document in Appendix-appropriate form:
-\subsection{Introduction}
-\subsection{The Body of the Paper}
-\subsubsection{Type Changes and  Special Characters}
-\subsubsection{Math Equations}
-\paragraph{Inline (In-text) Equations}
-\paragraph{Display Equations}
-\subsubsection{Citations}
-\subsubsection{Tables}
-\subsubsection{Figures}
-\subsubsection{Theorem-like Constructs}
-\subsubsection*{A Caveat for the \TeX\ Expert}
-\subsection{Conclusions}
-\subsection{Acknowledgments}
-\subsection{Additional Authors}
-This section is inserted by \LaTeX; you do not insert it.
-You just add the names and information in the
-\texttt{{\char'134}additionalauthors} command at the start
-of the document.
-\subsection{References}
-Generated by bibtex from your ~.bib file.  Run latex,
-then bibtex, then latex twice (to resolve references)
-to create the ~.bbl file.  Insert that ~.bbl file into
-the .tex source file and comment out
-the command \texttt{{\char'134}thebibliography}.
-% This next section command marks the start of
-% Appendix B, and does not continue the present hierarchy
-\section{More Help for the Hardy}
-The acm\_proc\_article-sp document class file itself is chock-full of succinct
-and helpful comments.  If you consider yourself a moderately
-experienced to expert user of \LaTeX, you may find reading
-it useful but please remember not to change it.
 \balancecolumns
 % That's all folks!
 \end{document}
