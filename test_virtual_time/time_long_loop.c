@@ -19,13 +19,13 @@ void run_long_loop(int vt_opt)
         setsid();
         printf("****** Process[%d] to be freezed ******\n", pid); 
         gettimeofday(&prev, NULL);
-        for ( i = 0; i < 50 * CNT_SLEEP; ++i ) {
+        for ( i = 0; i < 100 * CNT_SLEEP; ++i ) {
                 // do nothing
         }
         gettimeofday(&next, NULL);
         ret = timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("I elapsed %ld micro_sec total\n", usec);
+        printf("I[%d] elapsed %ld micro_sec total\n", pid, usec);
 }
 
 int main(int argc, char* argv[])

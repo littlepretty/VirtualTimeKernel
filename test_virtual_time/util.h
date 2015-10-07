@@ -35,7 +35,10 @@ int virtual_time_exit(pid_t pid);
 // freeze helpers
 int freeze_proc(pid_t pid);
 int unfreeze_proc(pid_t pid);
+void* freeze_work(void *p);
+void* unfreeze_work(void *p);
+void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char* action);
 
-int freeze_all_procs(pid_t* pid_list, size_t size);
-int unfreeze_all_procs(pid_t* pid_list, size_t size);
+void freeze_all_procs(pid_t* pid_list, size_t size);
+void unfreeze_all_procs(pid_t* pid_list, size_t size);
 

@@ -1,6 +1,7 @@
 CC=gcc
 INCLUDE=-I. 
 CP=cp
+PTHREAD=-pthread
 
 all: accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
 
@@ -26,20 +27,23 @@ test_ovhd_set_dilation: ovhd_set_dilation
 	cat ovhd_set_dilation.log
 
 # compile and link
-accu_dilation: util
-	$(CC) $(INCLUDE) -o $@ accu_dilation.c $<.o
+freeze_all_procs: util.o freeze_all_procs.c accu_freeze
+	$(CC) $(INCLUDE) $(PTHREAD) freeze_all_procs.c $< -o $@
 
-accu_freeze: util
-	$(CC) $(INCLUDE) -o time_long_loop time_long_loop.c $<.o
-	$(CC) $(INCLUDE) -o freeze_other freeze_other.c $<.o
+accu_dilation: util.o accu_dilation.c
+	$(CC) $(INCLUDE) $(PTHREAD) accu_dilation.c $< -o $@
 
-ovhd_dilation: util
-	$(CC) $(INCLUDE) -o ovhd_dilation ovhd_dilation.c $<.o
+accu_freeze: util.o time_long_loop.c freeze_other.c
+	$(CC) $(INCLUDE) $(PTHREAD) time_long_loop.c $< -o time_long_loop 
+	$(CC) $(INCLUDE) $(PTHREAD) freeze_other.c $< -o freeze_other 
 
-ovhd_set_dilation: util 
-	$(CC) $(INCLUDE) -o ovhd_set_dilation ovhd_set_dilation.c $<.o
+ovhd_dilation: util.o ovhd_dilation.c
+	$(CC) $(INCLUDE) $(PTHREAD) ovhd_dilation.c $< -o $@ 
 
-util: util.c
+ovhd_set_dilation: util.o ovhd_set_dilation.c
+	$(CC) $(INCLUDE) $(PTHREAD) ovhd_set_dilation.c $< -o $@ 
+
+util.o: util.c
 	$(CC) $(INCLUDE) -c util.c
 
 load_vt_module:

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <limits.h>	// for PATH_MAX
+#include <pthread.h>    // for pthread
 
 #include "util.h"
 
@@ -128,7 +129,7 @@ int virtual_time_exit(pid_t pid)
  sprintf(cmd, "cat /proc/%d/%s", pid, field);
  system(cmd);
  */
-static int read_proc_field(pid_t pid, char* field)
+int read_proc_field(pid_t pid, char* field)
 {
         int proc_file;
         char path[PATH_MAX];
@@ -152,7 +153,7 @@ static int read_proc_field(pid_t pid, char* field)
         return read_count;
 }
 
-static int write_proc_freeze(pid_t pid, char* val)
+int write_proc_freeze(pid_t pid, char* val)
 {
         int proc_file;
         char path[PATH_MAX];
@@ -168,6 +169,7 @@ static int write_proc_freeze(pid_t pid, char* val)
         }
         written_count = write(proc_file, val, 1);
         close(proc_file);
+        // printf("%d written\n", written_count);
         return written_count;
 }
 
@@ -193,66 +195,68 @@ int show_proc_freeze(pid_t pid)
         return read_proc_field(pid, "freeze");
 }
 
-void freeze_work(void *p)
+void* freeze_work(void *p)
 {
         char val[] = "1";
-        pid_t pid = (pid_t)p;
-        write_proc_freeze(pid, val);
-        pthread_exit((void*) p);
+        pid_t* pid = (pid_t *)p;
+        write_proc_freeze(*pid, val); 
+        /*printf("complete freeze process[%d]\n", *pid);*/
+        pthread_exit((void *)pid);
 }
 
-void unfreeze_work(void *p)
+void* unfreeze_work(void *p)
 {
         char val[] = "0";
-        pid_t pid = (pid_t)p;
-        write_proc_freeze(pid, val);
-        pthread_exit((void*) p);
+        pid_t* pid = (pid_t *)p;
+        write_proc_freeze(*pid, val);
+        /*printf("complete unfreeze process[%d]\n", *pid);*/
+        pthread_exit((void *)pid);
 }
 
-int freeze_all_procs(pid_t* pid_list, size_t size);
+#define MAX_NUM_THREADS 8
+
+void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char* action)
 {
-        pthread_t threads[size];
-        pthread_attr_t attr;
+        // Do NOT join pthreads
+        pthread_t* threads;
+        /*pthread_attr_t attr;*/
         int i, rc;
         void *status;
-        
-        pthread_attr_init(&attr);
-        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
+        threads = malloc(sizeof(pthread_t) * size);
+        /*pthread_attr_init(&attr);*/
+        // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         for (i = 0; i < size; ++i) {
-                rc = pthread_create(&thread[i], &attr, freeze_work, (void *)(pid_list[i]));
-                if (rc) {
-                        printf("[error] create pthread fail with %d\n", rc);
-                        exit(1);
+                if (pthread_create(&threads[i], NULL, func, (void *)(&pid_list[i])) != 0) {
+                        printf("[error] create pthread failed\n");
                 }
+                /*if (rc) {*/
+                        /*printf("[error] create pthread fail with %d\n", rc);*/
+                        /*exit(-1);*/
+                /*}*/
         }
-
-        pthread_attr_destory(&attr);
-        
-        for (i = 0; i < size; ++i) {
-                rc = pthread_join(thread[i], &status);
+        /*pthread_attr_destroy(&attr);*/
+        /*for (i = 0; i < size; ++i) {
+                rc = pthread_join(threads[i], &status);
                 if (rc) {
                         printf("[error] join pthread fail with %d\n", rc);
-                        exit(1);
+                        exit(-1);
                 }
-                printf("thread[%d] complete join for freezing process[%d]\n", i, (pid_t)status);
-        }
+                // printf("thread[%d] complete join for %s process[%d]\n", i, action, *((pid_t*)status));
+        }*/
+        // should issue exit on main thread if we don't do join()
         pthread_exit(NULL);
 }
 
-int unfreeze_all_procs(pid_t* pid_list, size_t size)
+void freeze_all_procs(pid_t* pid_list, size_t size)
 {
-
+        char* action = "freezing";
+        kickoff_pthreads(pid_list, size, freeze_work, action);
 }
 
-
-
-
-
-
-
-
-
-
-
+void unfreeze_all_procs(pid_t* pid_list, size_t size)
+{
+        char* action = "unfreezing";
+        kickoff_pthreads(pid_list, size, unfreeze_work, action);
+}
 
