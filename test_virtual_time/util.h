@@ -36,3 +36,6 @@ int virtual_time_exit(pid_t pid);
 int freeze_proc(pid_t pid);
 int unfreeze_proc(pid_t pid);
 
+int freeze_all_procs(pid_t* pid_list, size_t size);
+int unfreeze_all_procs(pid_t* pid_list, size_t size);
+

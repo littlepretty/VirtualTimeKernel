@@ -193,6 +193,66 @@ int show_proc_freeze(pid_t pid)
         return read_proc_field(pid, "freeze");
 }
 
+void freeze_work(void *p)
+{
+        char val[] = "1";
+        pid_t pid = (pid_t)p;
+        write_proc_freeze(pid, val);
+        pthread_exit((void*) p);
+}
+
+void unfreeze_work(void *p)
+{
+        char val[] = "0";
+        pid_t pid = (pid_t)p;
+        write_proc_freeze(pid, val);
+        pthread_exit((void*) p);
+}
+
+int freeze_all_procs(pid_t* pid_list, size_t size);
+{
+        pthread_t threads[size];
+        pthread_attr_t attr;
+        int i, rc;
+        void *status;
+        
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+        for (i = 0; i < size; ++i) {
+                rc = pthread_create(&thread[i], &attr, freeze_work, (void *)(pid_list[i]));
+                if (rc) {
+                        printf("[error] create pthread fail with %d\n", rc);
+                        exit(1);
+                }
+        }
+
+        pthread_attr_destory(&attr);
+        
+        for (i = 0; i < size; ++i) {
+                rc = pthread_join(thread[i], &status);
+                if (rc) {
+                        printf("[error] join pthread fail with %d\n", rc);
+                        exit(1);
+                }
+                printf("thread[%d] complete join for freezing process[%d]\n", i, (pid_t)status);
+        }
+        pthread_exit(NULL);
+}
+
+int unfreeze_all_procs(pid_t* pid_list, size_t size)
+{
+
+}
+
+
+
+
+
+
+
+
+
 
 
 
