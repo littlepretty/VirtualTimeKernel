@@ -15,8 +15,11 @@ test_accu_dilation: accu_dilation
 	sudo ./$< -t 16 -e -d -p >> accu_dilation.log
 	cat accu_dilation.log
 
+test_parallel_freeze: freeze_all_procs
+	sudo ./parallel_freeze.sh
+
 test_accu_freeze: accu_freeze
-	sudo ./freeze_driver.sh	
+	sudo ./accu_freeze.sh	
 
 test_ovhd_dilation: ovhd_dilation
 	sudo ./$< > ovhd_dilation.log
@@ -27,13 +30,13 @@ test_ovhd_set_dilation: ovhd_set_dilation
 	cat ovhd_set_dilation.log
 
 # compile and link
-freeze_all_procs: util.o freeze_all_procs.c accu_freeze
+freeze_all_procs: util.o freeze_all_procs.c accu_freeze parallel_freeze.sh
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_all_procs.c $< -o $@
 
 accu_dilation: util.o accu_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) accu_dilation.c $< -o $@
 
-accu_freeze: util.o time_long_loop.c freeze_other.c
+accu_freeze: util.o time_long_loop.c freeze_other.c accu_freeze.sh
 	$(CC) $(INCLUDE) $(PTHREAD) time_long_loop.c $< -o time_long_loop 
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_other.c $< -o freeze_other 
 

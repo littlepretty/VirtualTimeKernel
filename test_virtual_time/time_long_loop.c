@@ -17,15 +17,15 @@ void run_long_loop(int vt_opt)
 
         pid_t pid = getpid();
         setsid();
-        printf("****** Process[%d] to be freezed ******\n", pid); 
+        /*printf("****** Process[%d] to be freezed ******\n", pid); */
         gettimeofday(&prev, NULL);
-        for ( i = 0; i < 100 * CNT_SLEEP; ++i ) {
+        for ( i = 0; i < 50 * CNT_SLEEP; ++i ) {
                 // do nothing
         }
         gettimeofday(&next, NULL);
         ret = timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("I[%d] elapsed %ld micro_sec total\n", pid, usec);
+        printf("%ld\t", usec);
 }
 
 int main(int argc, char* argv[])
