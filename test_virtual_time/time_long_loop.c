@@ -3,7 +3,7 @@
 #include <time.h>               // for timeval
 #include <unistd.h>             // for getpid()
 
-#include "util.h"
+#include "vtutil.h"
 
 void run_long_loop(int vt_opt, int duration_factor)
 {

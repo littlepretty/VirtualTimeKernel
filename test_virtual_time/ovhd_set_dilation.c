@@ -6,7 +6,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "util.h"
+#include "vtutil.h"
 
 void repeat_set_dilation()
 {

@@ -4,7 +4,7 @@
 #include <getopt.h>
 #include <string.h>
 
-#include "util.h"
+#include "vtutil.h"
 
 #define MAX_NUM_PIDS 256
 

@@ -131,16 +131,16 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 	// save anything we may need
 	old_tdf = tsk->dilation;
 	vsn = tsk->virtual_start_nsec;
-	
 	if (old_tdf == new_tdf) { // no need to do anything
 		return 0;
-	} else if (old_tdf == 0) { // enter virtual time
-		return init_virtual_start_time(tsk, new_tdf);
+	}
+        if (old_tdf == 0) { // enter virtual time
+		init_virtual_start_time(tsk, new_tdf);
+                struct task_struct *child;
 	} else if (new_tdf == 0) { // exit virtual time
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
-		tsk->virtual_past_nsec = 0;
-		return 0;	
+		tsk->virtual_past_nsec = 0;	
 	} else if (old_tdf != 0 && new_tdf > 0) { // already in virtual time	
 		/* reset virtual_start so that we can get original time */
 		tsk->dilation = 0;
@@ -151,6 +151,7 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 		
 		// virtual_start_nsec remains the same
 		tsk->virtual_start_nsec = vsn;
+
 		// advance virtual_past_nsec
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
@@ -163,12 +164,11 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 		tsk->physical_start_nsec = now;	
 		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
 		tsk->physical_past_nsec = 0;
-
-		tsk->dilation = new_tdf;
-		return 0;	
+		tsk->dilation = new_tdf;	
 	} else {
 		return -EINVAL;
 	}
+        return 0;
 }
 EXPORT_SYMBOL(set_dilation);
 

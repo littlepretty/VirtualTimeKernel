@@ -7,14 +7,14 @@
 #include <limits.h>	// for PATH_MAX
 #include <pthread.h>    // for pthread
 
-#include "util.h"
+#include "vtutil.h"
 
 /**
  * General helpers for error checking and time calculation
  **/
-long check_syscall_status(long ret, char* syscall_name)
+int check_syscall_status(long ret, char* syscall_name)
 {
-        if(ret == -1) {
+        if(!ret) {
                 printf("\n[error] %s fails with error: %s\n",
                                 syscall_name, strerror(errno));
                 exit(errno);
@@ -54,7 +54,7 @@ int virtual_time_unshare(int flags)
         int ret;
 
         ret = unshare(flags | CLONE_NEWTIME);
-        return check_syscall_status(ret, "unshare");
+        return check_syscall_status(ret, "virtual_time_unshare");
 }
 
 static const float TDF_MIN = 0.001f;

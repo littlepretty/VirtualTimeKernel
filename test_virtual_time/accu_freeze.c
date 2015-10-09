@@ -7,7 +7,7 @@
 #include <sys/wait.h>
 #include <errno.h>          // for strerror()
 
-#include "util.h"
+#include "vtutil.h"
 
 long int nop_without_freeze()
 {

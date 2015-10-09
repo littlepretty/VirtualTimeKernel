@@ -4,7 +4,7 @@
 #include <getopt.h>
 #include <string.h>
 
-#include "util.h"
+#include "vtutil.h"
 
 void issue_freeze(pid_t pid, int wait, int pause)
 {

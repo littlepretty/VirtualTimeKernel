@@ -6,7 +6,7 @@
 #include <unistd.h>		// for getpid()
 #include <sys/types.h>
 
-#include "util.h"
+#include "vtutil.h"
 
 int elapsed[NR_ACCU_ROUND];
 int dilated_elapsed[NR_ACCU_ROUND];
@@ -23,12 +23,12 @@ void fill_elapsed()
         for (i = 0; i < NR_ACCU_ROUND; ++i)
         {
                 ret = gettimeofday(&prev, NULL);
-                check_syscall_status(ret, "gettimeofday");
+                /*check_syscall_status(ret, "gettimeofday");*/
                 for (j = 0; j < CNT_SLEEP; ++j) {
                         // do nothing
                 }
                 ret = gettimeofday(&next, NULL);
-                check_syscall_status(ret, "gettimeofday");
+                /*check_syscall_status(ret, "gettimeofday");*/
                 ret = timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
                 elapsed[i] = usec;
@@ -43,18 +43,19 @@ void fill_dilated_elapsed(int dil)
         pid_t pid = getpid();
 
         ret = virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+        check_syscall_status(ret, "unshare");
         ret = set_new_dilation(pid, dil);
         show_proc_dilation(pid);
 
         long int i, j;
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 ret = gettimeofday(&prev, NULL);
-                check_syscall_status(ret, "gettimeofday");
+                /*check_syscall_status(ret, "gettimeofday");*/
                 for (j = 0; j < CNT_SLEEP; ++j) {
                         // do nothing
                 }
                 ret = gettimeofday(&next, NULL);
-                check_syscall_status(ret, "gettimeofday");
+                /*check_syscall_status(ret, "gettimeofday");*/
                 ret = timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
                 dilated_elapsed[i] = usec;
