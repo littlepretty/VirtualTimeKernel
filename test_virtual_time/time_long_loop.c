@@ -5,7 +5,7 @@
 
 #include "util.h"
 
-void run_long_loop(int vt_opt)
+void run_long_loop(int vt_opt, int duration_factor)
 {
         struct timeval prev, next, diff, tmp;
         int ret;
@@ -19,7 +19,7 @@ void run_long_loop(int vt_opt)
         setsid();
         /*printf("****** Process[%d] to be freezed ******\n", pid); */
         gettimeofday(&prev, NULL);
-        for ( i = 0; i < 50 * CNT_SLEEP; ++i ) {
+        for ( i = 0; i < duration_factor * CNT_SLEEP; ++i ) {
                 // do nothing
         }
         gettimeofday(&next, NULL);
@@ -30,10 +30,8 @@ void run_long_loop(int vt_opt)
 
 int main(int argc, char* argv[])
 {
-        const char* short_options = "v";
-
-        int opt;
-        int virtual_time_flag;
+        const char* short_options = "vd:";
+        int opt, virtual_time_flag, duration_factor;
 
         virtual_time_flag = 0;
         do {
@@ -41,6 +39,9 @@ int main(int argc, char* argv[])
                 switch (opt) {
                         case 'v':
                                 virtual_time_flag = 1;
+                                break;
+                        case 'd':
+                                duration_factor = atoi(optarg);
                                 break;
                         case -1:
                                 break;
@@ -50,7 +51,7 @@ int main(int argc, char* argv[])
                 }
         } while (opt != -1);
 
-        run_long_loop(virtual_time_flag);
+        run_long_loop(virtual_time_flag, duration_factor);
 
         return 0;
 }

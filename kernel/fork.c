@@ -1569,7 +1569,7 @@ struct task_struct *fork_idle(int cpu)
 /*
  * Initialize virtual start time as this moment
  */
-int init_virtual_start_time(struct task_struct *tsk, int tdf)
+void init_virtual_start_time(struct task_struct *tsk, int tdf)
 {
 	struct timespec ts;
 	s64 now;
@@ -1589,11 +1589,8 @@ int init_virtual_start_time(struct task_struct *tsk, int tdf)
 		tsk->virtual_past_nsec = 0;
 		tsk->physical_start_nsec = now;
 		tsk->physical_past_nsec = 0;
-
 		tsk->dilation = tdf;
-	} else {
-		return -EINVAL;
-	}
+        }
 }
 EXPORT_SYMBOL(init_virtual_start_time);
 
