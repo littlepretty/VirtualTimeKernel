@@ -20,3 +20,6 @@ done
 
 cat $OUTPUT
 
+awk '{ if ($1 > $3) {print $1 - $3;} else { print $3 - $1;}}' $OUTPUT > err_freeze.log
+
+
