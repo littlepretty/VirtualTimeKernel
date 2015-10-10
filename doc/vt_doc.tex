@@ -139,12 +139,18 @@ TODO
 \keywords{Virtual Time, Linux Kernel, Emulation} % NOT required for Proceedings
 
 \section{Introduction}
-TODO
+What is virtual time? The short answer is: abstraction of time. When we abstract out the physical hardware, we can build an operating system that manage them intelligently; when we abstract out the behavior of operating system, we can run guest operating system inside a completely different host operating system; when we abstract the time of a process, what we can do is only limited by our imagination.
 
 \section{The Features of Virtual Time Subsystem}
+\subsection{Time Dilation}
+When a process enters virtual time, it's clock advances by a factor faster or slower than wall-clock time. We borrow the definition of \textbf{Time Dilation Factor} from \cite{toinfinitybeyond}: the ratio of the time passing rate perceived by process to the time passing rate of physical world time. 
+
+\subsection{Freeze}
+
 
 \section{The Interface of Virtual Time Subsystem}
-\subsection{Clock Namespace}
+\subsection{Linux Namespace}
+
 The first namespace \texttt{mnt} namespace was introduced in Linux 2.4.19. 
 Since then, more type of namespaces are implemented and currently we have totally 6 namespaces:
 \begin{enumerate}
@@ -165,7 +171,7 @@ It is widely applied in network emulation, Mininet\cite{mininet} for example, to
 The resource user namespace provided to process is its user ID with root privilege. 
 A process can do full privilege operations inside its user namespace, even like creating other types of namespaces. Outside it user namespace, process can only do normal unprivileged operations.
 \end{enumerate}
-
+\subsection{Clock Namespaces}
 Virtual time, by its definition, seems to fit into the category of namespace: it isolates time from the system wide wall clock so that a process can advance faster or slower by an offset or by a constant factor. 
 If so, virtual time should actually be called \textbf{Clock Namespace}. However, a problem hangs here: virtual time is really a per process feature; there is no need to share time by a group of processes, like sharing network or file system. 
 In other word, what can we do when we can identify that a group of processes belong to the same Clock namespace? We will see an unsatisfying answer in section \ref{Sub-Sec-Alg-Impl-Freeze}.
@@ -174,13 +180,23 @@ In other word, what can we do when we can identify that a group of processes bel
 Probably the most straightforward and destructive way of exposing virtual time to user space is through modifying existing system calls and adding new system calls. Our first working implementation use this method to interfacing clock namespace\cite{yan:vts:pads15, yan:vtmininet:sosr15}.
 To enable the virtual time perception to processes, we added/modified the following new system calls.
 \begin{itemize}
-\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME} is modified. It is used by container-based emulators, such as Mininet, to create emulated nodes. 
-When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare} creates a new process with a default TDF 1 in a different namespace from its parent process.
 
-\item Newly added system call \texttt{set\_dilaiton()} offers an interface to change the TDF of a process. Note that a command executed in an emulated host is equivalent to a shell command executed by \texttt{bash}. Therefore, adjusting a process's TDF requires the change of the calling process' parent (e.g., host's \texttt{bash}), which occasionally would lead to tracing back to the root of the process tree inside the clock namespace. 
+\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME} is modified. It is used by container-based emulators, such as Mininet, to create emulated nodes. 
+When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare()} creates a new process with a default TDF 1 in a different namespace from its parent process.
+
+\item Newly added system call \texttt{set\_dilaiton()} offers an interface to change the TDF of a process. 
+
+\item Newly added system call \texttt{freeze()} and \texttt{unfreeze()} comes as a combo to control the execution and pause of a process. Here pause is more than just send a signal \texttt{SIGSTOP} to process so that is stop executing; the process's clock, on freezing, actually is detached from OS's clock and is stopped. See section \ref{Sub-Sec-Alg-Impl-Freeze} for detail.
+
 \end{itemize}
+In container based network emulation, usually we want all processes inside the same container having the same time dilation factor. In other words, to keep the persistence, \texttt{set\_dilation()} should better set time dilation factor for a group of processes. We can take advantage of the identification of the \textit{network host}, who is usually the root of the process tree inside a particular container. We only invoke the \texttt{set\_dilation()} once for this \textit{root} process; as a leader in the container, it cascade \texttt{set\_dilation} further down to the process tree so that every process's TDF will be updated.
 
 \subsection{Through Proc Virtual File System}
+It is also possible to implement virtual time without adding system calls. Virtual file system provide a interface between kernel and user space. Since virtual time is a per process thing, it is more appropriate to create \texttt{/proc} file entry under the directory that specific to process.
+\begin{itemize}
+\item \texttt{/proc/\$pid/dilation} can be read and written so that process \texttt{\$pid} can enter virtual time(write non-zero value to zero TDF), exit virtual time(write zero to non-zero TDF) and change to new TDF.
+\item \texttt{/proc/\$pid/freeze} expects a boolean value and freeze or unfreeze process \texttt{\$pid} according to the written value. 
+\end{itemize}
 
 \section{Algorithms and Implementations}
 \subsection{Additional Data Structure}
