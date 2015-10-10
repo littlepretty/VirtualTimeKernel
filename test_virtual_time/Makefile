@@ -46,17 +46,17 @@ ovhd_dilation: vtutil.o ovhd_dilation.c
 ovhd_set_dilation: vtutil.o ovhd_set_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) ovhd_set_dilation.c $< -o $@ 
 
-vtutil.o: vtutil.c
-	$(CC) $(INCLUDE) -c $<
-	cp -v vtutil.c vtutil.h ../mn/
 
 load_vt_module:
 	sudo insmod ../virtual_time_module.ko
 rm_vt_module:
 	sudo rmmod virtual_time_module
 
-.PHONY: clean
+.PHONY: clean vtutil.o
 clean:
 	rm accu_dilation time_long_loop freeze_other ovhd_dilation ovhd_set_dilation *.o
 
+vtutil.o: vtutil.c
+	$(CC) $(INCLUDE) -c $<
+	cp -v vtutil.c vtutil.h ../mininet/
 

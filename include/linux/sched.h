@@ -1671,7 +1671,7 @@ struct task_struct {
 };
 
 /* Init virtual time */
-extern int init_virtual_start_time(struct task_struct *tsk, int tdf);
+extern void init_virtual_start_time(struct task_struct *tsk, int tdf);
 
 /* Future-safe accessor for struct task_struct's cpus_allowed. */
 #define tsk_cpus_allowed(tsk) (&(tsk)->cpus_allowed)

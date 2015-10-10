@@ -1834,18 +1834,16 @@ static int unshare_fd(unsigned long unshare_flags, struct files_struct **new_fdp
 	return 0;
 }
 
-static int unshare_virtual_time(unsigned long unshare_flags)
+static void unshare_virtual_time(unsigned long unshare_flags)
 {
 	/* if pack virtual time info into a struct "virtual_time"
 	 * then every process have a pointer to a NULL object
 	 * here we should allocate it, which may fail
 	 * also, init allocated object may fail due to "dilation"
 	 */
-	int error = 0;
 	if (unshare_flags & CLONE_NEWTIME) {
-		error = init_virtual_start_time(current, 1000); // default TDF=1(actually, it is 1000)
+		init_virtual_start_time(current, 1000); // default TDF=1(actually, it is 1000)
 	}
-	return error;
 }
 
 /*
@@ -1909,9 +1907,9 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 			new_cred, new_fs);
 	if (err)
 		goto bad_unshare_cleanup_cred;
-	err = unshare_virtual_time(unshare_flags);
-	if (err)
-		goto bad_unshare_cleanup_vt;
+        // init virtual time if CLONE_NEWTIME is on
+        unshare_virtual_time(unshare_flags);
+
 	if (new_fs || new_fd || do_sysvsem || new_cred || new_nsproxy) {
 		if (do_sysvsem) {
 			/*
@@ -1950,19 +1948,16 @@ SYSCALL_DEFINE1(unshare, unsigned long, unshare_flags)
 			new_cred = NULL;
 		}
 	}
-bad_unshare_cleanup_vt:
-	{/* for now, now resource need to be freed */}
+
 bad_unshare_cleanup_cred:
 	if (new_cred)
 		put_cred(new_cred);
 bad_unshare_cleanup_fd:
 	if (new_fd)
 		put_files_struct(new_fd);
-
 bad_unshare_cleanup_fs:
 	if (new_fs)
 		free_fs_struct(new_fs);
-
 bad_unshare_out:
 	return err;
 }

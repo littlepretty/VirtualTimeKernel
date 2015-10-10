@@ -42,7 +42,7 @@ void fill_dilated_elapsed(int dil)
         long int usec;
         pid_t pid = getpid();
 
-        ret = virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+        ret = unshare(CLONE_NEWNET | CLONE_NEWNS);
         check_syscall_status(ret, "unshare");
         ret = set_new_dilation(pid, dil);
         show_proc_dilation(pid);
