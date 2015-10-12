@@ -127,8 +127,9 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 	struct timespec ts;
 	s64 now, delta_ppn, delta_vpn, vsn;
 	int old_tdf;
+        struct task_struct *child;	
 	
-	// save anything we may need
+        // save anything we may need
 	old_tdf = tsk->dilation;
 	vsn = tsk->virtual_start_nsec;
 	if (old_tdf == new_tdf) { // no need to do anything
@@ -136,7 +137,6 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 	}
         if (old_tdf == 0) { // enter virtual time
 		init_virtual_start_time(tsk, new_tdf);
-                struct task_struct *child;
 	} else if (new_tdf == 0) { // exit virtual time
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
@@ -168,6 +168,9 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 	} else {
 		return -EINVAL;
 	}
+        list_for_each_entry(child, &(tsk->children), children) {
+                set_dilation(child, new_tdf);
+        }
         return 0;
 }
 EXPORT_SYMBOL(set_dilation);
