@@ -8,7 +8,7 @@
 #define USEC_PER_SEC 1000000UL
 
 #define NR_ACCU_ROUND 10UL
-#define CNT_SLEEP 10000000UL
+#define CNT_SLEEP 10000UL
 
 #define CLONE_NEWTIME 0x02000000
 
@@ -23,7 +23,7 @@
 )
 
 // general helpers
-int check_syscall_status(long ret, char* sys_cl_nm);
+int check_syscall_status(int ret, char* sys_cl_nm);
 long int timeval_to_usec(struct timeval tv);
 int timeval_substract(struct timeval* result, struct timeval* x, struct timeval* y);
 
@@ -41,4 +41,8 @@ void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char*
 
 void freeze_all_procs(pid_t* pid_list, size_t size);
 void unfreeze_all_procs(pid_t* pid_list, size_t size);
+
+// show helpers
+int show_proc_freeze(pid_t pid);
+int show_proc_dilation(pid_t pid);
 

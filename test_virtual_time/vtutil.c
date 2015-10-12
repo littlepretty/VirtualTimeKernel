@@ -12,12 +12,12 @@
 /**
  * General helpers for error checking and time calculation
  **/
-int check_syscall_status(long ret, char* syscall_name)
+int check_syscall_status(int ret, char* syscall_name)
 {
-        if(!ret) {
-                printf("\n[error] %s fails with error: %s\n",
-                                syscall_name, strerror(errno));
-                // exit(errno);
+        if(ret != 0) {
+                printf("[error %d] %s fails with error: %s\n",
+                                ret, syscall_name, strerror(errno));
+                exit(errno);
         }
         return ret;
 }

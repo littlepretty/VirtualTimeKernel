@@ -12,11 +12,15 @@ void run_long_loop(int vt_opt, int duration_factor)
         long int i, usec;
 
         if (vt_opt) {
+                printf("with virtual time\n");
                 virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+        } else {
+                printf("without virtual time\n");
         }
 
-        pid_t pid = getpid();
-        setsid();
+        /*pid_t pid = getpid();*/
+        pid_t pgid = setsid();
+        printf("new pgid = %d\n", pgid);
         /*printf("****** Process[%d] to be freezed ******\n", pid); */
         gettimeofday(&prev, NULL);
         for ( i = 0; i < duration_factor * CNT_SLEEP; ++i ) {
@@ -25,7 +29,7 @@ void run_long_loop(int vt_opt, int duration_factor)
         gettimeofday(&next, NULL);
         ret = timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("%ld\t", usec);
+        printf("elapsed %ld\n", usec);
 }
 
 int main(int argc, char* argv[])

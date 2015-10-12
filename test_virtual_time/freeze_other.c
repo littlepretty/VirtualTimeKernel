@@ -11,20 +11,14 @@ void issue_freeze(pid_t pid, int wait, int pause)
         long int i, usec;
         struct timeval prev, next, diff;
 
-        for ( i = 0; i < wait * CNT_SLEEP; ++i) {
-                // do nothing
-        }
-        gettimeofday(&prev, NULL);
+        usleep(wait);
         freeze_proc(pid);
-        for ( i = 0; i < pause * CNT_SLEEP; ++i ) {
-                // pause for a while
-        }
+        show_proc_dilation(pid);
+        show_proc_freeze(pid);
+        sleep(pause);
         unfreeze_proc(pid);
-        gettimeofday(&next, NULL);
-        timeval_substract(&diff, &next, &prev);
-        usec = timeval_to_usec(diff);
-        printf("%lu\t", usec);
-
+        show_proc_freeze(pid);
+        /*printf("freezed %d seconds\n", pause);*/
 }
 
 #define MAX_NUM_PIDS 256
@@ -42,8 +36,8 @@ int main(int argc, char** argv)
         };
 
         pid_found = 0;
-        wait = 5;
-        freeze = 15;
+        wait = 1;
+        freeze = 1;
         do {
                 opt = getopt_long(argc, argv, short_options, long_options, NULL);
                 switch (opt) {
@@ -55,11 +49,11 @@ int main(int argc, char** argv)
                                 break;
                         case 'w':
                                 wait = atoi(optarg);
-                                /*printf("got wait = %d\n", wait);*/
+                                /*printf("gonna wait %d\n", wait);*/
                                 break;
                         case 'f':
                                 freeze = atoi(optarg);
-                                /*printf("got freeze = %d\n", freeze);*/
+                                /*printf("gonna freeze %d\n", freeze);*/
                                 break;
                         case -1:
                                 break;
