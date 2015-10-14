@@ -143,7 +143,7 @@ What is virtual time? The short answer is: abstraction of time. When we abstract
 
 \section{The Features of Virtual Time Subsystem}
 \subsection{Time Dilation}
-When a process enters virtual time, it's clock advances by a factor faster or slower than wall-clock time. We borrow the definition of \textbf{Time Dilation Factor} from \cite{toinfinitybeyond}: the ratio of the time passing rate perceived by process to the time passing rate of physical world time. 
+When a process enters virtual time, it's clock advances by a factor faster or slower than wall-clock time. We borrow the definition of \textbf{Time Dilation Factor} from \cite{toinfinitybeyond}: the ratio of the time passing rate in physical world to the time passing rate perceived by process or virtual machine(VM). For example, when TDF equals 10, as 10 seconds elapsed in physical world, VM only perceives that 1 second passed. An interesting application of time dilation is to emulate a link with 10 Gbps bandwidth while we only have a 100 Mbps link. When a process or a VM send data through this link, 
 
 \subsection{Freeze}
 
