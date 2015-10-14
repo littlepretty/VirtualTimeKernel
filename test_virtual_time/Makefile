@@ -11,11 +11,7 @@ test: test_accuracy test_accu_freeze test_ovhd_dilaton test_ovhd_set_dilation
 
 # do testing
 test_accu_dilation: accu_dilation
-	sudo ./$< -t 2 -e -d -p > accu_dilation.log
-	sudo ./$< -t 4 -e -d -p >> accu_dilation.log
-	sudo ./$< -t 8 -e -d -p >> accu_dilation.log
-	sudo ./$< -t 16 -e -d -p >> accu_dilation.log
-	cat accu_dilation.log
+	sudo ./accu_dilation.sh
 
 test_freeze_all_procs: freeze_all_procs
 	sudo ./freeze_all_procs.sh

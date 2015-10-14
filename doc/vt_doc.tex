@@ -152,11 +152,11 @@ An interesting application of time dilation is to emulate a link with 1 Gbps ban
 \subsection{Freeze}
 Processes in any operating systems can be stopped and resumed. Usually it is through sending signal and handling signal. Imagine we not only stop the execution of a process, but also stop \textit{its} clock. Here "its" is not accurate; all processes inside a particular operating system share a global software clock. For example, process in Linux queries current time by \texttt{gettimeofday} system call. Now with virtual time, process finally have its own clock.
 
-What a \textbf{freeze} does is both stop the execution of a process and the advance of its clock. A \textbf{unfreeze} does the opposite things: resume the execution and the clock. A once frozen process will not counting the freezing duration into its clock. A nontrivial application of freeze and unfreeze is to cooperate simulation and emulation of a system. For simulation, there is no the concept of real time; time advances according to software's wish. 
+What a \textbf{freeze} does is both stop the execution of a process and the advance of its clock. A \textbf{unfreeze} does the opposite things: resume the execution and the clock. A once frozen process will not counting the freezing duration into its clock. A nontrivial application of freeze and unfreeze is to cooperate simulation and emulation of a system. For simulation, there is no the concept of real time; time advances according to software's wish. So even if a calculation in simulation may take a great deal of time, for example solving a multiple variable differential equation, this mount of time is not counted inside the simulating model. Emulation, on the other hand, runs in real time because it uses physical system's real clock. Consider this scenario: in a network emulator, host \texttt{sender} wants to transmit a certain amount of measured data to another host \texttt{receiver}; these measured data are actually gathered from simulator \textit{s} and it takes a fair amount of time for simulator to do the calculation, during which we need to stop the emulation as well as emulation's time. Just stop both hosts by sending \texttt{SIGSTOP} is not enough sometimes because time may be a relevant variable in emulation.
 
-\section{The Interface of Virtual Time Subsystem}
+\section{The Software Interface}
+
 \subsection{Linux Namespace}
-
 The first namespace \texttt{mnt} namespace was introduced in Linux 2.4.19. 
 Since then, more type of namespaces are implemented and currently we have totally 6 namespaces:
 \begin{enumerate}
@@ -177,6 +177,7 @@ It is widely applied in network emulation, Mininet\cite{mininet} for example, to
 The resource user namespace provided to process is its user ID with root privilege. 
 A process can do full privilege operations inside its user namespace, even like creating other types of namespaces. Outside it user namespace, process can only do normal unprivileged operations.
 \end{enumerate}
+
 \subsection{Clock Namespaces}
 Virtual time, by its definition, seems to fit into the category of namespace: it isolates time from the system wide wall clock so that a process can advance faster or slower by an offset or by a constant factor. 
 If so, virtual time should actually be called \textbf{Clock Namespace}. However, a problem hangs here: virtual time is really a per process feature; there is no need to share time by a group of processes, like sharing network or file system. 
@@ -187,8 +188,7 @@ Probably the most straightforward and destructive way of exposing virtual time t
 To enable the virtual time perception to processes, we added/modified the following new system calls.
 \begin{itemize}
 
-\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME} is modified. It is used by container-based emulators, such as Mininet, to create emulated nodes. 
-When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare()} creates a new process with a default TDF 1 in a different namespace from its parent process.
+\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME}\footnote{\texttt{CLONE\_NEWTIME} takes value \texttt{0x02000000}, which previously unused by \texttt{CLONE\_STOPPED}} is modified. It is used by container-based emulators, such as Mininet, to create emulated nodes. When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare()} creates a new process with a default TDF 1 in a different namespace from its parent process.
 
 \item Newly added system call \texttt{set\_dilaiton()} offers an interface to change the TDF of a process. 
 
@@ -203,12 +203,29 @@ It is also possible to implement virtual time without adding system calls. Virtu
 \item \texttt{/proc/\$pid/dilation} can be read and written so that process \texttt{\$pid} can enter virtual time(write non-zero value to zero TDF), exit virtual time(write zero to non-zero TDF) and change to new TDF.
 \item \texttt{/proc/\$pid/freeze} expects a boolean value and freeze or unfreeze process \texttt{\$pid} according to the written value. 
 \end{itemize}
+Change time dilation factor from zero to non-zero value will detach the process's clock from system clock, thus entering virtual time. Conversely, setting a process's TDF to zero will make it exit virtual time. The traditional \texttt{unshare()} interface can be kept as an alternative for entering virtual time.
+
+While more elegant and consistent with the philosopher of Proc virtual file system, this interface is doomed with more overhead due to that introduced by necessary \texttt{open(), write()} and \texttt{close()} operations. However, in practice these operations usually should not be invoked very often.
 
 \section{Algorithms and Implementations}
 \subsection{Additional Data Structure}
+Following new fields are added into \texttt{task\_struct} so that a process can have its own perception of time.
+\begin{itemize}
+	\item \texttt{dilation} represents the time dilation factor of a time-dilated process.
+	\item \texttt{virtual\_start\_ns} represents the starting time that a process detaches from the system clock and uses the virtual time, in nanoseconds.
+	\item \texttt{physical\_start\_ns} represents the starting time that a process detaches from the system clock and uses the virtual time, in nanoseconds. It differs from \texttt{virtual\_start\_ns} when process's dilation changes from non-zero value to another non-zero value. See section \ref{Alg-SetTDF} for details.
+	\item \texttt{virtual\_past\_ns} represents how much virtual time has elapsed since the last time the process requested the current time, in nanoseconds.
+	\item \texttt{physical\_past\_ns} represents how much physical time has elapsed since the last time the process requested the current time, in nanoseconds.
+	\item \texttt{freeze\_start\_ns} represents the starting moment that a process is frozen. It is always zero when the process is not frozen.
+	\item \texttt{freeze\_past\_ns} represents the accumulative time, in nanoseconds, that a running process was put into freezing state.
+\end{itemize}
 
 \algrenewcommand{\algorithmiccomment}[1]{\hskip3em$/*$ #1 $*/$}
 \subsection{Algorithm/Implementation for Set/Change Virtual Time Dilation}
+Setting a new dilation for a process may falls into several possible cases.
+\begin{enumerate}
+\item 
+\end{enumerate}
 \begin{algorithm*}[t]
 \caption{Set Time Dilation Factor}
 \label{Alg-SetTDF}
@@ -315,7 +332,9 @@ It is also possible to implement virtual time without adding system calls. Virtu
 \subsection{Bypass virtual Dynamic Shared Object}
 \subsection{Dilate Bandwidth Rate in Traffic Control}
 
-\section{Tests and Overhead Measurements}
+\section{Experiments}
+\subsection{Functional Tests}
+\subsection{Overhead Measurements}
 
 \section{Conclusions}
 TODO
