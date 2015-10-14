@@ -1,29 +1,28 @@
 #!/bin/bash
+
 OUTPUT=accu_freeze.log
-NUM_TESTS=10
+NUM_TESTS=2000
 
 function unit_test {
-        ./time_long_loop -d 50
-        ./time_long_loop -v -d 50 &
+        ./time_long_loop -d 1
+        setsid ./time_long_loop -v -d 1 &
         pid=$!
-        ./freeze_other -w 500 -f 2 -p $pid
-        
-        cat /proc/$pid/dilation
-        cat /proc/$pid/freeze
+        sudo ./freeze_other -w 10 -f 1 -p $pid
         wait $pid
 }
 
 make accu_freeze
 # clear content of old output
-# > $OUTPUT
+> $OUTPUT
 for ((i = 0; i < $NUM_TESTS; ++i)); do
-        unit_test # >> $OUTPUT
-        echo -e "" # >> $OUTPUT
+        unit_test >> $OUTPUT 
+        echo -e "" >> $OUTPUT
 done
 
-# cat $OUTPUT
-# awk '{ print $1}' $OUTPUT > no_freeze_loop.log
-# awk '{ if ($1 > $3) {print $1 - $3;} else { print $3 - $1;}}' $OUTPUT > err_freeze.log
+cat $OUTPUT
+
+awk '{ if ($1 > $2) {print $1 - $2;} else { print $2 - $1;}}' $OUTPUT > err_freeze.log
+cat err_freeze.log
 # ./plot_cdf.py
 
 

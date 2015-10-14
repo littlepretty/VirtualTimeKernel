@@ -79,8 +79,7 @@ int set_new_dilation(pid_t pid, float tdf)
                 sprintf(path, "/proc/%d/dilation", pid);
                 proc_file = open(path, O_WRONLY);
                 if ( proc_file == -1 ) {
-                        printf("cannot open %s with error %s\n",
-                                        path, strerror(errno));
+                        fprintf(stderr, "set new dilation failed with error: cannot open %s because %s\n", path, strerror(errno));
                         return -1;
                 }
                 // echo 1000TDF to kernel
@@ -106,9 +105,8 @@ int write_proc_freeze(pid_t pid, char* val)
 
         sprintf(path, "/proc/%d/freeze", pid);
         proc_file = open(path, O_WRONLY);
-        if ( proc_file == -1 ) {
-                printf("cannot open %s with error %s\n",
-                                path, strerror(errno));
+        if (proc_file == -1) {
+                fprintf(stderr, "freeze(%s) failed with error: cannot open %s because %s\n", val, path, strerror(errno));
                 return -1;
         }
         written_count = write(proc_file, val, 1);
@@ -145,8 +143,7 @@ int read_proc_field(pid_t pid, char* field)
         sprintf(path, "/proc/%d/%s", pid, field);
         proc_file = open(path, O_RDONLY);
         if ( proc_file == -1 ) {
-                printf("cannot open %s with error %s\n",
-                                path, strerror(errno));
+                fprintf(stderr, "read %s failed with error: cannot open %s because %s\n", field, path, strerror(errno));
                 return -1;
         }
         result = malloc(sizeof(char) * TDF_MAX);
@@ -205,7 +202,7 @@ void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char*
         // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         for (i = 0; i < size; ++i) {
                 if (pthread_create(&threads[i], NULL, func, (void *)(&pid_list[i])) != 0) {
-                        printf("[error] create pthread failed\n");
+                        fprintf(stderr, "create pthreads failed\n");
                 }
                 /*if (rc) {*/
                 /*printf("[error] create pthread fail with %d\n", rc);*/

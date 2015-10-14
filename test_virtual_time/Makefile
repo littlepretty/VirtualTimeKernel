@@ -3,9 +3,11 @@ INCLUDE=-I.
 CP=cp
 PTHREAD=-pthread
 
-all: accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
+all: freeze_all_procs accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
 
 test: test_accuracy test_accu_freeze test_ovhd_dilaton test_ovhd_set_dilation
+
+.PHONY: clean vtutil.o
 
 # do testing
 test_accu_dilation: accu_dilation
@@ -15,11 +17,12 @@ test_accu_dilation: accu_dilation
 	sudo ./$< -t 16 -e -d -p >> accu_dilation.log
 	cat accu_dilation.log
 
-test_parallel_freeze: freeze_all_procs
-	sudo ./parallel_freeze.sh
+test_freeze_all_procs: freeze_all_procs
+	sudo ./freeze_all_procs.sh
 
 test_accu_freeze: accu_freeze
 	sudo ./accu_freeze.sh	
+	cat accu_freeze.log
 
 test_ovhd_dilation: ovhd_dilation
 	sudo ./$< > ovhd_dilation.log
@@ -30,7 +33,7 @@ test_ovhd_set_dilation: ovhd_set_dilation
 	cat ovhd_set_dilation.log
 
 # compile and link
-freeze_all_procs: vtutil.o freeze_all_procs.c accu_freeze parallel_freeze.sh
+freeze_all_procs: vtutil.o freeze_all_procs.c accu_freeze freeze_all_procs.sh
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_all_procs.c $< -o $@
 
 accu_dilation: vtutil.o accu_dilation.c
@@ -46,17 +49,16 @@ ovhd_dilation: vtutil.o ovhd_dilation.c
 ovhd_set_dilation: vtutil.o ovhd_set_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) ovhd_set_dilation.c $< -o $@ 
 
-
-load_vt_module:
-	sudo insmod ../virtual_time_module.ko
-rm_vt_module:
-	sudo rmmod virtual_time_module
-
-.PHONY: clean vtutil.o
-clean:
-	rm accu_dilation time_long_loop freeze_other ovhd_dilation ovhd_set_dilation *.o
-
 vtutil.o: vtutil.c
 	$(CC) $(INCLUDE) -c $<
 	cp -v vtutil.c vtutil.h ../mininet/
+
+load_vt_module:
+	sudo insmod ../virtual_time_module.ko
+
+rm_vt_module:
+	sudo rmmod virtual_time_module
+
+clean:
+	rm freeze_all_procs accu_dilation time_long_loop freeze_other ovhd_dilation ovhd_set_dilation *.o
 

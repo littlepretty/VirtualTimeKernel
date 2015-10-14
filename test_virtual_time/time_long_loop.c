@@ -5,37 +5,43 @@
 
 #include "vtutil.h"
 
-void run_long_loop(int vt_opt, int duration_factor)
+struct timeval prev, next, diff, temp;
+
+void run_long_loop(int vt_opt, int duration)
 {
-        struct timeval prev, next, diff, tmp;
         int ret;
         long int i, usec;
 
-        if (vt_opt) {
-                printf("with virtual time\n");
+        if (vt_opt) { 
                 virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+                /*pid_t pgid = setsid();*/
+                /*printf("new pgid = %d\t", pgid);*/
         } else {
-                printf("without virtual time\n");
+                /*printf("without virtual time\n");*/
         }
 
         /*pid_t pid = getpid();*/
-        pid_t pgid = setsid();
-        printf("new pgid = %d\n", pgid);
         /*printf("****** Process[%d] to be freezed ******\n", pid); */
         gettimeofday(&prev, NULL);
-        for ( i = 0; i < duration_factor * CNT_SLEEP; ++i ) {
-                // do nothing
+        // sleep(duration);
+        for ( i = 0; i < duration * CNT_SLEEP; ++i) {
+                gettimeofday(&temp, NULL);
         }
         gettimeofday(&next, NULL);
-        ret = timeval_substract(&diff, &next, &prev);
+        timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
-        printf("elapsed %ld\n", usec);
+        printf("%ld\t", usec);
 }
 
+/*
+ * To run this program, use 'setsid time_long_loop -v -d duration'
+ * so that this program detached from its parent(your shell/tty) and
+ * freeze this process will not stop its parent or brothers
+ */
 int main(int argc, char* argv[])
-{
+{ 
         const char* short_options = "vd:";
-        int opt, virtual_time_flag, duration_factor;
+        int opt, virtual_time_flag, duration;
 
         virtual_time_flag = 0;
         do {
@@ -45,7 +51,7 @@ int main(int argc, char* argv[])
                                 virtual_time_flag = 1;
                                 break;
                         case 'd':
-                                duration_factor = atoi(optarg);
+                                duration = atoi(optarg);
                                 break;
                         case -1:
                                 break;
@@ -55,7 +61,7 @@ int main(int argc, char* argv[])
                 }
         } while (opt != -1);
 
-        run_long_loop(virtual_time_flag, duration_factor);
+        run_long_loop(virtual_time_flag, duration);
 
         return 0;
 }

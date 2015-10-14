@@ -8,24 +8,20 @@
 
 void issue_freeze(pid_t pid, int wait, int pause)
 {
-        long int i, usec;
-        struct timeval prev, next, diff;
-
         usleep(wait);
         freeze_proc(pid);
-        show_proc_dilation(pid);
-        show_proc_freeze(pid);
+        /*show_proc_dilation(pid);*/
+        /*show_proc_freeze(pid);*/
         sleep(pause);
         unfreeze_proc(pid);
-        show_proc_freeze(pid);
-        /*printf("freezed %d seconds\n", pause);*/
+        /*show_proc_freeze(pid);*/
+        /*printf("%d\t", pause);*/
 }
-
-#define MAX_NUM_PIDS 256
 
 int main(int argc, char** argv)
 {
-        int pid_found, opt, index, i, wait, freeze;
+        int pid_found, opt, index, i;
+        int wait, freeze; // wait @wait seconds and then freeze @freeze seconds
         int pid;
         const char* const short_options = "np:w:f:";
         const struct option long_options[] = {
@@ -49,22 +45,25 @@ int main(int argc, char** argv)
                                 break;
                         case 'w':
                                 wait = atoi(optarg);
-                                /*printf("gonna wait %d\n", wait);*/
+
                                 break;
                         case 'f':
                                 freeze = atoi(optarg);
-                                /*printf("gonna freeze %d\n", freeze);*/
+
                                 break;
                         case -1:
                                 break;
                         default:
-                                printf("Usage: %s -w wait_factor -f freeze_factor -p pid\n", argv[0]);
+                                printf("Usage: %s -w wait_microsecs -f secs -p pid\n", argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);
 
-        if ( pid_found == 1 ) 
+        if ( pid_found == 1 ) {
+                /*printf("gonna freeze process[%d] %d seconds\n", pid, freeze);*/
+                /*printf("but wait %d microseconds\n", wait);*/
                 issue_freeze(pid, wait, freeze);
+        }
         return 0;
 }
 
