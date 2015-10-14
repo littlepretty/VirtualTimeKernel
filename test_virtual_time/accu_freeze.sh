@@ -1,13 +1,13 @@
 #!/bin/bash
 
 OUTPUT=accu_freeze.log
-NUM_TESTS=2000
+NUM_TESTS=1000
 
 function unit_test {
-        ./time_long_loop -d 1
-        setsid ./time_long_loop -v -d 1 &
+        ./time_long_loop -d 20
+        setsid ./time_long_loop -v -d 20 &
         pid=$!
-        sudo ./freeze_other -w 10 -f 1 -p $pid
+        sudo ./freeze_other -w 100 -f 8000 -p $pid
         wait $pid
 }
 

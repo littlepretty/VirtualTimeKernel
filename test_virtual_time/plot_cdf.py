@@ -37,11 +37,14 @@ def plot_compare_cdf():
     counts2, bin_edges2 = np.histogram(freeze_data, bins=num_bins)
     cdf2 = np.cumsum(counts2)
 
+    label1 = 'No Freeze'
+    label2 = 'Freeze'
     xlim_min = min(min(no_freeze_data), min(freeze_data))
-    xlim_max = max(max(no_freeze_data), min(freeze_data))
+    xlim_max = max(max(no_freeze_data), max(freeze_data))
     plt.xlim(xlim_min, xlim_max)
-    plt.plot(bin_edges1[1:], cdf1)
-    plt.plot(bin_edges2[1:], cdf2)
+    p1 = plt.plot(bin_edges1[1:], cdf1, 'b', label=label1)
+    p2 = plt.plot(bin_edges2[1:], cdf2, 'r', label=label2)
+    plt.legend()
     #plt.show()
     plt.savefig('compare_cdf.eps', format='eps')
 
