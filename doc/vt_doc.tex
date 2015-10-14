@@ -142,11 +142,17 @@ TODO
 What is virtual time? The short answer is: abstraction of time. When we abstract out the physical hardware, we can build an operating system that manage them intelligently; when we abstract out the behavior of operating system, we can run guest operating system inside a completely different host operating system; when we abstract the time of a process, what we can do is only limited by our imagination.
 
 \section{The Features of Virtual Time Subsystem}
+Virtual time, in essential, abstract time for processes from the operating system they reside on. With this abstraction, now we can dilate a process's clock or freeze a process's clock.
+
 \subsection{Time Dilation}
-When a process enters virtual time, it's clock advances by a factor faster or slower than wall-clock time. We borrow the definition of \textbf{Time Dilation Factor} from \cite{toinfinitybeyond}: the ratio of the time passing rate in physical world to the time passing rate perceived by process or virtual machine(VM). For example, when TDF equals 10, as 10 seconds elapsed in physical world, VM only perceives that 1 second passed. An interesting application of time dilation is to emulate a link with 10 Gbps bandwidth while we only have a 100 Mbps link. When a process or a VM send data through this link, 
+When a process is \texttt{dilated}, it's clock advances by a factor faster or slower than wall-clock time. We borrow the definition of \textbf{Time Dilation Factor} from \cite{toinfinitybeyond}: the ratio of the time passing rate in physical world to the time passing rate perceived by process or virtual machine(VM). For example, when TDF equals 10, as 10 seconds elapsed in physical world, VM only perceives that 1 second passed. 
+
+An interesting application of time dilation is to emulate a link with 1 Gbps bandwidth while we only have a 100 Mbps link. Ideally, when a process or a VM keeps sending data through this link for 1 seconds, it actually take 10 seconds in real world and hence 1 Gb data is transferred. In other words, the dilated process think the network bandwidth is 1 Gbps.
 
 \subsection{Freeze}
+Processes in any operating systems can be stopped and resumed. Usually it is through sending signal and handling signal. Imagine we not only stop the execution of a process, but also stop \textit{its} clock. Here "its" is not accurate; all processes inside a particular operating system share a global software clock. For example, process in Linux queries current time by \texttt{gettimeofday} system call. Now with virtual time, process finally have its own clock.
 
+What a \textbf{freeze} does is both stop the execution of a process and the advance of its clock. A \textbf{unfreeze} does the opposite things: resume the execution and the clock. A once frozen process will not counting the freezing duration into its clock. A nontrivial application of freeze and unfreeze is to cooperate simulation and emulation of a system. For simulation, there is no the concept of real time; time advances according to software's wish. 
 
 \section{The Interface of Virtual Time Subsystem}
 \subsection{Linux Namespace}
