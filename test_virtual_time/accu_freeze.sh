@@ -15,8 +15,8 @@ make accu_freeze
 # clear content of old output
 > $OUTPUT
 for ((i = 0; i < $NUM_TESTS; ++i)); do
-        sudo unit_test >> $OUTPUT 
-        sudo echo -e "" >> $OUTPUT
+        unit_test >> $OUTPUT 
+        echo -e "" >> $OUTPUT
 done
 
 cat $OUTPUT
