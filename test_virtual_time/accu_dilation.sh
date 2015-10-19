@@ -11,7 +11,7 @@ make accu_dilation
 dilations="1 2 4 8 16"
 for dil in $dilations
 do
-        err_dilation $dil 5000
-        ./plot_cdf.py --input "accu_dilation_${dil}.log" -l1 'No dilation' -l2 "Dilation=${dil}" --topic "accu_dilation_${dil}"
+        #err_dilation $dil 5000
+        ./plot_cdf.py --input "accu_dilation_${dil}.log" --dilation $dil -l1 'No dilation' -l2 "Dilation=${dil}" --topic "accu_dilation_${dil}"
 done
 
