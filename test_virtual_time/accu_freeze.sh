@@ -1,7 +1,7 @@
 #!/bin/bash
 
 OUTPUT=accu_freeze.log
-NUM_TESTS=4000
+NUM_TESTS=5000
 
 function unit_test {
         ./time_long_loop -v -d 100

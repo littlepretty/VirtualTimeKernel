@@ -16,7 +16,7 @@ def plot_err_cdf(data1, data2):
     variance = []
     for x in data1:
         variance.append(abs(x-avg))
-    num_bins = 100
+    num_bins = 5000
     counts, bin_edges = np.histogram(variance, bins=num_bins)
     cdf_variance = np.cumsum(counts) / float(len(variance))
     
@@ -37,7 +37,7 @@ def plot_err_cdf(data1, data2):
 
 def plot_compare_cdf(data1, data2):
     """draw cdf to compare without/with freeze elapsed time"""
-    num_bins = 100
+    num_bins = 5000
     counts1, bin_edges1 = np.histogram(data1, bins=num_bins)
     cdf1 = np.cumsum(counts1) / float(len(data1))
     counts2, bin_edges2 = np.histogram(data2, bins=num_bins)
