@@ -30,7 +30,7 @@ long int without_virtual_time()
         return usec;
 }
 
-long int with_virtual_time()
+long int with_virtual_time(int dilation)
 {
         struct timeval prev, next, diff, tmp;
         int ret, status;
@@ -47,7 +47,7 @@ long int with_virtual_time()
                 pid_t self = getpid();
                 ret = virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS);
                 check_syscall_status(ret, "virtual_timeun_share");
-                ret = set_new_dilation(self ,4);
+                ret = set_new_dilation(self, dilation);
                 for (i = 0; i < NR_GTOD_ROUND; ++i) {
                         ret = gettimeofday(&tmp, NULL);
                         // check_syscall_status(ret, "gettimeofday");
@@ -74,10 +74,18 @@ long int with_virtual_time()
 
 int main(int argc, char const *argv[])
 {
-        long int noVT = without_virtual_time();
-        long int VT = with_virtual_time();
-        printf("Total Overhead = %ld micro_sec for %ld GTOD\n", VT - noVT, NR_GTOD_ROUND);
-        printf("Avgerage Overhead = %f micro_sec\n", ((float)(VT - noVT)) / NR_GTOD_ROUND);
+        int dilations[] = {1,2,4,8,16};
+        size_t size = sizeof(dilations) / sizeof(dilations[0]);
+        int i;
+        long int noVT, VT;
+        float avg;
+
+        for (i = 0; i < size; ++i) {
+                noVT = without_virtual_time();
+                VT = with_virtual_time(dilations[i]);
+                avg = ((float)(VT - noVT)) / NR_GTOD_ROUND;
+                printf("[Dilation(%d)] Total/Average overhead = %ld(%.3f) micro_sec for %ld GTOD\n", dilations[i], VT - noVT, avg, NR_GTOD_ROUND);
+        }
         return 0;
 }
 
