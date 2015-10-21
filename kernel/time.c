@@ -119,8 +119,8 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 /*
  * Change a process's time dilation factor
  * Operation fail when @dilation is less than 0
- * FIXME: since @tsk should be a (thread) group leader, 
- *        it's his job to set all its children's TDF      
+ * Since @tsk should be a (thread) group leader, 
+ * it's his job to set/update all its children's dilation
  */
 int set_dilation(struct task_struct* tsk, int new_tdf)
 {
@@ -168,6 +168,9 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 	} else {
 		return -EINVAL;
 	}
+        /**
+         * Recursive part
+         */
         list_for_each_entry(child, &(tsk->children), children) {
                 set_dilation(child, new_tdf);
         }

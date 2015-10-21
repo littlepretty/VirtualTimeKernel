@@ -24,7 +24,7 @@ def plot_err_cdf(data1, data2):
     xlim_max = max(max(err_data), max(variance))
     plt.figure()
     plt.xlim(0.99 * xlim_min, 1.02 * xlim_max)
-    
+    # plt.xlim(0, 5000)
     p1 = plt.plot(sorted_err_data, cdf_err, 'b', label=label_err)
     p2 = plt.plot(bin_edges[1:], cdf_variance, 'r', label='Variance of GTOD')
     
@@ -32,7 +32,7 @@ def plot_err_cdf(data1, data2):
     plt.xlabel('Time / Microseconds')
     plt.ylabel('Cumulative Distribution')
     plt.grid(True)
-    #plt.show()
+    # plt.show()
     plt.savefig('err_%s_cdf.eps' % topic_name, format='eps')
 
 def plot_compare_cdf(data1, data2):
@@ -47,13 +47,14 @@ def plot_compare_cdf(data1, data2):
     xlim_max = max(max(data1), max(data2))
     plt.figure()
     plt.xlim(0.99 * xlim_min, 1.02 * xlim_max)
+    # plt.xlim(65000, 70000)
     p1 = plt.plot(bin_edges1[1:], cdf1, 'b', label=label1)
     p2 = plt.plot(bin_edges2[1:], cdf2, 'r', label=label2)
     plt.legend(loc='lower right')
     plt.xlabel('Time Elapsed / Microseconds')
     plt.ylabel('Cumulative Distribution')
     plt.grid(True)
-    #plt.show()
+    # plt.show()
     plt.savefig('cmp_%s_cdf.eps' % topic_name, format='eps')
 
 def plot_variance_cdf(data):

@@ -861,20 +861,13 @@ next:
 
 	} while (cl != start);
 
-	/* polling host process about dilation info; update rate when necessary */
-	int dilation = 0;
-	if ( current ) {
-		/* get tdf, possibly an updated one */
-		rcu_read_lock();
-		struct task_struct *parent = rcu_dereference(current->real_parent);
-		dilation = parent->dilation;
-		rcu_read_unlock();
-	}
-
-	/* until now, still not sure if this the should-dilated htb class */
-	if ( dilation > 0 && dilation != cl->dilation ) {
+	/**
+         * Polling host process about dilation info; update rate when necessary
+	 * Until now, still not sure if this would dilate htb class --- Jiaqi
+	 */
+        if (current->dilation > 0 && current->dilation != cl->dilation) {
 		cl->dilation = dilation; // update dilation
-		printk("[process %d] in htb_dequeue_tree: change tdf to %d\n", current->pid, cl->dilation);
+		printk("[process %d] in htb_dequeue_tree: update tdf to %d\n", current->pid, cl->dilation);
 		psched_ratecfg_dilate(&cl->rate, cl->dilation); // update rate
 	}
 
@@ -1085,18 +1078,13 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt)
 
 	/*
 	int copy = -1;
-	if (current)
-	{
-		if (current->dilation > 0)
-		{
-			copy = q->rate2quantum;
-			// wrong!!! modify rate2quantum will crash OS
-			// q->rate2quantum = q->rate2quantum / current->dilation;
-		}
+	if (current->dilation > 0) {
+		copy = q->rate2quantum;
+		// wrong!!! modify rate2quantum will crash OS
+		// q->rate2quantum = q->rate2quantum / current->dilation;
 	} else {
 		printk("[panic] in htb_init current is NULL");
 	}
-
 	printk("[info] in htb_init: q->rate2quantum(%d), old copy(%d)", q->rate2quantum, copy);
 	*/
 	
@@ -1529,7 +1517,6 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 	// printk("[info] in htb_change_class: 1. write hopt->rate.rate(%u) to cl->rate.rate_bytes_ps\n", hopt->rate.rate);
 	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);
 	// printk("[info] in htb_change_class: 2. after dilation, cl->rate.rate_bytes_ps = %llu\n", cl->rate.rate_bytes_ps);
-
 	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
 
 	/* it used to be a nasty bug here, we have to check that node

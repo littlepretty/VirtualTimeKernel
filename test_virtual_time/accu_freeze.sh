@@ -21,6 +21,6 @@ function main {
 }
 
 make accu_freeze
-# main
+main
 ./plot_cdf.py --input $OUTPUT -l1 'Normal' -l2 'Freeze' --topic 'accu_freeze'
 

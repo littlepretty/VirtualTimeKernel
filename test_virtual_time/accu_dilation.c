@@ -13,14 +13,14 @@ unsigned long dilated_elapsed[NR_ACCU_ROUND];
 
 void fill_elapsed(int factor)
 {
-        struct timeval prev, next, diff;
+        struct timeval prev, next, diff, temp;
         int ret;
         long int i, j, usec;
 
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 gettimeofday(&prev, NULL); 
                 for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        // do nothing
+                        gettimeofday(&temp, NULL);
                 }
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
@@ -31,7 +31,7 @@ void fill_elapsed(int factor)
 
 void fill_dilated_elapsed(int dil, int factor)
 {
-        struct timeval prev, next, diff;
+        struct timeval prev, next, diff, temp;
         int ret;
         long int usec, i, j;
         pid_t pid = getpid();
@@ -43,7 +43,7 @@ void fill_dilated_elapsed(int dil, int factor)
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 gettimeofday(&prev, NULL);
                 for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        // do nothing
+                        gettimeofday(&temp, NULL);
                 }
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);

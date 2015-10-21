@@ -11,20 +11,14 @@
 long int without_virtual_time()
 {
         struct timeval prev, next, diff, tmp;
-        long ret;
         long int i, usec;
 
-        ret = gettimeofday(&prev, NULL);
-        // check_syscall_status(ret, "gettimeofday");
-
+        gettimeofday(&prev, NULL);
         for (i = 0; i < NR_GTOD_ROUND; ++i) {
-                ret = gettimeofday(&tmp, NULL);
-                // check_syscall_status(ret, "gettimeofday");
+                gettimeofday(&tmp, NULL);
         }
-
-        ret = gettimeofday(&next, NULL);
-        // check_syscall_status(ret, "gettimeofday");
-        ret = timeval_substract(&diff, &next, &prev);
+        gettimeofday(&next, NULL);
+        timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
         printf("Elapsed %ld micro_sec without virtual time\n", usec);
         return usec;
@@ -39,18 +33,15 @@ long int with_virtual_time(int dilation)
 
         pid = fork();
         ret = gettimeofday(&prev, NULL);
-        // check_syscall_status(ret, "gettimeofday");
         if (pid == -1) {
                 printf("\n[error] fork fails with error: %s\n", strerror(errno));
         } else if (pid == 0) {
                 // child process
                 pid_t self = getpid();
-                ret = virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS);
-                check_syscall_status(ret, "virtual_timeun_share");
-                ret = set_new_dilation(self, dilation);
+                virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS);
+                set_new_dilation(self, dilation);
                 for (i = 0; i < NR_GTOD_ROUND; ++i) {
                         ret = gettimeofday(&tmp, NULL);
-                        // check_syscall_status(ret, "gettimeofday");
                 }
                 exit(EXIT_SUCCESS);
         } else {
@@ -63,8 +54,7 @@ long int with_virtual_time(int dilation)
                 // if (WIFEXITED(status) != 0) {
                 //     printf("Child process ended normally; status = %d\n", WEXITSTATUS(status));
                 // }
-                ret = gettimeofday(&next, NULL);
-                // check_syscall_status(ret, "gettimeofday");
+                gettimeofday(&next, NULL); 
                 ret = timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
                 printf("Elapsed %ld micro_sec with virtual time\n", usec);
@@ -84,7 +74,7 @@ int main(int argc, char const *argv[])
                 noVT = without_virtual_time();
                 VT = with_virtual_time(dilations[i]);
                 avg = ((float)(VT - noVT)) / NR_GTOD_ROUND;
-                printf("[Dilation(%d)] Total/Average overhead = %ld(%.3f) micro_sec for %ld GTOD\n", dilations[i], VT - noVT, avg, NR_GTOD_ROUND);
+                printf("[Dilation(%d)] Total/Average overhead = %ld(%.3f) microseconds for %ld GTOD\n", dilations[i], VT - noVT, avg, NR_GTOD_ROUND);
         }
         return 0;
 }
