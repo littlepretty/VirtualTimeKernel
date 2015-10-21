@@ -866,7 +866,7 @@ next:
 	 * Until now, still not sure if this would dilate htb class --- Jiaqi
 	 */
         if (current->dilation > 0 && current->dilation != cl->dilation) {
-		cl->dilation = dilation; // update dilation
+		cl->dilation = current->dilation; // update dilation
 		printk("[process %d] in htb_dequeue_tree: update tdf to %d\n", current->pid, cl->dilation);
 		psched_ratecfg_dilate(&cl->rate, cl->dilation); // update rate
 	}

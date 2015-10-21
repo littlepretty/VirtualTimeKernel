@@ -236,9 +236,9 @@ Setting a new dilation for a process may falls into several possible cases.
 \If{$new\_tdf = old\_tdf$}
 	\State return 0\Comment{do nothing}
 \ElsIf{$old\_tdf = 0$}
-	\State return \texttt{\uppercase{init\_virtual\_time}($tsk, new\_tdf$)}\Comment{enter virtual time with $new\_tdf$}
+	\State \Call{init\_virtual\_time}{$tsk, new\_tdf$}\Comment{enter virtual time with $new\_tdf$}
 \ElsIf{$new\_tdf = 0$}
-	\State return \texttt{\uppercase{clean\_up\_virtual\_time}($tsk$)}\Comment{exit virtual time}
+	\State \Call{clean\_up\_virtual\_time}{$tsk$}\Comment{exit virtual time}
 \ElsIf{$new\_tdf > 0$}\Comment{real works here}
 	\State $tsk.dilation \gets 0$
 	\State $tsk.virtual\_start\_ns \gets 0$
@@ -255,6 +255,9 @@ Setting a new dilation for a process may falls into several possible cases.
 \Else
 	\State return \texttt{-EINVAL}
 \EndIf
+\ForAll{$tsk$'s $child$}
+	\State \Call{set\_dilation}{$child$}
+\EndFor
 \EndFunction
 \end{algorithmic}
 \end{algorithm*}
@@ -317,8 +320,8 @@ Setting a new dilation for a process may falls into several possible cases.
 \Function{do\_virtual\_time\_keeping}{$tsk, \;ts$}\Comment{\texttt{timespec} $ts$ will be modified}
 \If{$tsk.virtual\_start\_ns > 0$}
 	\State $tdf \gets tsk.dilation$
-	\State $delta\_ppn \gets \texttt{\uppercase{update\_physical\_time}($ts$)}$
-	\State \texttt{\uppercase{update\_virtual\_past\_time}($delta\_ppn, \;tdf$)}
+	\State $delta\_ppn \gets \Call{update\_physical\_time}{$ts$}$
+	\State \Call{update\_virtual\_past\_time}{$delta\_ppn, \;tdf$}
 	\State $virtual\_now \gets tsk.virtual\_start\_ns + tsk.virtual\_past\_ns$
 	\State $virtual\_ts \gets \texttt{ns\_to\_timespec(virtual\_now)}$
 	\State $ts.tv\_sec \gets virtual\_ts.tv\_sec$
