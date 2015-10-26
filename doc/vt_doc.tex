@@ -159,24 +159,22 @@ What a \textbf{freeze} does is both stop the execution of a process and the adva
 \subsection{Linux Namespace}
 The first namespace \texttt{mnt} namespace was introduced in Linux 2.4.19. 
 Since then, more type of namespaces are implemented and currently we have totally 6 namespaces:
-\begin{enumerate}
-\item Mount namespaces(\texttt{CLONE\_NEWNS}), the first born, isolate the set of file system mount points seen by a group of process\cite{lwn:namespace:overview}. It is a more secure and flexible alternation of \texttt{chroot jail}. Related system calls are \texttt{mount()} and \texttt{unmount()}
-
-\item UTS namespaces(\texttt{CLONE\_NEWUTS}) may be the most simple one to implement. It make containers to be able to have its own \texttt{nodename} and \texttt{domainname}\cite{lwn:namespace:overview}. Related system calls are \texttt{uname()}, \texttt{setnodename()} and \texttt{setdomainname()} 
-
+\begin{itemize}
+\item Mount namespaces(\texttt{CLONE\_NEWNS}), the first born, isolate the set of file system mount points seen by a group of process\cite{lwn:namespace:overview}. 
+It is a more secure and flexible alternation of \texttt{chroot jail}. Related system calls are \texttt{mount()} and \texttt{unmount()}
+\item UTS namespaces(\texttt{CLONE\_NEWUTS}) may be the most simple one to implement. It make containers to be able to have its own \texttt{nodename} and \texttt{domainname}\cite{lwn:namespace:overview}. 
+Related system calls are \texttt{uname()}, \texttt{setnodename()} and \texttt{setdomainname()} 
 \item IPC namespace(\texttt{CLONE\_NEWIPC}) isolate System V IPC objects and POSIX message queues, e.g. \texttt{sem, shm, msg}. 
-
-\item PID namespace(\texttt{CLONE\_NEWPID}) isolate the process ID number space. Between different PID namespaces, processes can have the same PID. 
+\item PID namespace(\texttt{CLONE\_NEWPID}) isolate the process ID number space. 
+Between different PID namespaces, processes can have the same PID. 
 It is used to enable containers to be migrated to different host system while still keeping the same PID for processes inside that container. 
 Processes inside a particular container, following the tradition of Linux(Unix) holds unique, sequentially assigned ID number.\cite{lwn:namespace:pid}
-
 \item Network namespaces(\texttt{CLONE\_NEWNET}) isolate the entire network stack in Linux kernel. With help of network namespace, container can have its own network device, addresses, ports, routes, firewall rules, etc\cite{lwn:namespace:net}. 
 It is widely applied in network emulation, Mininet\cite{mininet} for example, to create isolated network hosts.
-
 \item User namespaces(\texttt{CLONE\_NEWUSER}) are the most complicated namespace, taking five years to complete, spanning from Linux 2.6.23 to Linux 3.8\cite{lwn:namespace:user}. 
 The resource user namespace provided to process is its user ID with root privilege. 
 A process can do full privilege operations inside its user namespace, even like creating other types of namespaces. Outside it user namespace, process can only do normal unprivileged operations.
-\end{enumerate}
+\end{itemize}
 
 \subsection{Clock Namespaces}
 Virtual time, by its definition, seems to fit into the category of namespace: it isolates time from the system wide wall clock so that a process can advance faster or slower by an offset or by a constant factor. 
@@ -184,30 +182,38 @@ If so, virtual time should actually be called \textbf{Clock Namespace}. However,
 In other word, what can we do when we can identify that a group of processes belong to the same Clock namespace? We will see an unsatisfying answer in section \ref{Sub-Sec-Alg-Impl-Freeze}.
 
 \subsection{Through Additional System Calls}
-Probably the most straightforward and destructive way of exposing virtual time to user space is through modifying existing system calls and adding new system calls. Our first working implementation use this method to interfacing clock namespace\cite{yan:vts:pads15, yan:vtmininet:sosr15}.
+Probably the most straightforward and destructive way of exposing virtual time to user space is through modifying existing system calls and adding new system calls. 
+Our first working implementation use this method to interfacing clock namespace\cite{yan:vts:pads15, yan:vtmininet:sosr15}.
 To enable the virtual time perception to processes, we added/modified the following new system calls.
 \begin{itemize}
-
-\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME}\footnote{\texttt{CLONE\_NEWTIME} takes value \texttt{0x02000000}, which previously unused by \texttt{CLONE\_STOPPED}} is modified. It is used by container-based emulators, such as Mininet, to create emulated nodes. When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare()} creates a new process with a default TDF 1 in a different namespace from its parent process.
-
+\item \texttt{unshare()} system call with flag \texttt{CLONE\_NEWTIME}\footnote{\texttt{CLONE\_NEWTIME} takes value \texttt{0x02000000}, which previously unused by \texttt{CLONE\_STOPPED}} is modified. 
+It is used by container-based emulators, such as Mininet, to create emulated nodes. 
+When \texttt{CLONE\_NEWTIME} is set, \texttt{unshare()} creates a new process with a default TDF 1 in a different namespace from its parent process.
 \item Newly added system call \texttt{set\_dilaiton()} offers an interface to change the TDF of a process. 
-
-\item Newly added system call \texttt{freeze()} and \texttt{unfreeze()} comes as a combo to control the execution and pause of a process. Here pause is more than just send a signal \texttt{SIGSTOP} to process so that is stop executing; the process's clock, on freezing, actually is detached from OS's clock and is stopped. See section \ref{Sub-Sec-Alg-Impl-Freeze} for detail.
-
+\item Newly added system call \texttt{freeze()} and \texttt{unfreeze()} comes as a combo to control the execution and pause of a process. 
+Here pause is more than just send a signal \texttt{SIGSTOP} to process so that is stop executing; the process's clock, on freezing, actually is detached from OS's clock and is stopped. 
+See section \ref{Sub-Sec-Alg-Impl-Freeze} for detail.
 \end{itemize}
-In container based network emulation, usually we want all processes inside the same container having the same time dilation factor. In other words, to keep the persistence, \texttt{set\_dilation()} should better set time dilation factor for a group of processes. We can take advantage of the identification of the \textit{network host}, who is usually the root of the process tree inside a particular container. We only invoke the \texttt{set\_dilation()} once for this \textit{root} process; as a leader in the container, it cascade \texttt{set\_dilation} further down to the process tree so that every process's TDF will be updated.
+In container based network emulation, usually we want all processes inside the same container having the same time dilation factor. 
+In other words, to keep the persistence, \texttt{set\_dilation()} should better set time dilation factor for a group of processes. 
+We can take advantage of the identification of the \textit{network host}, who is usually the root of the process tree inside a particular container. 
+We only invoke the \texttt{set\_dilation()} once for this \textit{root} process; as a leader in the container, it cascade \texttt{set\_dilation} further down to the process tree so that every process's TDF will be updated.
 
 \subsection{Through Proc Virtual File System}
-It is also possible to implement virtual time without adding system calls. Virtual file system provide a interface between kernel and user space. Since virtual time is a per process thing, it is more appropriate to create \texttt{/proc} file entry under the directory that specific to process.
+It is also possible to implement virtual time without adding system calls. Virtual file system provides a interface between kernel and user space. Since virtual time is a per process thing, it is more appropriate to create \texttt{/proc} file entry under the directory that specific to process. Virtual time interface thus consists of two extra file entry under \texttt{/proc/\$pid}.
 \begin{itemize}
 \item \texttt{/proc/\$pid/dilation} can be read and written so that process \texttt{\$pid} can enter virtual time(write non-zero value to zero TDF), exit virtual time(write zero to non-zero TDF) and change to new TDF.
 \item \texttt{/proc/\$pid/freeze} expects a boolean value and freeze or unfreeze process \texttt{\$pid} according to the written value. 
 \end{itemize}
-Change time dilation factor from zero to non-zero value will detach the process's clock from system clock, thus entering virtual time. Conversely, setting a process's TDF to zero will make it exit virtual time. The traditional \texttt{unshare()} interface can be kept as an alternative for entering virtual time.
+Change time dilation factor from zero to non-zero value will detach the process's clock from system clock, thus entering virtual time. Conversely, setting a process's TDF to zero will make it exit virtual time. 
+The traditional \texttt{unshare()} system call together with \texttt{CLONE\_NEWTIME} flag is kept as an alternative for entering virtual time.
 
-While more elegant and consistent with the philosopher of Proc virtual file system, this interface is doomed with more overhead due to that introduced by necessary \texttt{open(), write()} and \texttt{close()} operations. However, in practice these operations usually should not be invoked very often.
+While being more elegant interface and persisting with the philosopher of Proc virtual file system, this interface is doomed with more overhead due to that introduced by necessary \texttt{open(), write()} and \texttt{close()} operations. 
+However, in practice these operations usually should not be invoked very often.
 
 \section{Algorithms and Implementations}
+In this section, we first present the extra 52 bytes variables added to process data structure. Then the pseudo-implementation/algorithms are elaborated in order.
+
 \subsection{Additional Data Structure}
 Following new fields are added into \texttt{task\_struct} so that a process can have its own perception of time.
 \begin{itemize}
@@ -216,16 +222,26 @@ Following new fields are added into \texttt{task\_struct} so that a process can 
 	\item \texttt{physical\_start\_ns} represents the starting time that a process detaches from the system clock and uses the virtual time, in nanoseconds. It differs from \texttt{virtual\_start\_ns} when process's dilation changes from non-zero value to another non-zero value. See section \ref{Alg-SetTDF} for details.
 	\item \texttt{virtual\_past\_ns} represents how much virtual time has elapsed since the last time the process requested the current time, in nanoseconds.
 	\item \texttt{physical\_past\_ns} represents how much physical time has elapsed since the last time the process requested the current time, in nanoseconds.
-	\item \texttt{freeze\_start\_ns} represents the starting moment that a process is frozen. It is always zero when the process is not frozen.
-	\item \texttt{freeze\_past\_ns} represents the accumulative time, in nanoseconds, that a running process was put into freezing state.
+	\item \texttt{freeze\_start\_ns} represents the starting moment that a process or process group is frozen. It is always zero when the process is not frozen. The process's group leader is responsible for maintaining this variable for its members.
+	\item \texttt{freeze\_past\_ns} represents the accumulative time, in nanoseconds, that a running process or process group was put into freezing state. The process's group leader is responsible for maintaining this variable for its members.
 \end{itemize}
 
 \algrenewcommand{\algorithmiccomment}[1]{\hskip3em$/*$ #1 $*/$}
-\subsection{Algorithm/Implementation for Set/Change Virtual Time Dilation}
-Setting a new dilation for a process may falls into several possible cases.
-\begin{enumerate}
-\item 
-\end{enumerate}
+\subsection{Algorithm/Implementation for Change Time Dilation Factor}
+Setting a new dilation for a process may falls into several possible cases, as shown in the condition clause of Algorithm \ref{Alg-SetTDF}. 
+The difficulty here is that setting $TDF$ may happen during the lifetime/execution of a process and user should not be bothered with handling the virtual time with old dilation. 
+So, in the 3rd case following, kernel should do the old dilation's virtual time keeping.
+\begin{itemize}
+\item We return immediately when user repeat set an old time dilation factor.
+\item Then we handle the case that $TDF$ was or is going to be zero; corresponding actions are either enter or exit virtual time space by invoke helper functions \texttt{init\_virtual\_time()} and \texttt{clean\_up\_virtual\_time()}, defined in Algorithm \ref{Alg-DilateTimeKeeping}.
+\item Finally the primary case goes when both previous and future $TDF$ is non-zero value. We first clear $dilation$ and $virtual\_start\_ns$ so that we can get undilated time moment $now$. 
+Then the algorithm can do an audit for the old dilation: we calculate the time offset from $now$ to the last moment that $physical\_past\_ns$ is updated; $virtual\_past\_ns$ thus advances by a factor of physical past time according to the old dilation. 
+At last, we can say goodbye to previous dilation factor and update $physical\_start\_ns$ to $now$, minus the time that this process does not perceived at all $freeze\_past\_ns$, and dilation to the new $TDF$. 
+As we will see in subsection \ref{Alg-Freeze}, how long a process is frozen, the time it should not perceived, is stored at its group leader's $freeze\_past\_ns$.
+\end{itemize}
+
+Finally, we need to cascade the update-TDF operation to all $tsk$'s children. 
+
 \begin{algorithm*}[t]
 \caption{Set Time Dilation Factor}
 \label{Alg-SetTDF}
@@ -245,10 +261,10 @@ Setting a new dilation for a process may falls into several possible cases.
 	\State \texttt{\_\_getnstimeofday}($ts$)\Comment{$ts$: a \texttt{timespec} temp}
 	\State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
 	\State $tsk.virtual\_start\_ns \gets vsn$
-	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk. physical\_start\_ns \; - \; tsk. freeze\_past\_ns$
+	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk. physical\_start\_ns \; - \; tsk. group\_leader.freeze\_past\_ns$
 	\State $delta\_vpn \gets delta\_ppn \; / \; old\_tdf$
 	\State $tsk.virtual\_past\_ns \; += \; delta\_vpn$
-	\State $tsk.physical\_start\_ns \gets (now \; - \; tsk\rightarrow freeze\_past\_ns)$
+	\State $tsk.physical\_start\_ns \gets (now \; - \; tsk.group\_leader.freeze\_past\_ns)$
 	\State $tsk.physical\_past\_ns \gets 0$
 	\State $tk.dilation \gets new\_tdf$
 	\State return 0
@@ -263,8 +279,27 @@ Setting a new dilation for a process may falls into several possible cases.
 \end{algorithm*}
 
 \subsection{Algorithm/Implementation for Freeze and Unfreeze}
+The \textit{threadgroup leader} deals with the freeze part of time keeping for all its members. 
+Besides, freeze and unfreeze should be done with respect to a entire process group. This design is based on two assumptions
+\begin{itemize}
+\item Freeze usually involves the entire process group. As an illustration, consider the case that we wants to freeze a container in the network emulation. Recall that container here usually plays the role of a lightweight virtual machine. Therefore when we want to freeze this container, we actually wants to freeze all the processes(usually emulates applications running inside a VM) inside this container. For example, when we freeze host $h_1$(container), we should also stop the clock of \texttt{ping}, \texttt{iperf} or other applications running inside $h1$. These applications, it turns out, have the same leader $h1$.
+\item Another more general assumption is that when a process is frozen, it is unable to query time or do anything else because it is put into $STOP$ status. 
+Under this assumption, we can ensure that every member process will access the same frozen duration.
+\end{itemize}
+So instead of let every process maintain the frozen time and, maybe, communicate with other members in the same group for consistency, we make the leader a central controller of the freeze time keeping. 
+Thus everyone can just query the leader when needed, for example, in Algorithm \ref{Alg-SetTDF} and Algorithm \ref{Alg-DilateTimeKeeping}. 
+The drawback is that we waste 16 bytes for every process other than the leader, who satisfying $tsk.group\_leader==tsk$.
+
+We must admit that the above assumptions, and thus our virtual time's freeze implementation, is highly tailored for the purpose of container based emulation. After all this is our motivation of implementing freeze/unfreeze inside virtual time. 
+Ideally, freeze/unfreeze should be done in the unit of per process. 
+Sometimes we need this fine granularity and sometimes it makes more sense to do it in a bundle. 
+
+The implementations for both granularity, however, appears to be somewhat similar. 
+First, after $kill$ a group of processes, we make a record of current moment; this record is used to calculate how long this group is frozen when we unfreeze it. It is a little bit subtle that when unfreeze, $kill$ operation is behind time keeping. 
+The reason is that if we resume the process group first, by any chance, an unfreeze process may be schedule to run and query time before we write the $freeze\_past\_ns$ to group leader.
+
 \label{Sub-Sec-Alg-Impl-Freeze}
-\begin{algorithm}[t]
+\begin{algorithm*}[t]
 \caption{Freeze and Unfreeze Process}
 \label{Alg-Freeze}
 \begin{algorithmic}[1]
@@ -272,37 +307,60 @@ Setting a new dilation for a process may falls into several possible cases.
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGSTOP, 1)}
 \State \texttt{\_\_getnstimeofday}($ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
-\State $tsk.freeze\_start\_ns \gets now$
+\State $tsk.group\_leader.freeze\_start\_ns \gets now$
 \EndFunction
 \\
 \Function{Unfreeze}{tsk}
 \State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
-\State $tsk.freeze\_past\_ns \gets now \; - \; tsk.freeze\_start\_ns$
-\State $tsk.freeze\_start\_ns \gets 0$
+\State $tsk.group\_leader.freeze\_past\_ns \; += \; now \; - \; tsk.group\_leader.freeze\_start\_ns$
+\State $tsk.group\_leader.freeze\_start\_ns \gets 0$
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGCONT, 1)}
 \EndFunction
 \end{algorithmic}
-\end{algorithm}
+\end{algorithm*}
 
 \subsection{Algorithm/Implementation for Virtual Time Keeping}
+Firstly, we have 2 helper functions to initialize and cleanup virtual time. 
+\begin{itemize}
+\item \texttt{clean\_up\_virtual\_time} reset all relevant variables to zero, which is also the default value for these variables when create a \texttt{task\_struct}
+\item Since physical and virtual time will fork as we enter virtual time, \texttt{init\_virtual\_time} initialize both to the current moment $now$ and then set a non-zero dilation to the process. 
+\end{itemize}
+
+Unsurprisingly, \texttt{do\_virtual\_time\_keeping} maintains virtual time including dilation and freeze. 
+It first call \texttt{update\_physical\_time} to get the physical duration since last time we request time, excluding the frozen part; then 
+\texttt{update\_virtual\_time} dilates this physical duration.
+At the ending of both helper methods, we finish the timekeeping by updating $physical\_past\_ns$ and $virtual\_past\_ns$.
+
 \begin{algorithm*}[t]
 \caption{Time Dilation Algorithm}%: Dilate \texttt{ts} if a current process uses virtual clock}
 \label{Alg-DilateTimeKeeping}
 \begin{algorithmic}[1]
 \Function{init\_virtual\_time}{$tsk,\;tdf$}
-\If{$tdf>0$}
-    \State $tk.dilation \gets tdf$
-    \State $tk.virtual\_start\_ns \gets 0$
+\If{$tdf>0$}\Comment{$tsk.dilaton = 0$ before initialization}
+%    \State $tsk.virtual\_start\_ns \gets 0$
     \State \texttt{\_\_getnstimeofday($ts$)}\Comment{$ts$: a \texttt{timespec} temp}
-    \State $tk.virtual\_start\_ns \gets $\texttt{timespec\_to\_ns($ts$)}
-    \State $tk.physical\_past\_ns \gets 0$
-    \State $tk.virtual\_past\_ns \gets 0$
+    \State $now \gets $\texttt{timespec\_to\_ns($ts$)}
+    \State $tsk.virtual\_start\_ns \gets now $
+    \State $tsk.physical\_start\_ns \gets now $
+    \State $tsk.dilation \gets tdf$
+%    \State $tsk.physical\_past\_ns \gets 0$
+%    \State $tsk.virtual\_past\_ns \gets 0$
 \EndIf
 \EndFunction
 \\
+\Function{clean\_up\_virtual\_time}{$tsk$}
+\State $tsk.dilation \gets 0$
+\State $tsk.physical\_start\_ns \gets 0$
+\State $tsk.physical\_past\_ns \gets 0$
+\State $tsk.virtual\_start\_ns \gets 0$
+\State $tsk.virtual\_past\_ns \gets 0$
+\State $tsk.freeze\_start\_ns \gets 0$
+\State $tsk.freeze\_past\_ns \gets 0$
+\EndFunction
+\\
 \Function{update\_physical\_time}{$tsk, \;ts$}\Comment{interval between }
-\State $leader \gets tsk.group_leader$
+\State $leader \gets tsk.group\_leader$
 \State $now \gets \texttt{timespec\_to\_ns($ts$)}$
 \State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk.physical\_start\_ns$
 \State $delta\_ppn \; -= \; leader.freeze\_past\_ns$
@@ -318,8 +376,9 @@ Setting a new dilation for a process may falls into several possible cases.
 \EndFunction
 \\
 \Function{do\_virtual\_time\_keeping}{$tsk, \;ts$}\Comment{\texttt{timespec} $ts$ will be modified}
-\If{$tsk.virtual\_start\_ns > 0$}
-	\State $tdf \gets tsk.dilation$
+\State $tdf \gets tsk.dilation$
+%\If{$tsk.virtual\_start\_ns > 0$}
+\If{$tdf > 0$}
 	\State $delta\_ppn \gets \Call{update\_physical\_time}{$ts$}$
 	\State \Call{update\_virtual\_past\_time}{$delta\_ppn, \;tdf$}
 	\State $virtual\_now \gets tsk.virtual\_start\_ns + tsk.virtual\_past\_ns$
@@ -332,8 +391,19 @@ Setting a new dilation for a process may falls into several possible cases.
 \end{algorithm*}
 
 \section{Miscellaneous Parts}
+Our primary motivation of virtual time system is to benefit network emulation. This section discuss issues we come across when virtual time system cooperate with other part of the operating system. This section also serve as a guideline about how virtual time's user should consider tweeting(or \textbf{NOT}) the OS in their expertise fields. 
+
 \subsection{Bypass virtual Dynamic Shared Object}
+
 \subsection{Dilate Bandwidth Rate in Traffic Control}
+One particular case related to network emulation is the usage of \texttt{tc}, a network quality-of-service control module in Linux\cite{trafficcontrol}. 
+For instance, one can use \texttt{tc} to rate-limit a link to 100 Mbps using Hierarchic Token Bucket (HTB) \texttt{qdisc}. 
+However, as a network module in Linux, \texttt{tc} does not reference Linux kernel's time as the way user application does. 
+Therefore, \texttt{tc} is transparent to our virtual time system. 
+If the TDF is set to 8, the link bandwidth would be approximately 800 Mbps from the emulated hosts' viewpoints as we observed from \texttt{iperf3} application.
+
+One way to solve this problem is to modify the network scheduling code in kernel to provide \texttt{tc} with a dilated traffic rate. 
+In the earlier example with TDF set to 8, the experiment will run 8 times slower than the real time. To emulate a 100 Mbps link, \texttt{tc} module should configure rate limit as $rate/TDF=12.5$ Mbps. 
 
 \section{Experiments}
 \subsection{Functional Tests}

@@ -20,7 +20,7 @@ void fill_elapsed(int factor)
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 gettimeofday(&prev, NULL); 
                 for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        gettimeofday(&temp, NULL);
+                        /*gettimeofday(&temp, NULL);*/
                 }
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
@@ -37,13 +37,13 @@ void fill_dilated_elapsed(int dil, int factor)
         pid_t pid = getpid();
 
         ret = virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
-        if (dil != 1) set_new_dilation(pid, dil);
+        set_new_dilation(pid, dil);
         /*show_proc_dilation(pid);*/
 
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 gettimeofday(&prev, NULL);
                 for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        gettimeofday(&temp, NULL);
+                        /*gettimeofday(&temp, NULL);*/
                 }
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
@@ -53,27 +53,28 @@ void fill_dilated_elapsed(int dil, int factor)
         ret = virtual_time_exit(pid);
 }
 
-void actual_dilation(int dil, float per_accu, int err_accu)
+void actual_dilation(FILE* output, int dil, float per_accu, int err_accu)
 {
-        float q, percentage;
-        long i, err;
-        int per_count, err_count;
+        long i;
+        /*float q, percentage;*/
+        /*long err;*/
+        /*int per_count, err_count;*/
+        /*per_count = err_count = 0;*/
 
-        per_count = err_count = 0;
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
-                q = (float)elapsed[i] / (float)dilated_elapsed[i];
-                err = abs(elapsed[i] - dil * dilated_elapsed[i]); 
-                if ((q - dil) * (q - dil) > per_accu * per_accu) ++per_count;
-                if (err > err_accu) ++err_count;
-                printf("%lu\t%lu\n", elapsed[i], dilated_elapsed[i]);
+                /*q = (float)elapsed[i] / (float)dilated_elapsed[i];*/
+                /*err = abs(elapsed[i] - dil * dilated_elapsed[i]); */
+                /*if ((q - dil) * (q - dil) > per_accu * per_accu) ++per_count;*/
+                /*if (err > err_accu) ++err_count;*/
+                fprintf(output, "%lu\t%lu\n", elapsed[i], dilated_elapsed[i]);
         }
-        percentage = (float)err_count / NR_ACCU_ROUND * 100;
+        /*percentage = (float)err_count / NR_ACCU_ROUND * 100;*/
         /*printf("[summary] %d (%.2f%%) bad dilations\n", err_count, percentage);*/
 }
 
 int main(int argc, char* const argv[])
 {
-        const char* const short_options = "t:edpf:b:";
+        const char* const short_options = "t:edpf:b:o:";
         const struct option long_options[] = {
                 {"tdf", 1, NULL, 't'},
                 {"elapsed", 0, NULL, 'e'},
@@ -81,6 +82,7 @@ int main(int argc, char* const argv[])
                 {"print", 0, NULL, 'p'},
                 {"factor", 1, NULL, 'f'},
                 {"bound", 1, NULL, 'b'},
+                {"output", 1, NULL, 'o'},
                 {NULL, 0, NULL, 0},
         };
         int next_option;
@@ -90,7 +92,9 @@ int main(int argc, char* const argv[])
         int dilation = 1;
         int factor = 1;
         int err_usec = 900; // error bound in micro seconds
-
+        char *output_filename;
+        FILE *output_stream;
+        
         do {
                 next_option = getopt(argc, argv, short_options);
                 switch(next_option) {
@@ -113,6 +117,9 @@ int main(int argc, char* const argv[])
                 case 'b':
                         err_usec = atoi(optarg);
                         break;
+                case 'o':
+                        output_filename = malloc(sizeof(optarg));
+                        strcpy(output_filename, optarg); 
                 case -1:
                         /*printf("invalid input parameters\n");*/
                         break;
@@ -126,8 +133,11 @@ int main(int argc, char* const argv[])
         /*printf("Run fill_elapsed() parameters\n");  */
         if (run_dilated) fill_dilated_elapsed(dilation, factor);
         /*printf("Run fill_dilated_elapsed() parameters\n"); */        
-        if (print_dil) actual_dilation(dilation, 0.1f, err_usec);
-
+        if (print_dil) {
+                output_stream = fopen(output_filename, "w");
+                actual_dilation(output_stream, dilation, 0.1f, err_usec);
+                fclose(output_stream);
+        }
         return 0;
 }
 
