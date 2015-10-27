@@ -122,7 +122,7 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
  * Since @tsk should be a (thread) group leader, 
  * it's his job to set/update all its children's dilation
  */
-int set_dilation(struct task_struct* tsk, int new_tdf)
+int set_dilation(struct task_struct *tsk, int new_tdf)
 {
 	struct timespec ts;
 	s64 now, delta_ppn, delta_vpn, vsn;
@@ -156,14 +156,16 @@ int set_dilation(struct task_struct* tsk, int new_tdf)
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
 		delta_ppn -= tsk->physical_start_nsec;
-                // tsk won't be group leader in recursive calls 
-                delta_ppn -= tsk->group_leader->freeze_past_nsec;
-		delta_vpn = delta_ppn * 1000 / old_tdf;
+
+                // tsk's freeze_past_nsec is either its own or populated
+                delta_ppn -= tsk->freeze_past_nsec;
+		
+                delta_vpn = delta_ppn * 1000 / old_tdf;
 		tsk->virtual_past_nsec += delta_vpn;
 
 		// new physcial_start_nsec from now on
 		tsk->physical_start_nsec = now;	
-		tsk->physical_start_nsec -= tsk->group_leader->freeze_past_nsec;
+		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
                 tsk->physical_past_nsec = 0;
 		tsk->dilation = new_tdf;
 	} else {
@@ -195,6 +197,15 @@ void freeze_time(struct task_struct *tsk)
 }
 EXPORT_SYMBOL(freeze_time);
 
+static void populate_frozen_time(struct task_struct *tsk)
+{
+        struct task_struct *child;
+
+        list_for_each_entry(child, &(tsk->children), children) {
+                child->freeze_past_nsec = tsk->freeze_past_nsec;
+                populate_frozen_time(child);
+        }
+}
 /**
  * Unfreeze a group of processes, only call on group leader
  **/
@@ -203,12 +214,18 @@ void unfreeze_time(struct task_struct *tsk)
 	struct timespec ts;
 	s64 now;
 
-	// signal CONTINUE to unfreeze @tsk's children
-	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 	__getnstimeofday(&ts);
-	now = timespec_to_ns(&ts);	
+	now = timespec_to_ns(&ts);
 	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
 	tsk->freeze_start_nsec = 0;
+        /**
+         * FIXME: for now just populate downward
+         * How to populate to parent && grandparent ...?
+         */
+        populate_frozen_time(tsk);
+
+	// signal CONTINUE to unfreeze @tsk's children
+	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);
 

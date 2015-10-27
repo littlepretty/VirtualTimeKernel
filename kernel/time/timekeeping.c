@@ -306,12 +306,17 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 	delta_ppn = now;
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
-	// substract freezed time
-        // @current either ==leader or not
-        if ( leader->freeze_past_nsec > 0 ) {
-		// only READ group leader's fields
-		delta_ppn -= leader->freeze_past_nsec;
-	}
+	
+        /**
+         * substract freezed time
+         * @current either ==leader or not
+	 * only READ group leader's fields
+         */
+	delta_ppn -= current->freeze_past_nsec;
+        /*delta_ppn -= leader->freeze_past_nsec;*/
+	printk("[VT] process %d's leader %d has %lldns frozen time\n", current->pid, leader->pid, leader->freeze_past_nsec);
+        printk("[VT] process %d substruct %lldns frozen time by itself\n", current->pid, current->freeze_past_nsec);
+
 	current->physical_past_nsec += delta_ppn;
 	return delta_ppn;
 }
