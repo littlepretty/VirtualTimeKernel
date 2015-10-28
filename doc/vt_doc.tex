@@ -150,11 +150,22 @@ When a process is \texttt{dilated}, it's clock advances by a factor faster or sl
 An interesting application of time dilation is to emulate a link with 1 Gbps bandwidth while we only have a 100 Mbps link. Ideally, when a process or a VM keeps sending data through this link for 1 seconds, it actually take 10 seconds in real world and hence 1 Gb data is transferred. In other words, the dilated process think the network bandwidth is 1 Gbps.
 
 \subsection{Freeze}
-Processes in any operating systems can be stopped and resumed. Usually it is through sending signal and handling signal. Imagine we not only stop the execution of a process, but also stop \textit{its} clock. Here "its" is not accurate; all processes inside a particular operating system share a global software clock. For example, process in Linux queries current time by \texttt{gettimeofday} system call. Now with virtual time, process finally have its own clock.
+Processes in any operating systems can be stopped and resumed. Usually it is through sending signal and handling signal. Imagine we not only stop the execution of a process, but also stop \textit{its} clock. 
+Here "its" is not accurate; all processes inside a particular operating system share a global software clock. 
+For example, process in Linux queries current time by \texttt{gettimeofday} system call. 
+Now with virtual time, process finally have its own clock and we are able to stop particular processes' clocks.
 
-What a \textbf{freeze} does is both stop the execution of a process and the advance of its clock. A \textbf{unfreeze} does the opposite things: resume the execution and the clock. A once frozen process will not counting the freezing duration into its clock. A nontrivial application of freeze and unfreeze is to cooperate simulation and emulation of a system. For simulation, there is no the concept of real time; time advances according to software's wish. So even if a calculation in simulation may take a great deal of time, for example solving a multiple variable differential equation, this mount of time is not counted inside the simulating model. Emulation, on the other hand, runs in real time because it uses physical system's real clock. Consider this scenario: in a network emulator, host \texttt{sender} wants to transmit a certain amount of measured data to another host \texttt{receiver}; these measured data are actually gathered from simulator \textit{s} and it takes a fair amount of time for simulator to do the calculation, during which we need to stop the emulation as well as emulation's time. Just stop both hosts by sending \texttt{SIGSTOP} is not enough sometimes because time may be a relevant variable in emulation.
+What a \textbf{freeze} does is both stop the execution of a process and the advance of its clock. 
+A \textbf{unfreeze} does the opposite things: resume the execution and the clock. 
+A once frozen process will not counting the freezing duration into its clock. 
+A nontrivial application of freeze and unfreeze is to cooperate simulation and emulation of a system. 
+For simulation, there is no concept of real time; time advances according to software's wish. 
+So even if a calculation in simulation may take a great deal of time, for example solving a multiple variable differential equation, this mount of time is not counted inside the simulating model. 
+Emulation, on the other hand, runs real software or on real hardware in real time. As a result it uses physical system's real clock. 
+As an illustration, consider this scenario: in a network emulator, host \texttt{sender} wants to transmit a certain amount of measured data to another host \texttt{receiver}; these measured data are actually gathered from simulator \textit{s} and it takes a fair amount of time for simulator to do the calculation, during which we need to stop the emulation as well as emulation's time. 
+Just stop both hosts by sending \texttt{SIGSTOP} is not enough because time may be a relevant variable in emulation. For example, if a process who maintaining a timer is just stopped execution, possibly it will miss a timeout during its halt and when it resumes, it is unable to trigger the action associated with the missed timer.
 
-\section{The Software Interface}
+\section{The Namespace Story}
 
 \subsection{Linux Namespace}
 The first namespace \texttt{mnt} namespace was introduced in Linux 2.4.19. 
@@ -179,8 +190,10 @@ A process can do full privilege operations inside its user namespace, even like 
 \subsection{Clock Namespaces}
 Virtual time, by its definition, seems to fit into the category of namespace: it isolates time from the system wide wall clock so that a process can advance faster or slower by an offset or by a constant factor. 
 If so, virtual time should actually be called \textbf{Clock Namespace}. However, a problem hangs here: virtual time is really a per process feature; there is no need to share time by a group of processes, like sharing network or file system. 
-In other word, what can we do when we can identify that a group of processes belong to the same Clock namespace? We will see an unsatisfying answer in section \ref{Sub-Sec-Alg-Impl-Freeze}.
+In other word, what can we do when we can identify that a group of processes belong to the same Clock namespace? We will see an satisfactory answer in section \ref{Sub-Sec-Alg-Impl-Freeze}.
 
+\section{The Software Interface}
+This section present 2 different software interfaces for virtual time. The first one will be deprecated.
 \subsection{Through Additional System Calls}
 Probably the most straightforward and destructive way of exposing virtual time to user space is through modifying existing system calls and adding new system calls. 
 Our first working implementation use this method to interfacing clock namespace\cite{yan:vts:pads15, yan:vtmininet:sosr15}.
@@ -222,8 +235,8 @@ Following new fields are added into \texttt{task\_struct} so that a process can 
 	\item \texttt{physical\_start\_ns} represents the starting time that a process detaches from the system clock and uses the virtual time, in nanoseconds. It differs from \texttt{virtual\_start\_ns} when process's dilation changes from non-zero value to another non-zero value. See section \ref{Alg-SetTDF} for details.
 	\item \texttt{virtual\_past\_ns} represents how much virtual time has elapsed since the last time the process requested the current time, in nanoseconds.
 	\item \texttt{physical\_past\_ns} represents how much physical time has elapsed since the last time the process requested the current time, in nanoseconds.
-	\item \texttt{freeze\_start\_ns} represents the starting moment that a process or process group is frozen. It is always zero when the process is not frozen. The process's group leader is responsible for maintaining this variable for its members.
-	\item \texttt{freeze\_past\_ns} represents the accumulative time, in nanoseconds, that a running process or process group was put into freezing state. The process's group leader is responsible for maintaining this variable for its members.
+	\item \texttt{freeze\_start\_ns} represents the starting moment that a process or process group is frozen. It is always zero when the process is not frozen.
+	\item \texttt{freeze\_past\_ns} represents the accumulative time, in nanoseconds, that a running process or process group was put into freezing state. A special process \textit{leader} is responsible for maintaining and populating this variable for its members.
 \end{itemize}
 
 \algrenewcommand{\algorithmiccomment}[1]{\hskip3em$/*$ #1 $*/$}
@@ -237,7 +250,7 @@ So, in the 3rd case following, kernel should do the old dilation's virtual time 
 \item Finally the primary case goes when both previous and future $TDF$ is non-zero value. We first clear $dilation$ and $virtual\_start\_ns$ so that we can get undilated time moment $now$. 
 Then the algorithm can do an audit for the old dilation: we calculate the time offset from $now$ to the last moment that $physical\_past\_ns$ is updated; $virtual\_past\_ns$ thus advances by a factor of physical past time according to the old dilation. 
 At last, we can say goodbye to previous dilation factor and update $physical\_start\_ns$ to $now$, minus the time that this process does not perceived at all $freeze\_past\_ns$, and dilation to the new $TDF$. 
-As we will see in subsection \ref{Alg-Freeze}, how long a process is frozen, the time it should not perceived, is stored at its group leader's $freeze\_past\_ns$.
+As we will see in subsection \ref{Alg-Freeze}, if a process does not play the role of leader, how long it is frozen, the time it should not perceived, is obtained from its leader's $freeze\_past\_ns$.
 \end{itemize}
 
 Finally, we need to cascade the update-TDF operation to all $tsk$'s children. 
@@ -261,10 +274,10 @@ Finally, we need to cascade the update-TDF operation to all $tsk$'s children.
 	\State \texttt{\_\_getnstimeofday}($ts$)\Comment{$ts$: a \texttt{timespec} temp}
 	\State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
 	\State $tsk.virtual\_start\_ns \gets vsn$
-	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk. physical\_start\_ns \; - \; tsk. group\_leader.freeze\_past\_ns$
+	\State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk. physical\_start\_ns \; - \; tsk.freeze\_past\_ns$
 	\State $delta\_vpn \gets delta\_ppn \; / \; old\_tdf$
 	\State $tsk.virtual\_past\_ns \; += \; delta\_vpn$
-	\State $tsk.physical\_start\_ns \gets (now \; - \; tsk.group\_leader.freeze\_past\_ns)$
+	\State $tsk.physical\_start\_ns \gets (now \; - \; tsk.freeze\_past\_ns)$
 	\State $tsk.physical\_past\_ns \gets 0$
 	\State $tk.dilation \gets new\_tdf$
 	\State return 0
@@ -279,24 +292,30 @@ Finally, we need to cascade the update-TDF operation to all $tsk$'s children.
 \end{algorithm*}
 
 \subsection{Algorithm/Implementation for Freeze and Unfreeze}
-The \textit{threadgroup leader} deals with the freeze part of time keeping for all its members. 
-Besides, freeze and unfreeze should be done with respect to a entire process group. This design is based on two assumptions
-\begin{itemize}
-\item Freeze usually involves the entire process group. As an illustration, consider the case that we wants to freeze a container in the network emulation. Recall that container here usually plays the role of a lightweight virtual machine. Therefore when we want to freeze this container, we actually wants to freeze all the processes(usually emulates applications running inside a VM) inside this container. For example, when we freeze host $h_1$(container), we should also stop the clock of \texttt{ping}, \texttt{iperf} or other applications running inside $h1$. These applications, it turns out, have the same leader $h1$.
-\item Another more general assumption is that when a process is frozen, it is unable to query time or do anything else because it is put into $STOP$ status. 
-Under this assumption, we can ensure that every member process will access the same frozen duration.
-\end{itemize}
-So instead of let every process maintain the frozen time and, maybe, communicate with other members in the same group for consistency, we make the leader a central controller of the freeze time keeping. 
-Thus everyone can just query the leader when needed, for example, in Algorithm \ref{Alg-SetTDF} and Algorithm \ref{Alg-DilateTimeKeeping}. 
-The drawback is that we waste 16 bytes for every process other than the leader, who satisfying $tsk.group\_leader==tsk$.
+At first, we intended to let \textit{process group leader} deals with the freeze part of time keeping for all its members. Every process can just access its process group leader's frozen time when doing virtual time keeping. 
+This design would be simple and straightforward to implement if the field \texttt{group\_leader} in \texttt{task\_struct} is, by our wish and its naming, the leader/root of a process group/sub-tree. Unfortunately, it is not.\footnote{It turns out to be the thread group leader.}
 
-We must admit that the above assumptions, and thus our virtual time's freeze implementation, is highly tailored for the purpose of container based emulation. After all this is our motivation of implementing freeze/unfreeze inside virtual time. 
+Anyway, we can implement this process group leader from scratch. However, the modification for this leader may span many different source files in kernel; it may even worsen the already complicated process relationships. So far this design doesn't smells very good. Perhaps freeze/unfreeze should be restricted to per process granularity.
+
+On the other hand, freeze and unfreeze in most cases should be done with respect to a entire process group. As an illustration, consider the case that we wants to freeze a container in the network emulation. 
+Recall that container here usually plays the role of a lightweight virtual machine. Therefore when we want to freeze this container, we actually wants to freeze all the processes(usually emulates applications running inside a VM) inside this container. 
+For example, when we freeze host $h_1$(container), we should also stop the clock of \texttt{ping}, \texttt{iperf} or other applications running inside $h1$. Obviously, for applications running in $h1$, we can make $h1$ their leader.
+Doing freeze/unfreeze in group, we can ensure that every member process will access the same frozen duration.
+So instead of let every process maintain its own frozen time and, maybe, communicate with other members in the same group for consistency/synchronization, we'd better make the leader a central controller of the freeze time keeping. 
+Thus everyone can just query the leader when needed, for example, in Algorithm \ref{Alg-SetTDF} and Algorithm \ref{Alg-DilateTimeKeeping}.
+The only drawback is that we waste 16 bytes for every process other than the leader.
+
+We must admit that the above discussions, and thus our virtual time's freeze implementation, is highly tailored for the purpose of container based emulation. After all this is our motivation of implementing freeze/unfreeze inside virtual time. 
 Ideally, freeze/unfreeze should be done in the unit of per process. 
 Sometimes we need this fine granularity and sometimes it makes more sense to do it in a bundle. 
 
-The implementations for both granularity, however, appears to be somewhat similar. 
-First, after $kill$ a group of processes, we make a record of current moment; this record is used to calculate how long this group is frozen when we unfreeze it. It is a little bit subtle that when unfreeze, $kill$ operation is behind time keeping. 
-The reason is that if we resume the process group first, by any chance, an unfreeze process may be schedule to run and query time before we write the $freeze\_past\_ns$ to group leader.
+In short, how can we implement freeze/unfreeze with flexible scope as well as elegant design and implementation? 
+
+Here enters \textbf{Clock namespace}.
+
+The implementations for freeze/unfreeze is shown in Algorithm \ref{Alg-Freeze}. 
+First, after $kill$ a group of processes, we make a record of current moment; this record is used to calculate how long this group is frozen when we unfreeze it. It is a little bit subtle that when unfreeze, sending \texttt{SIGCONT} to all processes  is behind the time keeping part. 
+The reason is that if we resume the process group first, by any chance, an unfreeze process may be schedule to run and query time before we populate the $freeze\_past\_ns$ to entire container.
 
 \label{Sub-Sec-Alg-Impl-Freeze}
 \begin{algorithm*}[t]
@@ -307,14 +326,15 @@ The reason is that if we resume the process group first, by any chance, an unfre
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGSTOP, 1)}
 \State \texttt{\_\_getnstimeofday}($ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
-\State $tsk.group\_leader.freeze\_start\_ns \gets now$
+\State $tsk.freeze\_start\_ns \gets now$
 \EndFunction
 \\
 \Function{Unfreeze}{tsk}
 \State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
-\State $tsk.group\_leader.freeze\_past\_ns \; += \; now \; - \; tsk.group\_leader.freeze\_start\_ns$
+\State $tsk.group\_leader.freeze\_past\_ns \; += \; now \; - \; tsk.freeze\_start\_ns$
 \State $tsk.group\_leader.freeze\_start\_ns \gets 0$
+\State \Call{populate\_frozen\_time}{$tsk$}
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGCONT, 1)}
 \EndFunction
 \end{algorithmic}
@@ -323,13 +343,13 @@ The reason is that if we resume the process group first, by any chance, an unfre
 \subsection{Algorithm/Implementation for Virtual Time Keeping}
 Firstly, we have 2 helper functions to initialize and cleanup virtual time. 
 \begin{itemize}
-\item \texttt{clean\_up\_virtual\_time} reset all relevant variables to zero, which is also the default value for these variables when create a \texttt{task\_struct}
-\item Since physical and virtual time will fork as we enter virtual time, \texttt{init\_virtual\_time} initialize both to the current moment $now$ and then set a non-zero dilation to the process. 
+\item \texttt{clean\_up\_virtual\_time()} reset all relevant variables to zero, which is also the default value for these variables when a \texttt{task\_struct} is created.
+\item Since physical and virtual time will fork as we enter virtual time, \texttt{init\_virtual\_time()} initialize both to the current moment $now$ and then set a non-zero dilation to the process. 
 \end{itemize}
 
-Unsurprisingly, \texttt{do\_virtual\_time\_keeping} maintains virtual time including dilation and freeze. 
-It first call \texttt{update\_physical\_time} to get the physical duration since last time we request time, excluding the frozen part; then 
-\texttt{update\_virtual\_time} dilates this physical duration.
+Unsurprisingly, \texttt{do\_virtual\_time\_keeping()} maintains virtual time including dilation and freeze. 
+It first call \texttt{update\_physical\_time()} to get the physical duration since last time we request time, excluding the frozen part; then 
+\texttt{update\_virtual\_time()} dilates this physical duration.
 At the ending of both helper methods, we finish the timekeeping by updating $physical\_past\_ns$ and $virtual\_past\_ns$.
 
 \begin{algorithm*}[t]
@@ -359,11 +379,10 @@ At the ending of both helper methods, we finish the timekeeping by updating $phy
 \State $tsk.freeze\_past\_ns \gets 0$
 \EndFunction
 \\
-\Function{update\_physical\_time}{$tsk, \;ts$}\Comment{interval between }
-\State $leader \gets tsk.group\_leader$
+\Function{update\_physical\_time}{$tsk, \;ts$} 
 \State $now \gets \texttt{timespec\_to\_ns($ts$)}$
 \State $delta\_ppn \gets now \; - \; tsk.physical\_past\_ns \; - \; tsk.physical\_start\_ns$
-\State $delta\_ppn \; -= \; leader.freeze\_past\_ns$
+\State $delta\_ppn \; -= \; tsk.freeze\_past\_ns$
 \State $tsk.physical\_past\_ns \; += \; delta\_ppn$
 \State return $delta\_ppn$
 \EndFunction
@@ -394,6 +413,7 @@ At the ending of both helper methods, we finish the timekeeping by updating $phy
 Our primary motivation of virtual time system is to benefit network emulation. This section discuss issues we come across when virtual time system cooperate with other part of the operating system. This section also serve as a guideline about how virtual time's user should consider tweeting(or \textbf{NOT}) the OS in their expertise fields. 
 
 \subsection{Bypass virtual Dynamic Shared Object}
+One issue we notice is that the 64-bit Linux kernel running on Intel-based architectures provides the Virtual Dynamic Shared Object (vDSO) and the \texttt{vsyscall} mechanism to reduce the overhead of context switches caused by the frequently invoked system calls, for example, \texttt{gettimeofday()} and \texttt{time()}\cite{lwn:vdso}. Therefore, applications may bypass our virtual-time-based system calls unless we explicitly use the \texttt{syscall} function. Our solution is to disable vDSO with respect to \texttt{\_\_vdso\_gettimeofday()} in order to transparently offer virtual time to applications in the containers.
 
 \subsection{Dilate Bandwidth Rate in Traffic Control}
 One particular case related to network emulation is the usage of \texttt{tc}, a network quality-of-service control module in Linux\cite{trafficcontrol}. 
