@@ -161,7 +161,7 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
                 /* tsk's freeze_past_nsec is either its own or populated */
                 delta_ppn -= tsk->freeze_past_nsec;
 		
-                delta_vpn = div_64_rem(delta_ppn * 1000, old_tdf, &rem);
+                delta_vpn = div_s64_rem(delta_ppn * 1000, old_tdf, &rem);
 		tsk->virtual_past_nsec += delta_vpn;
 
 		/* new physcial_start_nsec from now on */
