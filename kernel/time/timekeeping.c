@@ -299,24 +299,17 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 {
 	s64 now;
 	s64 delta_ppn; // delta physical_past_nsec
-	struct task_struct *leader;
 
-	leader = current->group_leader;
 	now = timespec_to_ns(ts);
 	delta_ppn = now;
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
-	
+
         /**
          * substract freezed time
-         * @current either ==leader or not
-	 * only READ group leader's fields
          */
 	delta_ppn -= current->freeze_past_nsec;
-        /*delta_ppn -= leader->freeze_past_nsec;*/
-	printk("[VT] process %d's leader %d has %lldns frozen time\n", current->pid, leader->pid, leader->freeze_past_nsec);
-        printk("[VT] process %d substruct %lldns frozen time by itself\n", current->pid, current->freeze_past_nsec);
-
+        
 	current->physical_past_nsec += delta_ppn;
 	return delta_ppn;
 }
@@ -329,14 +322,19 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 {
 	s32 rem;
 	s64 delta_vpn; // delta virtual_past_nsec
-	// actual dilation in the range of (0,100], but "1000==1"
-	if( tdf > 0 && tdf <= 100000 ) {
-		// go through following calculations even if TDF=1
-		delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
-		// Accuracy of s64 for nanoseconds:
-		// 2^63ns > 9*10^18ns => 9*10^9s
-		// To guarantee (physical_past_nsec * 1000) won't overflow:
-		// 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
+
+	/** 
+         * Actual dilation in the range of (0,100], but "1000==1".
+	 * Go through following calculations even if TDF=1.
+         */
+        if( tdf > 0 && tdf <= 100000 ) {	
+                /** 
+                 * Accuracy of s64 for nanoseconds:
+		 * 2^63ns > 9*10^18ns => 9*10^9s
+		 * To guarantee (physical_past_nsec * 1000) won't overflow:
+		 * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
+                 */
+		delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);	
 		current->virtual_past_nsec += delta_vpn;
 	}
 }
@@ -369,7 +367,7 @@ static void do_virtual_time_keeping(struct timespec* ts)
 				/*current->virtual_past_nsec,*/
 				/*current->physical_past_nsec);*/
 
-		// update __getnstimeofday's return ts
+		// update __getnstimeofday's return @ts
 		ts->tv_sec = virtual_ts.tv_sec;
 		ts->tv_nsec = virtual_ts.tv_nsec;
 	}

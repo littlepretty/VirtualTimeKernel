@@ -117,31 +117,32 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 }
 
 /*
- * Change a process's time dilation factor
- * Operation fail when @dilation is less than 0
- * Since @tsk should be a (thread) group leader, 
+ * Change a process's time dilation factor, fail when @dilation < 0
+ * Since @tsk should be the root of a process subtree(host in emulation)
  * it's his job to set/update all its children's dilation
  */
 int set_dilation(struct task_struct *tsk, int new_tdf)
 {
 	struct timespec ts;
 	s64 now, delta_ppn, delta_vpn, vsn;
+        s32 rem;
 	int old_tdf;
+        struct list_head *list;
         struct task_struct *child;	
 	
-        // save anything we may need
+        /* save anything we may need */
 	old_tdf = tsk->dilation;
 	vsn = tsk->virtual_start_nsec;
-	if (old_tdf == new_tdf) { // no need to do anything
+	if (old_tdf == new_tdf) { /* no need to do anything */
 		return 0;
 	}
-        if (old_tdf == 0) { // enter virtual time
+        if (old_tdf == 0) { /* enter virtual time */
 		init_virtual_start_time(tsk, new_tdf);
-	} else if (new_tdf == 0) { // exit virtual time
+	} else if (new_tdf == 0) { /* exit virtual time */
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
 		tsk->virtual_past_nsec = 0;	
-	} else if (old_tdf != 0 && new_tdf > 0) { // already in virtual time	
+	} else if (old_tdf != 0 && new_tdf > 0) { /* already in virtual time */
 		/* reset virtual_start so that we can get original time */
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
@@ -149,21 +150,21 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 		__getnstimeofday(&ts);
 		now = timespec_to_ns(&ts);
 		
-		// virtual_start_nsec remains the same
+		/* virtual_start_nsec remains the same */
 		tsk->virtual_start_nsec = vsn;
 
-		// advance virtual_past_nsec
+		/* advance virtual_past_nsec */
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
 		delta_ppn -= tsk->physical_start_nsec;
 
-                // tsk's freeze_past_nsec is either its own or populated
+                /* tsk's freeze_past_nsec is either its own or populated */
                 delta_ppn -= tsk->freeze_past_nsec;
 		
-                delta_vpn = delta_ppn * 1000 / old_tdf;
+                delta_vpn = div_64_rem(delta_ppn * 1000, old_tdf, &rem);
 		tsk->virtual_past_nsec += delta_vpn;
 
-		// new physcial_start_nsec from now on
+		/* new physcial_start_nsec from now on */
 		tsk->physical_start_nsec = now;	
 		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
                 tsk->physical_past_nsec = 0;
@@ -171,12 +172,13 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 	} else {
 		return -EINVAL;
 	}
-        /**
-         * Recursive part
-         */
-        list_for_each_entry(child, &(tsk->children), children) {
+        
+        /* recursive part, downward process subtree */
+        list_for_each(list, &(tsk->children)) {
+                child = list_entry(list, struct task_struct, sibling);
                 set_dilation(child, new_tdf);
         }
+
         return 0;
 }
 EXPORT_SYMBOL(set_dilation);
@@ -189,7 +191,7 @@ void freeze_time(struct task_struct *tsk)
 	struct timespec ts;
 	s64 now;
 	
-        // signal STOP to freeze this @tsk's children
+        /* signal STOP to freeze this @tsk's children */
 	kill_pgrp(task_pgrp(tsk), SIGSTOP, 1);
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
@@ -197,15 +199,26 @@ void freeze_time(struct task_struct *tsk)
 }
 EXPORT_SYMBOL(freeze_time);
 
+/**
+ * FIXME: for now just populate downward
+ * How to populate to parent && grandparent ...?
+ */
 static void populate_frozen_time(struct task_struct *tsk)
 {
+        struct list_head *list;
         struct task_struct *child;
+        char comm[TASK_COMM_LEN];
 
-        list_for_each_entry(child, &(tsk->children), children) {
+        list_for_each(list, &(tsk->children)) {
+                child = list_entry(list, struct task_struct, sibling);
                 child->freeze_past_nsec = tsk->freeze_past_nsec;
+                get_task_comm(comm, child);
+                comm[TASK_COMM_LEN-1] = 0;
+                printk("[VT] %d populates %lldns frozen time to %s[%d]\n", tsk->pid, child->freeze_past_nsec, comm, child->pid);
                 populate_frozen_time(child);
-        }
+        } 
 }
+
 /**
  * Unfreeze a group of processes, only call on group leader
  **/
@@ -218,13 +231,10 @@ void unfreeze_time(struct task_struct *tsk)
 	now = timespec_to_ns(&ts);
 	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
 	tsk->freeze_start_nsec = 0;
-        /**
-         * FIXME: for now just populate downward
-         * How to populate to parent && grandparent ...?
-         */
+
         populate_frozen_time(tsk);
 
-	// signal CONTINUE to unfreeze @tsk's children
+	/* signal CONTINUE to unfreeze @tsk's children */
 	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);
