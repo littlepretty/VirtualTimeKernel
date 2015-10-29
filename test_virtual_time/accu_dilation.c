@@ -11,17 +11,18 @@
 unsigned long elapsed[NR_ACCU_ROUND];
 unsigned long dilated_elapsed[NR_ACCU_ROUND];
 
-void fill_elapsed(int factor)
+void fill_elapsed(int duration)
 {
         struct timeval prev, next, diff, temp;
         int ret;
         long int i, j, usec;
 
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
-                gettimeofday(&prev, NULL); 
-                for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        /*gettimeofday(&temp, NULL);*/
-                }
+                gettimeofday(&prev, NULL);
+                usleep(duration);
+                /*for (j = 0; j < CNT_SLEEP * factor; ++j) {*/
+                        /*[>gettimeofday(&temp, NULL);<]*/
+                /*}*/
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
@@ -29,7 +30,7 @@ void fill_elapsed(int factor)
         }
 }
 
-void fill_dilated_elapsed(int dil, int factor)
+void fill_dilated_elapsed(int dil, int duration)
 {
         struct timeval prev, next, diff, temp;
         int ret;
@@ -42,9 +43,10 @@ void fill_dilated_elapsed(int dil, int factor)
 
         for (i = 0; i < NR_ACCU_ROUND; ++i) {
                 gettimeofday(&prev, NULL);
-                for (j = 0; j < CNT_SLEEP * factor; ++j) {
-                        /*gettimeofday(&temp, NULL);*/
-                }
+                usleep(duration);
+                /*for (j = 0; j < CNT_SLEEP * factor; ++j) {*/
+                        /*[>gettimeofday(&temp, NULL);<]*/
+                /*}*/
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
@@ -74,13 +76,13 @@ void actual_dilation(FILE* output, int dil, float per_accu, int err_accu)
 
 int main(int argc, char* const argv[])
 {
-        const char* const short_options = "t:edpf:b:o:";
+        const char* const short_options = "t:edpu:b:o:";
         const struct option long_options[] = {
                 {"tdf", 1, NULL, 't'},
                 {"elapsed", 0, NULL, 'e'},
                 {"dilated", 0, NULL, 'd'},
                 {"print", 0, NULL, 'p'},
-                {"factor", 1, NULL, 'f'},
+                {"duration", 1, NULL, 'u'},
                 {"bound", 1, NULL, 'b'},
                 {"output", 1, NULL, 'o'},
                 {NULL, 0, NULL, 0},
@@ -90,7 +92,7 @@ int main(int argc, char* const argv[])
         int run_dilated = 0;
         int print_dil = 0;
         int dilation = 1;
-        int factor = 1;
+        int duration = 1000;
         int err_usec = 900; // error bound in micro seconds
         char *output_filename;
         FILE *output_stream;
@@ -111,8 +113,8 @@ int main(int argc, char* const argv[])
                         if (run_elapsed == 1 && run_dilated == 1)
                                 print_dil = 1;
                         break;
-                case 'f':
-                        factor = atoi(optarg);
+                case 'u':
+                        duration = atoi(optarg);
                         break;
                 case 'b':
                         err_usec = atoi(optarg);
@@ -124,14 +126,14 @@ int main(int argc, char* const argv[])
                         /*printf("invalid input parameters\n");*/
                         break;
                 default:
-                        printf("Usage: accu_dilation -t tdf [-e] [-d] [-p] -f factor\n");
+                        printf("Usage: accu_dilation -t tdf -u duration [-e] [-d] [-p]\n");
                         exit(1);
                 }
         } while(next_option != -1);
         
-        if (run_elapsed) fill_elapsed(factor);
+        if (run_elapsed) fill_elapsed(duration);
         /*printf("Run fill_elapsed() parameters\n");  */
-        if (run_dilated) fill_dilated_elapsed(dilation, factor);
+        if (run_dilated) fill_dilated_elapsed(dilation, duration);
         /*printf("Run fill_dilated_elapsed() parameters\n"); */        
         if (print_dil) {
                 output_stream = fopen(output_filename, "w");
