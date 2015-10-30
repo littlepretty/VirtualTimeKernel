@@ -327,7 +327,7 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
          * Actual dilation in the range of (0,100], but "1000==1".
 	 * Go through following calculations even if TDF=1.
          */
-        if( tdf > 0 && tdf <= 100000 ) {	
+        if(tdf > 0 && tdf <= 100000) {	
                 /** 
                  * Accuracy of s64 for nanoseconds:
 		 * 2^63ns > 9*10^18ns => 9*10^9s
@@ -347,7 +347,7 @@ static void do_virtual_time_keeping(struct timespec* ts)
 	int tdf;
 
 	// make sure vt has been initialized
-	if ( current->virtual_start_nsec > 0 ) {
+	if (current->virtual_start_nsec > 0) {
 		// if current use virtual time
 		tdf = current->dilation;
 		delta_ppn = update_physical_past_nsec(ts);

@@ -12,21 +12,13 @@ void run_long_loop(int vt_opt, int duration)
         int ret;
         long int i, usec;
 
-        if (vt_opt) { 
-                virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
-                /*pid_t pgid = setsid();*/
-                /*printf("new pgid = %d\t", pgid);*/
-        } else {
-                /*printf("without virtual time\n");*/
-        }
+        if (vt_opt) virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
 
-        /*pid_t pid = getpid();*/
-        /*printf("****** Process[%d] to be freezed ******\n", pid); */
         gettimeofday(&prev, NULL);
-        // sleep(duration);
-        for ( i = 0; i < duration * CNT_SLEEP; ++i) {
-                gettimeofday(&temp, NULL);
-        }
+        usleep(duration);
+        /*for ( i = 0; i < duration * CNT_SLEEP; ++i) {*/
+                /*gettimeofday(&temp, NULL);*/
+        /*}*/
         gettimeofday(&next, NULL);
         timeval_substract(&diff, &next, &prev);
         usec = timeval_to_usec(diff);
@@ -56,7 +48,7 @@ int main(int argc, char* argv[])
                         case -1:
                                 break;
                         default:
-                                printf("Usage: %s [-v]\n", argv[0]);
+                                printf("Usage: %s -d microseconds [-v]\n", argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);

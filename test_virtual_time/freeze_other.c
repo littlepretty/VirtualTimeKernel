@@ -9,19 +9,17 @@
 void issue_freeze(pid_t pid, int wait, int pause)
 {
         usleep(wait);
+
         freeze_proc(pid);
-        /*show_proc_dilation(pid);*/
-        /*show_proc_freeze(pid);*/
         usleep(pause);
         unfreeze_proc(pid);
-        /*show_proc_freeze(pid);*/
-        /*printf("%d\t", pause);*/
 }
 
 int main(int argc, char** argv)
 {
         int pid_found, opt, index, i;
-        int wait, freeze; // wait @wait seconds and then freeze @freeze seconds
+        /* wait @wait seconds and then freeze @freeze seconds */
+        int wait, freeze; 
         int pid;
         const char* const short_options = "np:w:f:";
         const struct option long_options[] = {

@@ -120,8 +120,8 @@ int main(int argc, char* const argv[])
                         err_usec = atoi(optarg);
                         break;
                 case 'o':
-                        output_filename = malloc(sizeof(optarg));
-                        strcpy(output_filename, optarg); 
+                        output_filename = malloc(sizeof(optarg) + 1);
+                        strcpy(output_filename, optarg);
                 case -1:
                         /*printf("invalid input parameters\n");*/
                         break;
