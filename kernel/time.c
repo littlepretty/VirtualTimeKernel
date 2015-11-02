@@ -215,10 +215,10 @@ static void populate_frozen_time(struct task_struct *tsk)
                 /*
                  * Debug usage only
                  */
-                // char comm[TASK_COMM_LEN]; put me outside the loop!!!
-                // get_task_comm(comm, child);
-                // comm[TASK_COMM_LEN-1] = 0;
-                // printk("[VT] %d populates %lldns frozen time to %d\n", tsk->pid, child->freeze_past_nsec, child->pid);
+                char comm[TASK_COMM_LEN]; put me outside the loop!!!
+                get_task_comm(comm, child);
+                comm[TASK_COMM_LEN-1] = 0;
+                printk("[VT] %d populates %lldns frozen time to %d\n", tsk->pid, child->freeze_past_nsec, child->pid);
 
                 populate_frozen_time(child);
         }
