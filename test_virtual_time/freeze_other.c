@@ -3,66 +3,63 @@
 #include <time.h>
 #include <getopt.h>
 #include <string.h>
+#include <signal.h>
 
 #include "vtutil.h"
 
-void issue_freeze(pid_t pid, int wait, int pause)
-{
-        usleep(wait);
+extern pipe_fd[2];
 
-        freeze_proc(pid);
-        usleep(pause);
-        unfreeze_proc(pid);
+void sigint_handler(int dummy)
+{
+        close(pipe_fd[0]);
+}
+
+void issue_freeze(int pause)
+{
+        char pid_str[PID_MAX_LEN];
+        pid_t pid;
+        ssize_t num_read = 0;
+
+        while (1) {
+                close(pipe_fd[1]);
+                num_read = read(pipe_fd[0], pid_str, PID_MAX_LEN);
+                if (num_read > 0) {
+                        pid = atoi(pid_str);
+                        printf("to freeze %d\n", pid);
+                        freeze_proc(pid);
+                        usleep(pause);
+                        unfreeze_proc(pid);
+                }
+        }
 }
 
 int main(int argc, char** argv)
 {
-        int pid_found, opt, index, i;
-        /* wait @wait seconds and then freeze @freeze seconds */
-        int wait, freeze; 
-        int pid;
-        const char* const short_options = "np:w:f:";
-        const struct option long_options[] = {
-                {"nop", 0, 0, 0},
-                {"pid", 1, 0, 0},
-                {"wait", 1, 0, 0},
-                {"freeze", 1, 0, 0}
-        };
+        int opt, index, i;
+        int freeze; /* freeze @freeze seconds */  
+        const char* const short_options = "f:";
 
-        /*
-         * default values
-         */
-        pid_found = 0;
-        wait = 100; // 100us
         freeze = 10000; // 10ms
         do {
-                opt = getopt_long(argc, argv, short_options, long_options, NULL);
+                opt = getopt(argc, argv, short_options);
                 switch (opt) {
-                        case 'n': 
-                                break;
-                        case 'p':
-                                pid_found = 1;
-                                pid = atoi(optarg);
-                                break;
-                        case 'w':
-                                wait = atoi(optarg);
-                                break;
                         case 'f':
                                 freeze = atoi(optarg);
                                 break;
                         case -1:
                                 break;
                         default:
-                                printf("Usage: %s -w wait_microsecs -f freeze_microsecs -p pid\n", argv[0]);
+                                printf("Usage: %s -f freeze(microsecs) \n", argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);
 
-        if ( pid_found == 1 ) {
-                /*printf("gonna freeze process[%d] %d seconds\n", pid, freeze);*/
-                /*printf("but wait %d microseconds\n", wait);*/
-                issue_freeze(pid, wait, freeze);
-        }
+        /*printf("gonna freeze process[%d] %d seconds\n", pid, freeze);*/
+        /*printf("but wait %d microseconds\n", wait);*/
+
+        signal(SIGINT, sigint_handler);
+        issue_freeze(freeze);
+        
         return 0;
 }
 
