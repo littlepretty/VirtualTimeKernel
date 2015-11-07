@@ -2,47 +2,48 @@
 #include <stdio.h>
 #include <time.h>               // for timeval
 #include <unistd.h>             // for getpid()
+#include <string.h>
+#include <signal.h>
+#include <fcntl.h>
 
 #include "vtutil.h"
 
 struct timeval prev, next, diff, temp;
 
-extern int pipe_fd[2];
-
-void freeze_me_loop(int vt_opt, int pause_interval, int repetition)
+void freeze_me_loop(pid_t server_pid, int pause_interval, int repetition)
 {
         long int usec, i;
-        int pause_flage;
         pid_t pid;
         char pid_str[PID_MAX_LEN];
+        int server_fd;
+        struct timespec wait_ts = {.tv_sec = 0, .tv_nsec = 100};
+        struct timespec rem;
 
-        if (vt_opt) virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
+        virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
 
         pid = getpid();
         sprintf(pid_str, "%d", pid);
+        umask(0);
+        server_fd = open(FREEZE_FIFO, O_WRONLY);
+        write(server_fd, pid_str, strlen(pid_str)); /* write my pid */
+        
         for (i = 0; i < repetition; ++i) {
                 usleep(pause_interval);
-
+ 
                 gettimeofday(&prev, NULL);
+                printf("[freeze_me] GTOD 1\n");  
                 
-                // write my pid to PIPE[1]
-
-                write(pipe_fd[1], pid_str, PID_MAX_LEN);
-
+                kill(server_pid, SIGUSR1);
+                nanosleep(&wait_ts, &rem);
                 
-                /*usleep(duration);*/
-                /*for ( i = 0; i < duration * CNT_SLEEP; ++i) {*/
-                        /*gettimeofday(&temp, NULL);*/
-                /*}*/
-
+                printf("[freeze_me] GTOD 2\n"); 
                 gettimeofday(&next, NULL);
-
+                
                 timeval_substract(&diff, &next, &prev);
                 usec = timeval_to_usec(diff);
                 
-                printf("%ld\n", usec);
+                printf("%ld\n", usec); /* log error */
         }
-        close(pipe_fd[1]); /* feed reader EOF */
 }
 
 /*
@@ -52,18 +53,16 @@ void freeze_me_loop(int vt_opt, int pause_interval, int repetition)
  */
 int main(int argc, char* argv[])
 { 
-        const char* short_options = "vr:i:";
-        int opt, virtual_time_flag, repetition, interval;
+        const char* short_options = "s:r:i:";
+        int opt, repetition, interval, server_pid;
 
-        virtual_time_flag = 0;
         repetition = 0;
         interval = 1000;
         do {
                 opt = getopt(argc, argv, short_options);
                 switch (opt) {
-                        case 'v':
-                                virtual_time_flag = 1;
-                                break;
+                        case 's':
+                                server_pid = atoi(optarg);
                         case 'r':
                                 repetition = atoi(optarg);
                                 break;
@@ -72,16 +71,12 @@ int main(int argc, char* argv[])
                         case -1:
                                 break;
                         default:
-                                printf("Usage: %s -i interval -r repeats [-v]\n", argv[0]);
+                                printf("Usage: %s -i interval -r repeats\n", argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);
 
-        if (pipe(pipe_fd) == -1) {
-                printf("create pipe error\n");
-                exit(1);
-        }
-        freeze_me_loop(virtual_time_flag, interval, repetition);
+        freeze_me_loop(server_pid, interval, repetition);
                 
         return 0;
 }

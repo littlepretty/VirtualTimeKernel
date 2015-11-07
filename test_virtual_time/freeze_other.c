@@ -4,52 +4,68 @@
 #include <getopt.h>
 #include <string.h>
 #include <signal.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "vtutil.h"
 
-extern pipe_fd[2];
+pid_t pid;
+int freeze_duration;
 
-void sigint_handler(int dummy)
+void sigint_handler(int signum)
 {
-        close(pipe_fd[0]);
+        printf("Exit freeze daemon\n");
+        exit(0);
 }
 
-void issue_freeze(int pause)
+void issue_freeze(int signum)
 {
-        char pid_str[PID_MAX_LEN];
-        pid_t pid;
-        ssize_t num_read = 0;
+        if (pid != -1) {
+                printf("[freeze other] freeze %d\n", pid);
+                freeze_proc(pid);
+                usleep(freeze_duration);
+                unfreeze_proc(pid);
+                printf("[freeze other] unfreeze %d\n", pid);
+        }
+}
 
+void get_pid_from_fifo()
+{
+        int server_fd;
+        ssize_t num_read;
+        char pid_str[PID_MAX_LEN];
+
+        umask(0);
+        mkfifo(FREEZE_FIFO, S_IRUSR | S_IWUSR | S_IWGRP);
+        server_fd = open(FREEZE_FIFO, O_RDONLY); /* block until freeze_me also open */
+        num_read = read(server_fd, pid_str, PID_MAX_LEN);
+        if (num_read > 0) {
+                pid = atoi(pid_str);
+                printf("[freeze other] got pid %d from %s\n", pid, pid_str);
+        }
         while (1) {
-                close(pipe_fd[1]);
-                num_read = read(pipe_fd[0], pid_str, PID_MAX_LEN);
-                if (num_read > 0) {
-                        pid = atoi(pid_str);
-                        printf("to freeze %d\n", pid);
-                        freeze_proc(pid);
-                        usleep(pause);
-                        unfreeze_proc(pid);
-                }
+                /* wait for signal from freeze_me */
         }
 }
 
 int main(int argc, char** argv)
 {
-        int opt, index, i;
-        int freeze; /* freeze @freeze seconds */  
+        int opt, index, i;  
         const char* const short_options = "f:";
 
-        freeze = 10000; // 10ms
+        pid = -1;
+        freeze_duration = 10000; // 10ms
         do {
                 opt = getopt(argc, argv, short_options);
                 switch (opt) {
                         case 'f':
-                                freeze = atoi(optarg);
+                                freeze_duration = atoi(optarg);
                                 break;
                         case -1:
                                 break;
                         default:
-                                printf("Usage: %s -f freeze(microsecs) \n", argv[0]);
+                                printf("Usage: %s -f value(microsecs) \n", argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);
@@ -58,7 +74,10 @@ int main(int argc, char** argv)
         /*printf("but wait %d microseconds\n", wait);*/
 
         signal(SIGINT, sigint_handler);
-        issue_freeze(freeze);
+        if (signal(SIGUSR1, issue_freeze) == SIG_ERR) {
+                printf("[freeze other] install SIGUSR1 handler fail\n");
+        }
+        get_pid_from_fifo();
         
         return 0;
 }

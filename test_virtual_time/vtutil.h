@@ -23,7 +23,7 @@
 )
 
 #define PID_MAX_LEN 7
-int pipe_fd[2]; /* pipe file descriptor in freeze test */
+#define FREEZE_FIFO "/tmp/freeze_fifo" /* named pipe key in freeze test */
 
 // general helpers
 int check_syscall_status(int ret, char* sys_cl_nm);

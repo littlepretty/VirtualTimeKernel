@@ -56,5 +56,5 @@ rm_vt_module:
 	sudo rmmod virtual_time_module
 
 clean:
-	rm freeze_all_procs accu_dilation time_long_loop freeze_other ovhd_dilation ovhd_set_dilation *.o
+	rm freeze_all_procs accu_dilation freeze_me freeze_other ovhd_dilation ovhd_set_dilation *.o
 
