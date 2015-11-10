@@ -358,6 +358,7 @@ Unsurprisingly, \texttt{do\_virtual\_time\_keeping()} maintains virtual time inc
 It first call \texttt{update\_physical\_time()} to get the physical duration since last time we request time, excluding the frozen part; then 
 \texttt{update\_virtual\_time()} dilates this physical duration.
 At the ending of both helper methods, we finish the timekeeping by updating $physical\_past\_ns$ and $virtual\_past\_ns$.
+As an example, we show in system call \texttt{gettimeofday} the way to dilate system's wall clock time. 
 
 \begin{algorithm*}[t]
 \caption{Time Dilation Algorithm}%: Dilate \texttt{ts} if a current process uses virtual clock}
@@ -417,12 +418,33 @@ At the ending of both helper methods, we finish the timekeeping by updating $phy
 \end{algorithm*}
 
 \section{Miscellaneous Parts}
-Our primary motivation of virtual time system is to benefit network emulation. This section discuss issues we come across when virtual time system cooperate with other part of the operating system. This section also serve as a guideline about how virtual time's user should consider tweeting(or \textbf{NOT}) the OS in their expertise fields. 
+Our primary motivation of virtual time system is to benefit network emulation. This section discuss issues we come across when virtual time system cooperate with other part of the operating system (even sometimes, mingling with applications is necessary). This section also serve as a guideline about how virtual time's user should consider tweeting(or \textbf{NOT}) the OS kernel in their expertise fields. 
 
 \subsection{Bypass virtual Dynamic Shared Object}
-One issue we notice is that the 64-bit Linux kernel running on Intel-based architectures provides the Virtual Dynamic Shared Object (vDSO) and the \texttt{vsyscall} mechanism to reduce the overhead of context switches caused by the frequently invoked system calls, for example, \texttt{gettimeofday()} and \texttt{time()}\cite{lwn:vdso}. Therefore, applications may bypass our virtual-time-based system calls unless we explicitly use the \texttt{syscall} function. Our solution is to disable vDSO with respect to \texttt{\_\_vdso\_gettimeofday()} in order to transparently offer virtual time to applications in the containers.
+One issue we notice is that the 64-bit Linux kernel running on Intel-based architectures provides the Virtual Dynamic Shared Object (vDSO) and the \texttt{vsyscall} mechanism to reduce the overhead of context switches caused by the frequently invoked system calls, for example, \texttt{gettimeofday()} and \texttt{time()}\cite{lwn:vdso}. Therefore, applications may bypass our virtual-time-based system calls unless we explicitly use the \texttt{syscall} function. Our solution is to disable vDSO with respect to \texttt{\_\_vdso\_gettimeofday()} in order to transparently offer virtual time to applications in the containers. However, as we seen in the very next subsection, sometimes it is necessary to mingle with application so that the application's time goes with virtual clock.
 
 \subsection{Inconsistent Time}
+Let's start with a widely used application in network emulation: \texttt{ping}. 
+The goal of \texttt{ping} is simply estimate the \textbf{network delay} without affected by the processing delay on host ends. 
+Basically, it\cite{iputils:ping} works by sending and receiving \textit{ICMP} packet with \texttt{SOCK\_RAW} socket\cite{linux:man:socket} in the communication domain of \textit{IPV4} network layer protocol\footnote{Format \texttt{AF\_INET} for IPV4 \texttt{ping}}. 
+
+By using raw socket that providing raw access to network layer, \texttt{ping} can bypass transport layer processing so that it can directly and manually parse the receiving ICMP packet.
+As a result, at the sending side, ping-sender will fill only 8 bytes of the data portion with the Unix \texttt{timeval}, which the sender obtained from system call \texttt{gettimeofday()}. 
+Along with the process ID and an ascending sequencing number, this very tiny \texttt{ICMP ECHO REQUEST} packet will be handed to IP layer. 
+
+Correspondingly, the receiving side receives a message from the raw socket. This message are sometimes called ancillary data because it is not a part of the socket's payload but a sequence of \texttt{cmsghdr} structure with appended data\cite{linux:man:cmsg}. Ideally, \texttt{ping} should parse this raw message to decide if it belongs to itself and calculate latency by querying system time again and subtract it from sending time extracted from the ICMP packet.
+
+So far everything goes perfectly for both sender and receiver applications. 
+If in an virtual time emulation where all the hosts are using virtual time, since applications inherit ``virtual time" from hosts, any \texttt{gettimeofday()} system call mentioned above are covered by virtual time subsystem. 
+Therefore the measured delay should be either dilated (by TDF) or adjusted (subtract frozen time in the case of freeze/unfreeze).
+However, in our benchmark experiments, if we freeze ping for 1 second, the network delay will increase 1 second very time freeze/unfreeze pair occurs. In other words, either the sending or the receiving side is not using virtual time. 
+
+The reason lies in just one line of code: \texttt{ping} set the \texttt{SO\_TIMESTAMP} option unless the user want to see \textbf{full user-to-user latency}. 
+With \texttt{SO\_TIMESTAMP} option on, socket will report the time stamp via \texttt{recvmsg()} in the control message as struct \texttt{timeval}\footnote{Higher resolution time stamp in nanoseconds is possible with \texttt{SO\_TIMESTAMPNS} option. Moreover, general timestamping(\texttt{SO\_TIMESTAMPING}) can be done on reception, transmission or both with multiple timestamp sources}.
+More specifically, when raw socket (\texttt{raw\_prot}'s virtual function \texttt{raw\_recvmsg()}) is receiving a packet $skb$ from \texttt{skb\_recv\_datagram()}, 
+\texttt{\_\_sock\_recv\_timestamp()} will query system time if any of \texttt{SO\_TIMESTAMP}, \texttt{SO\_TIMESTAMPNS} or \texttt{SO\_TIMESTAMPING} flags is set in socket options. 
+Time returned by \texttt{ktime\_get\_real()} will be put inside the \texttt{SCM\_TIMESTAMP} filed at \texttt{SOL\_SOCKET} level in the receiving message's ancillary data, e.g. \texttt{CMG} sequence.
+\texttt{ping} knows this timestamping feature in socket and prefers this time value embedded inside socket message to getting time by itself when calculating round trip time.
 
 
 \subsection{Dilate Bandwidth Rate in Traffic Control}
