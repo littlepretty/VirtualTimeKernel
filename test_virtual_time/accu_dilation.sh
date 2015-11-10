@@ -48,6 +48,5 @@ done
 
 # ./plot_cdf.py --input "accu_dilation_${dil}.log" --dilation $dil -l1 'No dilation' -l2 "Dilation=${dil}" --topic "accu_dilation_${dil}"
 
-
-
+rm accu_dilation
 

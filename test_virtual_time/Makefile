@@ -35,8 +35,8 @@ freeze_all_procs: vtutil.o freeze_all_procs.c accu_freeze freeze_all_procs.sh
 accu_dilation: vtutil.o accu_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) accu_dilation.c $< -o $@
 
-accu_freeze: vtutil.o time_long_loop.c freeze_other.c accu_freeze.sh
-	$(CC) $(INCLUDE) $(PTHREAD) time_long_loop.c $< -o time_long_loop 
+accu_freeze: vtutil.o freeze_me.c freeze_other.c accu_freeze.sh
+	$(CC) $(INCLUDE) $(PTHREAD) freeze_me.c $< -o freeze_me 
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_other.c $< -o freeze_other 
 
 ovhd_dilation: vtutil.o ovhd_dilation.c
@@ -56,5 +56,5 @@ rm_vt_module:
 	sudo rmmod virtual_time_module
 
 clean:
-	rm freeze_all_procs accu_dilation time_long_loop freeze_other ovhd_dilation ovhd_set_dilation *.o
+	rm freeze_all_procs accu_dilation freeze_me freeze_other ovhd_dilation ovhd_set_dilation *.o
 

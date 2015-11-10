@@ -22,6 +22,9 @@
         CLONE_NEWNET		\
 )
 
+#define PID_MAX_LEN 7
+#define FREEZE_FIFO "/tmp/freeze_fifo" /* named pipe key in freeze test */
+
 // general helpers
 int check_syscall_status(int ret, char* sys_cl_nm);
 long int timeval_to_usec(struct timeval tv);
