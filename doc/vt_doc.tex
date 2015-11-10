@@ -315,25 +315,32 @@ Here enters \textbf{Clock namespace}.
 
 The implementations for freeze/unfreeze is shown in Algorithm \ref{Alg-Freeze}. 
 First, after $kill$ a group of processes, we make a record of current moment; this record is used to calculate how long this group is frozen when we unfreeze it. It is a little bit subtle that when unfreeze, sending \texttt{SIGCONT} to all processes  is behind the time keeping part. 
-The reason is that if we resume the process group first, by any chance, an unfreeze process may be schedule to run and query time before we populate the $freeze\_past\_ns$ to entire container.
+The reason is that if we resume the process group first, by any chance, an unfreeze process may be schedule to run and possibly query time before we populate the $freeze\_past\_ns$ to entire container.
 
 \label{Sub-Sec-Alg-Impl-Freeze}
 \begin{algorithm*}[t]
 \caption{Freeze and Unfreeze Process}
 \label{Alg-Freeze}
 \begin{algorithmic}[1]
-\Function{Freeze}{tsk}
+\Function{Freeze}{$tsk$}
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGSTOP, 1)}
 \State \texttt{\_\_getnstimeofday}($ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
 \State $tsk.freeze\_start\_ns \gets now$
 \EndFunction
 \\
-\Function{Unfreeze}{tsk}
+\Function{populate\_frozen\_time}{$tsk$}
+\ForAll{$child$ of $tsk$}
+	\State $child.freeze\_past\_nsec \gets tsk.freeze\_past\_nsec$
+	\State \Call{populate\_frozen\_time}{$child$}
+\EndFor
+\EndFunction
+\\
+\Function{Unfreeze}{$tsk$}
 \State \texttt{\_\_getnstimeofday}(\&$ts$)\Comment{\texttt{timespec} $ts$}
 \State $now \gets$ \texttt{timespec\_to\_ns}($ts$)
-\State $tsk.group\_leader.freeze\_past\_ns \; += \; now \; - \; tsk.freeze\_start\_ns$
-\State $tsk.group\_leader.freeze\_start\_ns \gets 0$
+\State $tsk.freeze\_past\_ns \; += \; now \; - \; tsk.freeze\_start\_ns$
+\State $tsk.freeze\_start\_ns \gets 0$
 \State \Call{populate\_frozen\_time}{$tsk$}
 \State \texttt{kill\_pgrp(task\_pgrp($tsk$), SIGCONT, 1)}
 \EndFunction
@@ -414,6 +421,9 @@ Our primary motivation of virtual time system is to benefit network emulation. T
 
 \subsection{Bypass virtual Dynamic Shared Object}
 One issue we notice is that the 64-bit Linux kernel running on Intel-based architectures provides the Virtual Dynamic Shared Object (vDSO) and the \texttt{vsyscall} mechanism to reduce the overhead of context switches caused by the frequently invoked system calls, for example, \texttt{gettimeofday()} and \texttt{time()}\cite{lwn:vdso}. Therefore, applications may bypass our virtual-time-based system calls unless we explicitly use the \texttt{syscall} function. Our solution is to disable vDSO with respect to \texttt{\_\_vdso\_gettimeofday()} in order to transparently offer virtual time to applications in the containers.
+
+\subsection{Inconsistent Time}
+
 
 \subsection{Dilate Bandwidth Rate in Traffic Control}
 One particular case related to network emulation is the usage of \texttt{tc}, a network quality-of-service control module in Linux\cite{trafficcontrol}. 
