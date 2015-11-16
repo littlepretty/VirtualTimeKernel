@@ -116,11 +116,11 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 	return 0;
 }
 
-/*
+/**
  * Change a process's time dilation factor, fail when @dilation < 0
  * Since @tsk should be the root of a process subtree(host in emulation)
  * it's his job to set/update all its children's dilation
- */
+ **/
 int set_dilation(struct task_struct *tsk, int new_tdf)
 {
 	struct timespec ts;
@@ -167,13 +167,14 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 		/* new physcial_start_nsec from now on */
 		tsk->physical_start_nsec = now;	
 		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
+                
                 tsk->physical_past_nsec = 0;
 		tsk->dilation = new_tdf;
 	} else {
 		return -EINVAL;
 	}
         
-        /* recursive part, downward process subtree */
+        /* recursive part, downward process-subtree */
         list_for_each(list, &(tsk->children)) {
                 child = list_entry(list, struct task_struct, sibling);
                 set_dilation(child, new_tdf);
@@ -201,24 +202,22 @@ EXPORT_SYMBOL(freeze_time);
 
 /**
  * FIXME: for now just populate downward
- * How to populate to parent && grandparent ...?
- */
+ * How to populate to parent && grandparent...?
+ **/
 static void populate_frozen_time(struct task_struct *tsk)
 {
         struct list_head *list;
         struct task_struct *child;
-        char comm[TASK_COMM_LEN]; /* put me outside the loop!!! */
+        /*char comm[TASK_COMM_LEN]; [> put me outside the loop!!! <]*/
         
         list_for_each(list, &(tsk->children)) {
                 child = list_entry(list, struct task_struct, sibling);
                 child->freeze_past_nsec = tsk->freeze_past_nsec;
 
-                /*
-                 * Debug usage only
-                 */        
-                get_task_comm(comm, child);
-                comm[TASK_COMM_LEN-1] = 0;
-                printk("[VT] %d populates %lldns frozen time to %d\n", tsk->pid, child->freeze_past_nsec, child->pid);
+                /* Debug usage only */
+                /*get_task_comm(comm, child);*/
+                /*comm[TASK_COMM_LEN-1] = 0;*/
+                /*printk("[VT] %d populates %lldns frozen time to %d\n", tsk->pid, child->freeze_past_nsec, child->pid);*/
 
                 populate_frozen_time(child);
         }
@@ -239,7 +238,7 @@ void unfreeze_time(struct task_struct *tsk)
 
         populate_frozen_time(tsk);
 
-	/* signal CONTINUE to unfreeze @tsk's children */
+	/* signal CONTINUE to unfreeze @tsk's children after timekeeping */
 	kill_pgrp(task_pgrp(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);

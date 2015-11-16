@@ -298,7 +298,7 @@ static void timekeeping_forward_now(struct timekeeper *tk)
 static s64 update_physical_past_nsec(struct timespec *ts)
 {
 	s64 now;
-	s64 delta_ppn; // delta physical_past_nsec
+	s64 delta_ppn; /* delta physical_past_nsec */
 
 	now = timespec_to_ns(ts);
 	delta_ppn = now;
@@ -309,8 +309,8 @@ static s64 update_physical_past_nsec(struct timespec *ts)
          * substract freezed time
          */
 	delta_ppn -= current->freeze_past_nsec;
-        
 	current->physical_past_nsec += delta_ppn;
+
 	return delta_ppn;
 }
 
@@ -327,18 +327,25 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
          * Actual dilation in the range of (0,100], but "1000==1".
 	 * Go through following calculations even if TDF=1.
          */
-        if(tdf > 0 && tdf <= 100000) {	
-                /** 
-                 * Accuracy of s64 for nanoseconds:
-		 * 2^63ns > 9*10^18ns => 9*10^9s
-		 * To guarantee (physical_past_nsec * 1000) won't overflow:
-		 * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
-                 */
-		delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);	
-		current->virtual_past_nsec += delta_vpn;
+        if (tdf > 0 && tdf <= 100000) {	
+                if (tdf == 1000) { /* optimized for freeze */
+                        current->virtual_past_nsec += delta_ppn;
+                } else {
+                        /** 
+                         * Accuracy of s64 for nanoseconds:
+                         * 2^63ns > 9*10^18ns => 9*10^9s
+                         * To guarantee (physical_past_nsec * 1000) won't overflow:
+                         * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
+                         */
+		        delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);	
+		        current->virtual_past_nsec += delta_vpn;
+                }
 	}
 }
-
+/**
+ * Maintain process's @virtual_past_nsec and @virtual_start_nsec 
+ * in the context of freeze and time dilation
+ */
 static void do_virtual_time_keeping(struct timespec* ts)
 {
 	struct timespec virtual_ts;
@@ -348,26 +355,25 @@ static void do_virtual_time_keeping(struct timespec* ts)
 
 	// make sure vt has been initialized
 	if (current->virtual_start_nsec > 0) {
-		// if current use virtual time
+		/* if @current use virtual time */
 		tdf = current->dilation;
 		delta_ppn = update_physical_past_nsec(ts);
 
-		// if tdf=1,
-		// virtual_past_nsec almost = physcial_past_nsec
+		/* if tdf=1 @virtual_past_nsec almost = @physcial_past_nsec */
 		update_virtual_past_nsec(delta_ppn, tdf);
 
 		virtual_now = current->virtual_start_nsec +
 			current->virtual_past_nsec;
 		virtual_ts = ns_to_timespec(virtual_now);
 
-		// for debug
+		/* for debug */
 		/*printk("[VT process %d] %lld, tdf = %d\n",*/
 				/*current->pid, virtual_now, tdf);*/
 		/*printk("VT past %lld, RT past %lld\n",*/
 				/*current->virtual_past_nsec,*/
 				/*current->physical_past_nsec);*/
 
-		// update __getnstimeofday's return @ts
+		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
 		ts->tv_nsec = virtual_ts.tv_nsec;
 	}
