@@ -828,7 +828,7 @@ void main_loop(int icmp_sock, __u8 *packet, int packlen)
 					    ioctl(icmp_sock, SIOCGSTAMP, &recv_time))
 						gettimeofday(&recv_time, NULL);
 					recv_timep = &recv_time;
-                                        printf("[main loop] recv_time[%ld.%ld]\n", recv_timep->tv_sec, recv_timep->tv_usec);
+                                        /*printf("[main loop] recv_time[%ld.%ld]\n", recv_timep->tv_sec, recv_timep->tv_usec);*/
 				}
 
 				not_ours = parse_reply(&msg, cc, addrbuf, recv_timep);
@@ -870,12 +870,12 @@ int gather_statistics(__u8 *icmph, int icmplen,
                 struct timeval try_tv;
                 gettimeofday(&try_tv, NULL);
 restamp:
-                printf("[gather_statistics] send_time[%ld.%ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);
-                printf("[gather_statistics] recv_time[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);
-                printf("[gather_statistics] try_recv_time[%ld.%ld]s\n", try_tv.tv_sec, try_tv.tv_usec);
+                /*printf("[gather_statistics] send_time[%ld.%ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);*/
+                /*printf("[gather_statistics] recv_time[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);*/
+                /*printf("[gather_statistics] try_recv_time[%ld.%ld]s\n", try_tv.tv_sec, try_tv.tv_usec);*/
 		tvsub(tv, &tmp_tv);
 		triptime = tv->tv_sec * 1000000 + tv->tv_usec;
-                printf("[gather_statistics] triptime[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);
+                /*printf("[gather_statistics] triptime[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);*/
 		if (triptime < 0) {
 			fprintf(stderr, "Warning: time of day goes back (%ldus), taking countermeasures.\n", triptime);
 			triptime = 0;
