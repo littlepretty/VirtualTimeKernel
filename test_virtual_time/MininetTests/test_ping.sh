@@ -1,11 +1,13 @@
 #!/bin/bash
 
-SWs="3"
-PingCount=5
-Latencies="0.001"
+rm *.log
 
-Durations="1"
-Intervals="0.1"
+SWs="2"
+PingCount=100
+
+Latencies="5.0 1.0 0.1 0.01" # microseconds
+Durations="0.1 0.01" # seconds
+Intervals="0.5 0.1 0.05" # seconds
 
 for n in $SWs 
 do
@@ -15,10 +17,13 @@ do
                 do
                         for int in $Intervals 
                         do
-                                sudo ./mn_ping.py -n $n --ping_count $PingCount --latency $delay --duration $dur --interval $int
-
-                                output=Sw${sw}Lnk${delay}Frz${dur}Int${int}.log 
-                                cat *.log
+                                echo "*******************************************************************"
+                                echo "********** Freeze ${dur}s for every ${int}s with ${delay}ms link ***********"
+                                echo "*******************************************************************"
+                                ./mn_ping.py -n $n --ping_count $PingCount \
+                                        --latency $delay --duration $dur --interval $int
+                                cat Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.log 
+                                cat Sw${n}Lat${delay}Frz${dur}Int${int}Vir.log
                         done
                 done
         done

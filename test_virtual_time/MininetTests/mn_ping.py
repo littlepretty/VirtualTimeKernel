@@ -77,9 +77,9 @@ def test():
     
     # don't block
     info('\n*** Start freeze/virtual time test with custom Ping ***\n')
-    net.get('h1').cmd('/home/kd/VirtualTimeKernel/iputils/ping -c %s -D 10.0.0.2 > %sVir.log &' % (ping_count, file_out))
+    net.get('h1').cmd('/home/kd/VirtualTimeKernel/iputils/ping -c %s 10.0.0.2 > %sVir.log &' % (ping_count, file_out))
     # make sure ping started before freeze
-    time.sleep(1)
+    time.sleep(1.2)
 
     for x in range(0, num_pause):
         # print 'pausing'
@@ -107,8 +107,8 @@ if __name__ == '__main__':
     latency = args.latency
     interval = args.interval
     
-    file_out = 'Sw%sLnk%sFrz%sInt%s' % (num_sw, latency, duration, interval)
-    num_pause = int(ping_count / interval) - 1
+    file_out = 'Sw%sLat%sFrz%sInt%s' % (num_sw, latency, duration, interval)
+    num_pause = int((ping_count - 10) / interval) - 1
 
     setLogLevel('info')
     test()
