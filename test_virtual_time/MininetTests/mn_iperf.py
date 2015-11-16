@@ -97,7 +97,7 @@ if __name__ == '__main__':
     interval = args.interval
     duration = args.duration
 
-    file_out = 'Sw%sLnk%sFrz%sInt%s' % (num_sw, bw, duration, interval)
+    file_out = 'Sw%sBw%sFrz%sInt%s' % (num_sw, bw, duration, interval)
     num_pause = int((perf_time - 2) / interval) - 1
 
     setLogLevel('info')
