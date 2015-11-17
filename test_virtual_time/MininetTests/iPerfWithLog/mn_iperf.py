@@ -43,7 +43,7 @@ class DssTopo(Topo):
         host1 = self.addHost('h1')
         host2 = self.addHost('h2')
         switchList = []
-        link_opts = dict(bw='%smb' % bw)
+        link_opts = {'bw' : bandwidth}
 
         for i in range(num_sw):
             s = self.addSwitch('switch%s' % i)
@@ -68,18 +68,19 @@ def test():
     NRESUME = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -u -p %s' % pIDS
 
     # start iperf server
-    net.get('h1').cmd('iperf3 -s > %s_server.iperf&' % file_out)
+    net.get('h1').cmd('iperf3 -s > %sSrv.log &' % file_out)
 
     # make sure server has started
     time.sleep(0.5)
-    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.iperf 2>&1' % (perf_time, file_out))
-    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sVir.iperf 2>&1 &' % (perf_time, file_out))
+    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' % (perf_time, file_out))
+    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sVir.log 2>&1 &' % (perf_time, file_out))
 
     time.sleep(0.8)
     for x in range(0, num_pause):
         pause()
         time.sleep(interval)
 
+    time.sleep(1)
     net.stop()
 
 if __name__ == '__main__':
@@ -93,11 +94,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     num_sw = args.num_sw
     perf_time = args.perf_time
-    bw = args.bw
+    bandwidth = args.bw
     interval = args.interval
     duration = args.duration
 
-    file_out = 'Sw%sBw%sFrz%sInt%s' % (num_sw, bw, duration, interval)
+    file_out = 'Sw%sBw%sFrz%sInt%s' % (num_sw, bandwidth, duration, interval)
     num_pause = int((perf_time - 2) / interval) - 1
 
     setLogLevel('info')

@@ -409,7 +409,7 @@ iperf_run_client(struct iperf_test * test)
 
             /* Run the timers. */
             (void) gettimeofday(&now, NULL);
-            printf("[run_client] query timer at %ld.%ld\n", now.tv_sec, now.tv_usec);
+            /*printf("[run_client] query timer at %ld.%ld\n", now.tv_sec, now.tv_usec);*/
             tmr_run(&now);
 
 	    /* Is the test done yet? */

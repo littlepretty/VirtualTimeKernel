@@ -2095,7 +2095,7 @@ iperf_stats_callback(struct iperf_test *test)
         gettimeofday(&rp->end_time, NULL);
         memcpy(&temp.interval_end_time, &rp->end_time, sizeof(struct timeval));
         temp.interval_duration = timeval_diff(&temp.interval_start_time, &temp.interval_end_time);
-        printf("[stats_callback] %ld.%ld -- %ld.%ld\n", temp.interval_start_time.tv_sec, temp.interval_start_time.tv_usec, temp.interval_end_time.tv_sec, temp.interval_end_time.tv_usec);
+        /*printf("[stats_callback] %ld.%ld -- %ld.%ld\n", temp.interval_start_time.tv_sec, temp.interval_start_time.tv_usec, temp.interval_end_time.tv_sec, temp.interval_end_time.tv_usec);*/
  
 	if (test->protocol->id == Ptcp) {
 	    if ( has_tcpinfo()) {

@@ -87,6 +87,7 @@ def test():
         time.sleep(interval)
 	# print 'resumed'
 
+    time.sleep(10)
     net.stop()    
 
 if __name__ == '__main__':
