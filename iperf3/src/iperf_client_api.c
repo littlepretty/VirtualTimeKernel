@@ -332,6 +332,7 @@ int
 iperf_run_client(struct iperf_test * test)
 {
     int startup;
+    int send_count;
     int result = 0;
     fd_set read_set, write_set;
     struct timeval now;
@@ -364,6 +365,7 @@ iperf_run_client(struct iperf_test * test)
     cpu_util(NULL);
 
     startup = 1;
+    send_count = 0;
     while (test->state != IPERF_DONE) {
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
@@ -405,11 +407,14 @@ iperf_run_client(struct iperf_test * test)
 		// Regular mode. Client sends.
 		if (iperf_send(test, &write_set) < 0)
 		    return -1;
+                else {
+                    ++send_count;
+                }
 	    }
 
             /* Run the timers. */
-            (void) gettimeofday(&now, NULL);
-            /*printf("[run_client] query timer at %ld.%ld\n", now.tv_sec, now.tv_usec);*/
+            (void) gettimeofday(&now, NULL); 
+            printf("[run_client] #snd %d ts=%6ld.%6ld\n", send_count, now.tv_sec, now.tv_usec);
             tmr_run(&now);
 
 	    /* Is the test done yet? */

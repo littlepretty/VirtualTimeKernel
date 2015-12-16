@@ -1042,6 +1042,9 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     register int multisend, r, streams_active;
     register struct iperf_stream *sp;
     struct timeval now;
+    struct timeval prev, next;
+    int num_active_streams = 0;
+    int bytes_sent = test->bytes_sent;
 
     /* Can we do multisend mode? */
     if (test->settings->burst != 0)
@@ -1051,6 +1054,8 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
     else
         multisend = 1;	/* nope */
 
+    gettimeofday(&prev, NULL);
+    /*printf("[iperf_send] multisend is 10, prove: = %d\n", multisend);*/
     for (; multisend > 0; --multisend) {
 	if (test->settings->rate != 0 && test->settings->burst == 0)
 	    gettimeofday(&now, NULL);
@@ -1065,6 +1070,7 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    return r;
 		}
 		streams_active = 1;
+                num_active_streams++;
 		test->bytes_sent += r;
 		++test->blocks_sent;
 		if (test->settings->rate != 0 && test->settings->burst == 0)
@@ -1075,9 +1081,15 @@ iperf_send(struct iperf_test *test, fd_set *write_setP)
 		    break;
 	    }
 	}
+        /*printf("[iperf_send] test stream #%d send bytes = %lu\n", num_active_streams - 1, test->bytes_sent);*/
 	if (!streams_active)
 	    break;
     }
+    gettimeofday(&next, NULL);
+    int64_t usecs = (next.tv_sec - prev.tv_sec) * 1000000LL + next.tv_usec - prev.tv_usec;
+    bytes_sent = test->bytes_sent - bytes_sent;
+    /*printf("[iperf_send] %d streams' send %d bytes takes %ld usec\n", num_active_streams, bytes_sent, usecs);*/
+
     if (test->settings->burst != 0) {
 	gettimeofday(&now, NULL);
 	SLIST_FOREACH(sp, &test->streams, streams)

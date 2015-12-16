@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
         case 'n':
             /* run in network and mount namespaces */
             if (virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS) == -1) {
-                perror("unshare");
+                perror("virtual_time_unshare");
                 return 1;
             }
             /* mount sysfs to pick up the new network namespace */

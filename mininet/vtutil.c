@@ -41,7 +41,7 @@ int timeval_substract(struct timeval* result,
         return x->tv_sec > y->tv_sec;
 }
 
-long int timeval_to_usec(struct timeval tv)
+long timeval_to_usec(struct timeval tv)
 {
         return tv.tv_sec * USEC_PER_SEC + tv.tv_usec;
 }
@@ -74,11 +74,14 @@ int set_new_dilation(pid_t pid, float tdf)
         char tdf_str[TDF_STR_LEN];
         size_t count;
         ssize_t written_count = 0;
+        struct timeval prev, next, ovhd;
+        long int usec;
 
-        if ( tdf >= TDF_MIN && tdf < TDF_MAX ){
+        gettimeofday(&prev, NULL);
+        if (tdf >= TDF_MIN && tdf < TDF_MAX){
                 sprintf(path, "/proc/%d/dilation", pid);
                 proc_file = open(path, O_WRONLY);
-                if ( proc_file == -1 ) {
+                if (proc_file == -1) {
                         fprintf(stderr, "set new dilation failed with error: cannot open %s because %s\n", path, strerror(errno));
                         return -1;
                 }
@@ -88,6 +91,10 @@ int set_new_dilation(pid_t pid, float tdf)
                 written_count = write(proc_file, tdf_str, count);
                 close(proc_file);
         }
+        gettimeofday(&next, NULL);
+        timeval_substract(&ovhd, &next, &prev);
+        usec = timeval_to_usec(ovhd);
+        printf("[set dilation ovhd = %ld]\n", usec);
         return written_count;
 }
 
@@ -118,7 +125,22 @@ int write_proc_freeze(pid_t pid, char* val)
 int freeze_proc(pid_t pid)
 {
         char *val = "1";
+#ifdef SHOW_OVHD
+        struct timeval prev, next, ovhd;
+        long int usec;
+        int result;
+
+        gettimeofday(&prev, NULL);
+        result = write_proc_freeze(pid, val);
+        gettimeofday(&next, NULL);
+        timeval_substract(&ovhd, &next, &prev);
+        usec = timeval_to_usec(ovhd);
+        printf("[freeze proc %d] takes %ld]\n", pid, usec);
+
+        return result;
+#else
         return write_proc_freeze(pid, val);
+#endif
 }
 
 int unfreeze_proc(pid_t pid)
@@ -173,8 +195,20 @@ void* freeze_work(void *p)
 {
         char val[] = "1";
         pid_t* pid = (pid_t *)p;
+#ifdef SHOW_OVHD
+        struct timeval prev, next, ovhd;
+        long int usec;
+
+        gettimeofday(&prev, NULL);
         write_proc_freeze(*pid, val); 
         /*printf("complete freeze process[%d]\n", *pid);*/
+        gettimeofday(&next, NULL);
+        timeval_substract(&ovhd, &next, &prev);
+        usec = timeval_to_usec(ovhd);
+        printf("[freeze proc %d] takes %ld us\n", *pid, usec);
+#else
+        write_proc_freeze(*pid, val);
+#endif
         pthread_exit((void *)pid);
 }
 

@@ -11,11 +11,13 @@
 void repeat_set_dilation()
 {
         long int i, usec;
+        int repeat = 10;
         pid_t self;
 
         virtual_time_unshare(CLONE_NEWNET | CLONE_NEWNS);
         self = getpid();
-        for (i = 0; i < NR_SET_ROUND; ++i) {
+
+        for (i = 0; i < repeat; ++i) {
                 set_new_dilation(self, i % 4);
         }
         printf("Finish %lu SET dilations\n", NR_SET_ROUND);
