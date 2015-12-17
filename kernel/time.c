@@ -185,22 +185,6 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 EXPORT_SYMBOL(set_dilation);
 
 /**
- * Freeze a group of processes, only call on group leader
- **/
-void freeze_time(struct task_struct *tsk)
-{
-	struct timespec ts;
-	s64 now;
-	
-        /* signal STOP to freeze this @tsk's children */
-	kill_pgrp(task_pgrp(tsk), SIGSTOP, 1);
-	__getnstimeofday(&ts);
-	now = timespec_to_ns(&ts);
-	tsk->freeze_start_nsec = now;
-}
-EXPORT_SYMBOL(freeze_time);
-
-/**
  * FIXME: for now just populate downward
  * How to populate to parent && grandparent...?
  **/
@@ -222,6 +206,23 @@ static void populate_frozen_time(struct task_struct *tsk)
                 populate_frozen_time(child);
         }
 }
+
+/**
+ * Freeze a group of processes, only call on group leader
+ **/
+void freeze_time(struct task_struct *tsk)
+{
+	struct timespec ts;
+	s64 now;
+	
+        /* signal STOP to freeze this @tsk's children */
+	kill_pgrp(task_pgrp(tsk), SIGSTOP, 1);
+	__getnstimeofday(&ts);
+	now = timespec_to_ns(&ts);
+	tsk->freeze_start_nsec = now;
+}
+EXPORT_SYMBOL(freeze_time);
+
 
 /**
  * Unfreeze a group of processes, only call on group leader

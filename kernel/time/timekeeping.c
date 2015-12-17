@@ -310,10 +310,6 @@ static s64 update_physical_past_nsec(struct timespec *ts)
          */
 	delta_ppn -= current->freeze_past_nsec;
 	current->physical_past_nsec += delta_ppn;
-        printk("[VT process %s(%d)] substract %lld frozen time\n", 
-                        current->comm, current->pid, current->freeze_past_nsec);
-        printk("[VT process %s(%d)] RT past %lld; FT past %lld\n", 
-                        current->comm, current->pid, now, current->physical_past_nsec);
 
 	return delta_ppn;
 }
@@ -353,7 +349,7 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 static void do_virtual_time_keeping(struct timespec* ts)
 {
 	struct timespec virtual_ts;
-	s64 virtual_now;
+	s64 virtual_now, now;
 	s64 delta_ppn;
 	int tdf;
 
@@ -371,9 +367,9 @@ static void do_virtual_time_keeping(struct timespec* ts)
 		virtual_ts = ns_to_timespec(virtual_now);
 
 		/* for debug */
-                printk("[VT process %s(%d)] VT past %lld; FT past %lld\n", 
-                                current->comm, current->pid, 
-                                current->virtual_past_nsec, current->physical_past_nsec);
+                now = timespec_to_ns(ts);
+                printk("[VT process %s(%d)] %lld frozen time; RT = %lld; VT = %lld\n", 
+                                current->comm, current->pid, current->freeze_past_nsec, now, virtual_now);
 
 		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
