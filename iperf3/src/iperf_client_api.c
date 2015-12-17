@@ -332,7 +332,7 @@ int
 iperf_run_client(struct iperf_test * test)
 {
     int startup;
-    int send_count;
+    int sent_cnt;
     int result = 0;
     fd_set read_set, write_set;
     struct timeval now;
@@ -365,12 +365,13 @@ iperf_run_client(struct iperf_test * test)
     cpu_util(NULL);
 
     startup = 1;
-    send_count = 0;
+    sent_cnt = 0;
     while (test->state != IPERF_DONE) {
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	(void) gettimeofday(&now, NULL);
 	timeout = tmr_timeout(&now);
+        /*printf("[run_client] will wait %6ld.%6ld for select()\n");*/
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
@@ -407,15 +408,16 @@ iperf_run_client(struct iperf_test * test)
 		// Regular mode. Client sends.
 		if (iperf_send(test, &write_set) < 0)
 		    return -1;
-                else {
-                    ++send_count;
-                }
 	    }
 
             /* Run the timers. */
             (void) gettimeofday(&now, NULL); 
-            printf("[run_client] #snd %d ts=%6ld.%6ld\n", send_count, now.tv_sec, now.tv_usec);
-            tmr_run(&now);
+            if (tmr_run(&now)) {
+                printf("[client_run] %d sent before timeout\n", sent_cnt);
+                sent_cnt = 0;
+            } else {
+                ++sent_cnt;
+            }
 
 	    /* Is the test done yet? */
 	    if ((!test->omitting) &&

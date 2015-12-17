@@ -29,6 +29,7 @@
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "timer.h"
 
@@ -186,13 +187,13 @@ tmr_timeout( struct timeval* nowP )
     return &timeout;
 }
 
-
-void
+int
 tmr_run( struct timeval* nowP )
 {
     struct timeval now;
     Timer* t;
     Timer* next;
+    int if_timeout = 0;
 
     getnow( nowP, &now );
     for ( t = timers; t != NULL; t = next ) {
@@ -203,8 +204,9 @@ tmr_run( struct timeval* nowP )
 	if ( t->time.tv_sec > now.tv_sec ||
 	     ( t->time.tv_sec == now.tv_sec &&
 	       t->time.tv_usec > now.tv_usec ) )
-	    break;
+                break;
 	(t->timer_proc)( t->client_data, &now );
+        if_timeout = 1;
 	if ( t->periodic ) {
 	    /* Reschedule. */
 	    add_usecs( &t->time, t->usecs );
@@ -212,6 +214,7 @@ tmr_run( struct timeval* nowP )
 	} else
 	    tmr_cancel( t );
     }
+    return if_timeout;
 }
 
 
