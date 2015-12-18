@@ -22,7 +22,6 @@ import threading
 import subprocess
 import argparse
 
-
 def pidList(net):
     pIDs = ''
     for host in net.hosts:
@@ -32,17 +31,17 @@ def pidList(net):
     for c in net.controllers:
         pIDs += ' %s' % c.pid
     # freeze ovs-switchd ovsdb-server
-    pIDs += ' 1474 1473 1440 1439 '
+    pIDs += ' 1666 1667 '
     return pIDs
 
 def pause(pIDs): 
     NPAUSE = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -f -p %s' % pIDs
     NRESUME = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -u -p %s' % pIDs
     output = subprocess.check_output(NPAUSE, shell=True)
-    print 'freeze', output
+    print 'freeze\n', output
     time.sleep(duration)
     output = subprocess.check_output(NRESUME, shell=True)
-    print 'unfreeze', output
+    print 'unfreeze\n', output
 
 class DssTopo(Topo):
     "DSS custom topo"
@@ -131,3 +130,4 @@ if __name__ == '__main__':
     print "Schedule %d freeze operations" % num_pause
     setLogLevel('info')
     test()
+ 

@@ -146,7 +146,22 @@ int freeze_proc(pid_t pid)
 int unfreeze_proc(pid_t pid)
 {
         char *val = "0";
+#ifdef SHOW_OVHD
+        struct timeval prev, next, ovhd;
+        long int usec;
+        int result;
+
+        gettimeofday(&prev, NULL);
+        result = write_proc_freeze(pid, val);
+        gettimeofday(&next, NULL);
+        timeval_substract(&ovhd, &next, &prev);
+        usec = timeval_to_usec(ovhd);
+        printf("[unfreeze proc %d] takes %ld]\n", pid, usec);
+
+        return result;
+#else
         return write_proc_freeze(pid, val);
+#endif
 }
 
 /*
@@ -195,20 +210,7 @@ void* freeze_work(void *p)
 {
         char val[] = "1";
         pid_t* pid = (pid_t *)p;
-#ifdef SHOW_OVHD
-        struct timeval prev, next, ovhd;
-        long int usec;
-
-        gettimeofday(&prev, NULL);
-        write_proc_freeze(*pid, val); 
-        /*printf("complete freeze process[%d]\n", *pid);*/
-        gettimeofday(&next, NULL);
-        timeval_substract(&ovhd, &next, &prev);
-        usec = timeval_to_usec(ovhd);
-        printf("[freeze proc %d] takes %ld us\n", *pid, usec);
-#else
         write_proc_freeze(*pid, val);
-#endif
         pthread_exit((void *)pid);
 }
 
@@ -217,42 +219,53 @@ void* unfreeze_work(void *p)
         char val[] = "0";
         pid_t* pid = (pid_t *)p;
         write_proc_freeze(*pid, val);
-        /*printf("complete unfreeze process[%d]\n", *pid);*/
         pthread_exit((void *)pid);
 }
 
-#define MAX_NUM_THREADS 8
-
 void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char* action)
 {
-        // Do NOT join pthreads
         pthread_t* threads;
-        /*pthread_attr_t attr;*/
+        pthread_attr_t attr;
         int i, rc;
         void *status;
+#ifdef SHOW_OVHD
+        struct timeval prev, next, ovhd;
+        long usec;
 
+        gettimeofday(&prev, NULL);
+#endif
         threads = malloc(sizeof(pthread_t) * size);
-        /*pthread_attr_init(&attr);*/
-        // pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+        pthread_attr_init(&attr);
+        pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         for (i = 0; i < size; ++i) {
                 if (pthread_create(&threads[i], NULL, func, (void *)(&pid_list[i])) != 0) {
                         fprintf(stderr, "create pthreads failed\n");
                 }
                 /*if (rc) {*/
-                /*printf("[error] create pthread fail with %d\n", rc);*/
-                /*exit(-1);*/
+                        /*printf("[error] create pthread fail with %d\n", rc);*/
+                        /*exit(-1);*/
                 /*}*/
         }
-        /*pthread_attr_destroy(&attr);*/
-        /*for (i = 0; i < size; ++i) {
-          rc = pthread_join(threads[i], &status);
-          if (rc) {
-          printf("[error] join pthread fail with %d\n", rc);
-          exit(-1);
-          }
-        // printf("thread[%d] complete join for %s process[%d]\n", i, action, *((pid_t*)status));
-        }*/
-        // should issue exit on main thread if we don't do join()
+        pthread_attr_destroy(&attr);
+        for (i = 0; i < size; ++i) {
+                rc = pthread_join(threads[i], &status);
+                /*if (rc) {*/
+                        /*printf("[error] join pthread fail with %d\n", rc);*/
+                        /*exit(-1);*/
+                /*}*/
+                /*printf("%s thread[%d] joined for pid[%d]\n", action, i, *((pid_t*)status));*/
+        }
+#ifdef SHOW_OVHD
+        gettimeofday(&next, NULL);
+        timeval_substract(&ovhd, &next, &prev);
+        usec = timeval_to_usec(ovhd);
+        if (strcmp(action, "freeze") == 0) {
+                printf("freeze %ld\n", usec);
+        } else if (strcmp(action, "unfreeze") == 0) {
+                printf("unfreeze %ld\n", usec);
+        }
+#endif
+        /* should issue exit on main thread if we don't do join() */
         pthread_exit(NULL);
 }
 

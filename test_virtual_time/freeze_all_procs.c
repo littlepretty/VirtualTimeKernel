@@ -6,7 +6,7 @@
 
 #include "vtutil.h"
 
-#define MAX_NUM_PIDS 256
+#define MAX_NUM_PIDS 1024
 
 int main(int argc, char** argv)
 {
