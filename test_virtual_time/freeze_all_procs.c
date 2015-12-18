@@ -6,7 +6,12 @@
 
 #include "vtutil.h"
 
-#define MAX_NUM_PIDS 1024
+static int const MAX_NUM_PIDS = 1024;
+
+void print_usage(char *comm)
+{
+        printf("Usage: %s -[f or u] -p [pids up to %d]\n", comm, MAX_NUM_PIDS);
+}
 
 int main(int argc, char** argv)
 {
@@ -49,7 +54,7 @@ int main(int argc, char** argv)
                                 /*printf("parse ends\n");*/
                                 break;
                         default:
-                                printf("Usage: %s -[f or u] -p pid1 pid2 pid3 ... pid256\n", argv[0]);
+                                print_usage(argv[0]);        
                                 exit(EXIT_FAILURE);
                 }
         } while (opt != -1);
@@ -60,13 +65,12 @@ int main(int argc, char** argv)
                 /*}*/
                 if (freeze_flag) {
                         // issue freeze
-                        kickoff_pthreads(pid_list, pid_size, freeze_work, NULL);
+                        kickoff_pthreads(pid_list, pid_size, freeze_work, "freeze");
                 } else if (unfreeze_flag) {
-                        // issue unfreeze
-                        kickoff_pthreads(pid_list, pid_size, unfreeze_work, NULL);
+                        // issue unfreeze 
+                        kickoff_pthreads(pid_list, pid_size, unfreeze_work, "unfreeze");
                 } else {
-                        printf("Tell me what you wanna do!\n");
-                        printf("Usage: %s -[f or u] -p pid1 pid2 pid3 ... pid256\n", argv[0]);
+                        print_usage(argv[0]);
                 }
         }
         return 0;

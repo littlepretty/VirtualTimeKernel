@@ -222,17 +222,17 @@ void* unfreeze_work(void *p)
         pthread_exit((void *)pid);
 }
 
-void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char* action)
+void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char *action)
 {
         pthread_t* threads;
         pthread_attr_t attr;
         int i, rc;
         void *status;
 #ifdef SHOW_OVHD
-        struct timeval prev, next, ovhd;
+        struct timeval start, end, ovhd;
         long usec;
-
-        gettimeofday(&prev, NULL);
+        
+        gettimeofday(&start, NULL); 
 #endif
         threads = malloc(sizeof(pthread_t) * size);
         pthread_attr_init(&attr);
@@ -241,43 +241,30 @@ void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char*
                 if (pthread_create(&threads[i], NULL, func, (void *)(&pid_list[i])) != 0) {
                         fprintf(stderr, "create pthreads failed\n");
                 }
-                /*if (rc) {*/
-                        /*printf("[error] create pthread fail with %d\n", rc);*/
-                        /*exit(-1);*/
-                /*}*/
         }
         pthread_attr_destroy(&attr);
         for (i = 0; i < size; ++i) {
                 rc = pthread_join(threads[i], &status);
-                /*if (rc) {*/
-                        /*printf("[error] join pthread fail with %d\n", rc);*/
-                        /*exit(-1);*/
-                /*}*/
+                if (rc) {
+                        fprintf(stderr, "join pthread fail with %d\n", rc);
+                        exit(-1);
+                }
                 /*printf("%s thread[%d] joined for pid[%d]\n", action, i, *((pid_t*)status));*/
         }
-#ifdef SHOW_OVHD
-        gettimeofday(&next, NULL);
-        timeval_substract(&ovhd, &next, &prev);
+#ifdef SHOW_OVHD        
+        gettimeofday(&end, NULL);
+        timeval_substract(&ovhd, &end, &start);
         usec = timeval_to_usec(ovhd);
         if (strcmp(action, "freeze") == 0) {
-                printf("freeze %ld\n", usec);
+                printf("freeze %ld\n", usec);        
         } else if (strcmp(action, "unfreeze") == 0) {
-                printf("unfreeze %ld\n", usec);
+                printf("unfreeze %ld\n", usec);         
+        } else {
+                printf("unknown action %s\n", action);  
         }
 #endif
-        /* should issue exit on main thread if we don't do join() */
+        /* should issue exit on main thread if we do join() */
         pthread_exit(NULL);
 }
 
-void freeze_all_procs(pid_t* pid_list, size_t size)
-{
-        char* action = "freezing";
-        kickoff_pthreads(pid_list, size, freeze_work, action);
-}
-
-void unfreeze_all_procs(pid_t* pid_list, size_t size)
-{
-        char* action = "unfreezing";
-        kickoff_pthreads(pid_list, size, unfreeze_work, action);
-}
 
