@@ -367,9 +367,9 @@ static void do_virtual_time_keeping(struct timespec* ts)
 		virtual_ts = ns_to_timespec(virtual_now);
 
 		/* for debug */
-                now = timespec_to_ns(ts);
-                printk("[VT process %s(%d)] %lld frozen time; RT = %lld; VT = %lld\n", 
-                                current->comm, current->pid, current->freeze_past_nsec, now, virtual_now);
+                /*now = timespec_to_ns(ts);*/
+                /*printk("[VT process %s(%d)] %lld frozen time; RT = %lld; VT = %lld\n", */
+                                /*current->comm, current->pid, current->freeze_past_nsec, now, virtual_now);*/
 
 		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
