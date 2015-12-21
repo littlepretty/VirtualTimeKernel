@@ -50,7 +50,7 @@ def plot_compare_cdf(data1, data2):
     # plt.xlim(65000, 70000)
     p1 = plt.plot(bin_edges1[1:], cdf1, 'b', label=label1)
     p2 = plt.plot(bin_edges2[1:], cdf2, 'r', label=label2)
-    plt.legend(loc='lower right')
+    plt.legend() #(loc='lower right')
     plt.xlabel('PING RTT / Microseconds')
     plt.ylabel('Cumulative Distribution')
     plt.grid(True)
