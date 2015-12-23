@@ -3,7 +3,7 @@ INCLUDE=-I.
 CP=cp
 PTHREAD=-pthread
 
-all: freeze_all_procs accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
+all: freeze_listen freeze_all_procs accu_dilation accu_freeze ovhd_dilation ovhd_set_dilation
 
 test: test_accuracy test_accu_freeze test_ovhd_dilaton test_ovhd_set_dilation
 
@@ -31,6 +31,10 @@ test_ovhd_set_dilation: ovhd_set_dilation
 # compile and link
 freeze_all_procs: vtutil.o freeze_all_procs.c accu_freeze freeze_all_procs.sh
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_all_procs.c $< -o $@
+
+freeze_listen: vtutil.o freeze_listen.c
+	$(CC) $(INCLUDE) $(PTHREAD) freeze_listen.c $< -o $@
+
 
 accu_dilation: vtutil.o accu_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) accu_dilation.c $< -o $@
