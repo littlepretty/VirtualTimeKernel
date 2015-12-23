@@ -1,11 +1,13 @@
 #!/bin/bash
 
-SWs="2"
-PingCount=1000
-Latencies="10.0 1.0 0.1 0.01 0.001" # microseconds
+SWs="1"
+PingCount=20
+Latencies="100.0" # milliseconds
 
-Durations="0.1" # seconds
-Intervals="0.5" # seconds
+Durations="1.0" # seconds
+Intervals="1.0" # seconds
+
+rm *.log
 
 for n in $SWs 
 do
@@ -23,10 +25,11 @@ do
                                 ./parse_ping.pl Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.log > Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.ping
                                 ./parse_ping.pl Sw${n}Lat${delay}Frz${dur}Int${int}Vir.log > Sw${n}Lat${delay}Frz${dur}Int${int}Vir.ping
                                 
-                                ./plot_cdf.py --bsl_file Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.ping --vir_file Sw${n}Lat${delay}Frz${dur}Int${int}Vir.ping --label1 "No Freeze: Link Delay=${delay}us" --label2 "Freeze: Duration=${dur}s  Interval=${int}s" --topic_name Sw${n}Lat${delay}Frz${dur}Int${int}
+                                ./plot_cdf.py --bsl_file Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.ping --vir_file Sw${n}Lat${delay}Frz${dur}Int${int}Vir.ping --label1 "No Freeze: Link Delay=${delay}ms" --label2 "Freeze: Duration=${dur}s  Interval=${int}s" --topic_name Sw${n}Lat${delay}Frz${dur}Int${int}
                         done
                 done
         done
 done
 
+rm *.ping
 

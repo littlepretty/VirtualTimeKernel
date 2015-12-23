@@ -46,7 +46,7 @@ ovhd_set_dilation: vtutil.o ovhd_set_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) ovhd_set_dilation.c $< -o $@ 
 
 vtutil.o: vtutil.c
-	$(CC) $(INCLUDE) -D SHOW_OVHD -c $<
+	$(CC) $(INCLUDE) -c $<
 	cp -v vtutil.c vtutil.h ../mininet/
 
 load_vt_module:

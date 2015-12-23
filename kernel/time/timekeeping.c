@@ -349,8 +349,7 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 static void do_virtual_time_keeping(struct timespec* ts)
 {
 	struct timespec virtual_ts;
-	s64 virtual_now, now;
-	s64 delta_ppn;
+	s64 virtual_now, now, delta_ppn;
 	int tdf;
 
 	// make sure vt has been initialized
@@ -367,9 +366,10 @@ static void do_virtual_time_keeping(struct timespec* ts)
 		virtual_ts = ns_to_timespec(virtual_now);
 
 		/* for debug */
-                /*now = timespec_to_ns(ts);*/
-                /*printk("[VT process %s(%d)] %lld frozen time; RT = %lld; VT = %lld\n", */
-                                /*current->comm, current->pid, current->freeze_past_nsec, now, virtual_now);*/
+                now = timespec_to_ns(ts);
+                printk("[VT-%s(%d)] FT=%lld ns; RT=%lld us; VT=%lld us\n", 
+                                current->comm, current->pid, current->freeze_past_nsec, 
+                                now / 1000, virtual_now / 1000);
 
 		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
@@ -408,9 +408,6 @@ int __getnstimeofday(struct timespec *ts)
 	if (unlikely(timekeeping_suspended))
 		return -EAGAIN;
 
-	/* Virtual time features: freeze && dilate */
-	do_virtual_time_keeping(ts);
-
 	return 0;
 }
 EXPORT_SYMBOL(__getnstimeofday);
@@ -424,6 +421,13 @@ EXPORT_SYMBOL(__getnstimeofday);
 void getnstimeofday(struct timespec *ts)
 {
 	WARN_ON(__getnstimeofday(ts));
+        
+        /**
+         * Keep __getnstimeofday() clean so that 
+         * we always have real wall clock time ts.
+         * Virtual timekeeping: freeze && dilate
+         */
+	do_virtual_time_keeping(ts);
 }
 EXPORT_SYMBOL(getnstimeofday);
 
@@ -573,7 +577,8 @@ void do_gettimeofday(struct timeval *tv)
 	struct timespec now;
 
 	getnstimeofday(&now);
-	tv->tv_sec = now.tv_sec;
+		
+        tv->tv_sec = now.tv_sec;
 	tv->tv_usec = now.tv_nsec/1000;
 }
 EXPORT_SYMBOL(do_gettimeofday);

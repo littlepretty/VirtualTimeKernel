@@ -870,12 +870,12 @@ int gather_statistics(__u8 *icmph, int icmplen,
                 struct timeval try_tv;
                 gettimeofday(&try_tv, NULL);
 restamp:
-                /*printf("[gather_statistics] send_time[%ld.%ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);*/
-                /*printf("[gather_statistics] recv_time[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);*/
-                /*printf("[gather_statistics] try_recv_time[%ld.%ld]s\n", try_tv.tv_sec, try_tv.tv_usec);*/
+                printf("[gather_statistics] send_time[%ld.%6ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);
+                printf("[gather_statistics] recv_time[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);
+                printf("[gather_statistics] try_recv_time[%ld.%6ld]s\n", try_tv.tv_sec, try_tv.tv_usec);
 		tvsub(tv, &tmp_tv);
 		triptime = tv->tv_sec * 1000000 + tv->tv_usec;
-                /*printf("[gather_statistics] triptime[%ld.%ld]s\n", tv->tv_sec, tv->tv_usec);*/
+                printf("[gather_statistics] triptime[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);
 		if (triptime < 0) {
 			fprintf(stderr, "Warning: time of day goes back (%ldus), taking countermeasures.\n", triptime);
 			triptime = 0;

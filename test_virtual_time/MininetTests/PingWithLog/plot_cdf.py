@@ -16,14 +16,14 @@ def plot_err_cdf(data1, data2):
     variance = []
     for x in data1:
         variance.append(abs(x-avg))
-    num_bins = 1000
+    num_bins = 5000
     counts, bin_edges = np.histogram(variance, bins=num_bins)
     cdf_variance = np.cumsum(counts) / float(len(variance))
     
     xlim_min = min(min(err_data), min(variance)) 
     xlim_max = max(max(err_data), max(variance))
     plt.figure()
-    plt.xlim(0.99 * xlim_min, 1.02 * xlim_max)
+    # plt.xlim(0.99 * xlim_min, 1.02 * xlim_max)
     # plt.xlim(0, 5000)
     p1 = plt.plot(sorted_err_data, cdf_err, 'b', label=label_err)
     p2 = plt.plot(bin_edges[1:], cdf_variance, 'r', label='Variance of GTOD')
@@ -37,7 +37,7 @@ def plot_err_cdf(data1, data2):
 
 def plot_compare_cdf(data1, data2):
     """draw cdf to compare without/with freeze elapsed time"""
-    num_bins = 1000
+    num_bins = 5000
     counts1, bin_edges1 = np.histogram(data1, bins=num_bins)
     cdf1 = np.cumsum(counts1) / float(len(data1))
     counts2, bin_edges2 = np.histogram(data2, bins=num_bins)
@@ -46,7 +46,7 @@ def plot_compare_cdf(data1, data2):
     xlim_min = min(min(data1), min(data2))
     xlim_max = max(max(data1), max(data2))
     plt.figure()
-    plt.xlim(0.98 * xlim_min, 1.02 * xlim_max)
+    # plt.xlim(0.98 * xlim_min, 1.02 * xlim_max)
     # plt.xlim(65000, 70000)
     p1 = plt.plot(bin_edges1[1:], cdf1, 'b', label=label1)
     p2 = plt.plot(bin_edges2[1:], cdf2, 'r', label=label2)
