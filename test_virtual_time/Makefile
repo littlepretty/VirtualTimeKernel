@@ -35,7 +35,6 @@ freeze_all_procs: vtutil.o freeze_all_procs.c accu_freeze freeze_all_procs.sh
 freeze_listen: vtutil.o freeze_listen.c
 	$(CC) $(INCLUDE) $(PTHREAD) freeze_listen.c $< -o $@
 
-
 accu_dilation: vtutil.o accu_dilation.c
 	$(CC) $(INCLUDE) $(PTHREAD) accu_dilation.c $< -o $@
 
