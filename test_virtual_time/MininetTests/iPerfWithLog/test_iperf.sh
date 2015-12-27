@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SWs="1"
-PerfTime=30 # seconds
+PerfTime=40 # seconds
 BWs="100" # mb
 
 Durations="1.0" # seconds

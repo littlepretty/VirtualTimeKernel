@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SWs="1"
-PingCount=20
+PingCount=50
 Latencies="100.0" # milliseconds
 
 Durations="1.0" # seconds

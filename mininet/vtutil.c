@@ -264,7 +264,7 @@ void kickoff_pthreads(pid_t* pid_list, size_t size, void *(*func)(void *), char 
         }
 #endif
         /* should issue exit on main thread if we do join() */
-        pthread_exit(NULL);
+        /*pthread_exit(NULL);*/
 }
 
 
