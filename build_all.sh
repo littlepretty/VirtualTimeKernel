@@ -65,12 +65,11 @@ build_all() {
         rm -f $LOG
         rm -f $ERR
         make_kernel
-        # make_modules
-        # install_modules
+        make_headers 
         install_kernel
         update_grub
 
-        echo "following software should be rebuilt: iperf-3, basic tests and mininet"
+        echo "following software should be rebuilt: basic tests and mininet"
 }
 
 usage() {

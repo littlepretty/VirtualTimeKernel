@@ -198,11 +198,11 @@ static inline struct htb_class *htb_find(u32 handle, struct Qdisc *sch)
  *
  * It returns NULL if the packet should be dropped or -1 if the packet
  * should be passed directly thru. In all other cases leaf class is returned.
- * We allow direct class selection by classid in priority. The we examine
+ * We allow direct class selection by classid in priority. Then we examine
  * filters in qdisc and in inner nodes (if higher filter points to the inner
  * node). If we end up with classid MAJOR:0 we enqueue the skb into special
  * internal fifo (direct). These packets then go directly thru. If we still
- * have no valid leaf we try to use MAJOR:default leaf. It still unsuccessful
+ * have no valid leaf we try to use MAJOR:default leaf. If still unsuccessful
  * then finish and return direct queue.
  */
 #define HTB_DIRECT ((struct htb_class *)-1L)
@@ -911,11 +911,11 @@ ok:
 		goto fin;
 
 	q->now = ktime_to_ns(ktime_get());
-	// printk("[info] in htb_dequeue q->now in ns: %lld\n", q->now);
+	printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000);
 	start_at = jiffies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
-	// printk("[info] in htb_dequeue next_event in ns: %lld\n", next_event);
+	// printk("[htb_dequeue] next_event: %lldns\n", next_event);
 
 	for (level = 0; level < TC_HTB_MAXDEPTH; level++) {
 		/* common case optimization - skip event handler quickly */
@@ -942,7 +942,6 @@ ok:
 				goto ok;
 		}
 	}
-	// printk("[info] in htb_dequeue next_event in ns: %lld\n", next_event);
 
 	sch->qstats.overlimits++;
 	if (likely(next_event > q->now)) {
@@ -1075,18 +1074,6 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt)
 	if ((q->rate2quantum = gopt->rate2quantum) < 1)
 		q->rate2quantum = 1;
 	q->defcls = gopt->defcls;
-
-	/*
-	int copy = -1;
-	if (current->dilation > 0) {
-		copy = q->rate2quantum;
-		// wrong!!! modify rate2quantum will crash OS
-		// q->rate2quantum = q->rate2quantum / current->dilation;
-	} else {
-		printk("[panic] in htb_init current is NULL");
-	}
-	printk("[info] in htb_init: q->rate2quantum(%d), old copy(%d)", q->rate2quantum, copy);
-	*/
 	
 	return 0;
 }
@@ -1142,11 +1129,7 @@ static int htb_dump_class(struct Qdisc *sch, unsigned long arg,
 
 	memset(&opt, 0, sizeof(opt));
 
-	// printk("[info] in htb_dump_class: cl->rate.rate_bytes_ps(%llu)\n", cl->rate.rate_bytes_ps);
-	// printk("[info] in htb_dump_class: opt.rate.rate(%u)\n", opt.rate.rate);
 	psched_ratecfg_getrate(&opt.rate, &cl->rate);
-	// printk("[info] in htb_dump_class: cl->rate.rate_bytes_ps(%llu)\n", cl->rate.rate_bytes_ps);
-	// printk("[info] in htb_dump_class: opt.rate.rate(%u)\n", opt.rate.rate);
 
 	opt.buffer = PSCHED_NS2TICKS(cl->buffer);
 	psched_ratecfg_getrate(&opt.ceil, &cl->ceil);
@@ -1513,10 +1496,8 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 
 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
-	// printk("[info] in htb_change_class: rate64(%llu)\n", rate64);
-	// printk("[info] in htb_change_class: 1. write hopt->rate.rate(%u) to cl->rate.rate_bytes_ps\n", hopt->rate.rate);
-	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);
-	// printk("[info] in htb_change_class: 2. after dilation, cl->rate.rate_bytes_ps = %llu\n", cl->rate.rate_bytes_ps);
+        /* dilate 'rate' and 'ceil' ---Jiaqi */
+	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);	
 	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
 
 	/* it used to be a nasty bug here, we have to check that node

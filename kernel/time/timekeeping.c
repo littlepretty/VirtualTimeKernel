@@ -434,7 +434,8 @@ EXPORT_SYMBOL(getnstimeofday);
 ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
-	unsigned int seq;
+	struct timespec ts;
+        unsigned int seq;
 	s64 secs, nsecs;
 
 	WARN_ON(timekeeping_suspended);
@@ -445,7 +446,16 @@ ktime_t ktime_get(void)
 		nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
 
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
-	/*
+	
+        printk("[ktime_get] RT %lld.%6lld, ", secs, nsecs / 1000);
+        ts.tv_sec = secs;
+        ts.tv_nsec= nsecs;
+        do_virtual_time_keeping(&ts);
+        secs = ts.tv_sec;
+        nsecs = ts.tv_nsec;
+        printk("VT %lld.%6lld\n", secs, nsecs / 1000);
+        
+        /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
 	 */
