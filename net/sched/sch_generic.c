@@ -920,10 +920,11 @@ void psched_ratecfg_precompute(struct psched_ratecfg *r,
 	r->undilated_rate_bytes_ps = max_t(u64, conf->rate, rate64);
 	r->rate_bytes_ps = max_t(u64, conf->rate, rate64);
 
-        if (current->dilation > 1) {
-		r->rate_bytes_ps = r->undilated_rate_bytes_ps / current->dilation * 1000;
-		printk("[process %d] in psched_ratecfg_precompute: rate(%llu) dilated(%d) from origin(%llu)\n", 
-				current->pid, r->rate_bytes_ps, current->dilation / 1000, r->undilated_rate_bytes_ps);
+        if (current->dilation > 0) {
+		r->rate_bytes_ps = r->undilated_rate_bytes_ps * 1000 / current->dilation;
+		printk("[psched_ratecfg_precompute]: %s(%d) rate dilated(%d) from (%llu) to (%llu)\n",
+                                current->comm, current->pid, r->undilated_rate_bytes_ps, 
+                                current->dilation, r->rate_bytes_ps);
 	}
 
 	r->linklayer = (conf->linklayer & TC_LINKLAYER_MASK);
@@ -957,18 +958,19 @@ EXPORT_SYMBOL(psched_ratecfg_precompute);
 
 void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation)
 {
-	if (r && dilation > 0)
-	{
-		r->rate_bytes_ps = r->undilated_rate_bytes_ps / dilation * 1000;
-		printk("[process %d] in psched_ratecfg_dilate: change rate to %llu due to change of tdf(%d)\n",
-				current->pid, r->rate_bytes_ps, dilation / 1000);
-
+	if (r && dilation > 0) {
+		r->rate_bytes_ps = r->undilated_rate_bytes_ps * 1000 / dilation;
+		printk("[psched_ratecfg_dilate] %s(%d) change rate to %llu due to change of TDF(%d)\n",
+                                current->comm, current->pid, r->rate_bytes_ps, dilation);
+                /**
+                 * FIXME: not sure what this code does,
+                 * but better redo it after updating rate_bytes_ps
+                 */
 		r->mult = 1;
 		r->shift = 0;
-		if (r->rate_bytes_ps > 0)
-		{
-			/* not sure what this code does, but better redo it after updating rate_bytes_ps */
+		if (r->rate_bytes_ps > 0) {
 			u64 factor = NSEC_PER_SEC;
+
 			for (;;) {
 				r->mult = div64_u64(factor, r->rate_bytes_ps);
 				if (r->mult & (1U << 31) || factor & (1ULL << 63))

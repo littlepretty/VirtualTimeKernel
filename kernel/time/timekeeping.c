@@ -366,10 +366,10 @@ static void do_virtual_time_keeping(struct timespec* ts)
 		virtual_ts = ns_to_timespec(virtual_now);
 
 		/* for debug */
-                now = timespec_to_ns(ts);
-                printk("[VT-%s(%d)] FT=%lld ns; RT=%lld us; VT=%lld us\n", 
-                                current->comm, current->pid, current->freeze_past_nsec, 
-                                now / 1000, virtual_now / 1000);
+                /*now = timespec_to_ns(ts);*/
+                /*printk("[VT-%s(%d)] FT=%lld us; RT=%lld us; VT=%lld us\n", */
+                                /*current->comm, current->pid, current->freeze_past_nsec / 1000, */
+                                /*now / 1000, virtual_now / 1000);*/
 
 		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
@@ -434,27 +434,27 @@ EXPORT_SYMBOL(getnstimeofday);
 ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
-	struct timespec ts;
+	struct timespec ts, tomono;
         unsigned int seq;
 	s64 secs, nsecs;
 
 	WARN_ON(timekeeping_suspended);
 
 	do {
-		seq = read_seqcount_begin(&timekeeper_seq);
-		secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
-		nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
+		seq = read_seqcount_begin(&timekeeper_seq);	
+                /*secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;*/
+		/*nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;*/
+                ts.tv_sec = tk->xtime_sec;
+                ts.tv_nsec = timekeeping_get_ns(tk);
+                tomono = tk->wall_to_monotonic;
 
-	} while (read_seqcount_retry(&timekeeper_seq, seq));
-	
-        printk("[ktime_get] RT %lld.%6lld, ", secs, nsecs / 1000);
-        ts.tv_sec = secs;
-        ts.tv_nsec= nsecs;
+        } while (read_seqcount_retry(&timekeeper_seq, seq));
+
         do_virtual_time_keeping(&ts);
-        secs = ts.tv_sec;
-        nsecs = ts.tv_nsec;
-        printk("VT %lld.%6lld\n", secs, nsecs / 1000);
-        
+
+        secs = ts.tv_sec + tomono.tv_sec;
+        nsecs = ts.tv_nsec + tomono.tv_nsec; 
+
         /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.

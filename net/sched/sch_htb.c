@@ -862,13 +862,14 @@ next:
 	} while (cl != start);
 
 	/**
-         * Polling host process about dilation info; update rate when necessary
-	 * Until now, still not sure if this would dilate htb class --- Jiaqi
+         * Polling host process about dilation info; update rate when necessary.
+	 * FIXME: still need to explore/validate this part --- Jiaqi
 	 */
         if (current->dilation > 0 && current->dilation != cl->dilation) {
-		cl->dilation = current->dilation; // update dilation
-		printk("[process %d] in htb_dequeue_tree: update tdf to %d\n", current->pid, cl->dilation);
-		psched_ratecfg_dilate(&cl->rate, cl->dilation); // update rate
+		cl->dilation = current->dilation; /* update dilation */
+                psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
+                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n", 
+                                curr->comm, current->pid, cl->dilation);
 	}
 
 	if (likely(skb != NULL)) {
@@ -915,7 +916,6 @@ ok:
 	start_at = jiffies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
-	// printk("[htb_dequeue] next_event: %lldns\n", next_event);
 
 	for (level = 0; level < TC_HTB_MAXDEPTH; level++) {
 		/* common case optimization - skip event handler quickly */
@@ -1496,7 +1496,7 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 
 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
-        /* dilate 'rate' and 'ceil' ---Jiaqi */
+        /* See psched_ratecfg_precompute for dilation --- Jiaqi */
 	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);	
 	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
 
