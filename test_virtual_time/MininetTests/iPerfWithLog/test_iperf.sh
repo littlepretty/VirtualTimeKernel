@@ -1,11 +1,11 @@
 #!/bin/bash
 
 SWs="1"
-PerfTime=40 # seconds
+PerfTime=10
 BWs="100" # mb
 
 Durations="1.0" # seconds
-Intervals="2.0" # 0.5 0.1 0.05" # seconds
+Intervals="1.0" # 0.5 0.1 0.05" # seconds
 
 for bw in $BWs
 do

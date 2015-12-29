@@ -1,9 +1,5 @@
 #!/usr/bin/python
 
-#####################
-#  channon@iit.edu  #
-##################### 
-
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.node import Controller, OVSKernelSwitch, Host
@@ -12,9 +8,6 @@ from mininet.link import TCLink
 from mininet.util import irange, dumpNodeConnections
 from mininet.log import setLogLevel, info
 
-####################
-#  System Imports  #
-####################
 import sys
 import time
 import os
@@ -31,7 +24,7 @@ def pidList(net):
     for c in net.controllers:
         pIDs += ' %s' % c.pid
     # freeze ovs-switchd ovsdb-server
-    pIDs += ' 1666 1667 '
+    # pIDs += ' '
     return pIDs
 
 def pause(pIDs): 
@@ -84,17 +77,17 @@ def test():
     # start iperf server
     net.get('h1').cmd('iperf3 -s > %sSrv.log &' % file_out)
     # make sure server has started
-    time.sleep(0.5)
+    time.sleep(1)
     
-    start = time.time()
-    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' \
-            % (perf_time, file_out))
-    baseline_runtime = time.time() - start
-    print "Runtime of baseline iperf = %f" % baseline_runtime
+    # start = time.time()
+    # net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' \
+            # % (perf_time, file_out))
+    # baseline_runtime = time.time() - start
+    # print "Runtime of baseline iperf = %f" % baseline_runtime
 
     frozen_iperf = iperfThread(net, perf_time, file_out)
     frozen_iperf.start()
-    time.sleep(0.1)
+    time.sleep(1)
     start = time.time()
     
     for x in range(0, num_pause):
@@ -104,8 +97,6 @@ def test():
     frozen_iperf.join()
     frozen_runtime = time.time() - start
     print "Runtime of frozen iperf = %f" % frozen_runtime
-    print "Time error = %f" \
-            % (frozen_runtime - num_pause * duration - baseline_runtime)
     net.stop()
 
 if __name__ == '__main__':

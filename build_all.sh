@@ -29,10 +29,10 @@ make_kernel() {
         check_err make_kernel
 }
 
-make_headers() {
+install_headers() {
         echo "step 1.1 make headers"
         sudo make headers_install 2>$ERR
-        check_err make_headers
+        check_err install_headers
 }
 
 make_modules() {
@@ -65,7 +65,9 @@ build_all() {
         rm -f $LOG
         rm -f $ERR
         make_kernel
-        make_headers 
+        install_headers
+        make_modules
+        install_modules
         install_kernel
         update_grub
 

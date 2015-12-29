@@ -19,7 +19,6 @@ echo "Step 0. patch file written to ${PATCH}"
 diff -rup $DST ./ > ${PATCH}
 echo ""
 
-
 FILES="kernel/fork.c		\
 kernel/time.c			\
 kernel/time/timekeeping.c	\
@@ -28,13 +27,15 @@ include/uapi/linux/sched.h	\
 include/linux/sched.h		\
 include/linux/init_task.h	\
 include/linux/time.h		\
-include/net/sch_generic.h	\
-net/sched/sch_generic.c		\
-net/sched/sch_htb.c		\
-net/core/dev.c			\
+net/sched/sch_htb.c             \
 fs/proc/base.c			\
 Makefile			\
 build_all.sh"
+
+#include/net/sch_generic.h	\
+#net_dilation/sched/sch_generic.c       \
+#net_dilation/sched/sch_htb.c   \
+#net_dilation/core/dev.c        \
 
 # if [ ! -e $DST/virtual_time ]; then
 #     mkdir $DST/virtual_time

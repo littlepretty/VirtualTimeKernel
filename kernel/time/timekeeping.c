@@ -434,7 +434,7 @@ EXPORT_SYMBOL(getnstimeofday);
 ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
-	struct timespec ts, tomono;
+	/*struct timespec ts, tomono;*/
         unsigned int seq;
 	s64 secs, nsecs;
 
@@ -442,26 +442,26 @@ ktime_t ktime_get(void)
 
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);	
-                /*secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;*/
-		/*nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;*/
-                ts.tv_sec = tk->xtime_sec;
-                ts.tv_nsec = timekeeping_get_ns(tk);
-                tomono = tk->wall_to_monotonic;
+                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
+                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
+                /*ts.tv_sec = tk->xtime_sec;*/
+                /*ts.tv_nsec = timekeeping_get_ns(tk);*/
+                /*tomono = tk->wall_to_monotonic;*/
 
         } while (read_seqcount_retry(&timekeeper_seq, seq));
 
-        do_virtual_time_keeping(&ts);
+        /*do_virtual_time_keeping(&ts);*/
 
-        secs = ts.tv_sec + tomono.tv_sec;
-        nsecs = ts.tv_nsec + tomono.tv_nsec;
+        /*secs = ts.tv_sec + tomono.tv_sec;*/
+        /*nsecs = ts.tv_nsec + tomono.tv_nsec;*/
         /**
          * Usually tomono is negative, so 'nsecs' may be negative.
          * Make it positive by reducing 'secs'. Maybe overthingking?
          */
-        while (nsecs < 0 && secs > 0) {
-                --secs;
-                nsecs += NSEC_PER_SEC;
-        }
+        /*while (nsecs < 0 && secs > 0) {*/
+                /*--secs;*/
+                /*nsecs += NSEC_PER_SEC;*/
+        /*}*/
 
         /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on

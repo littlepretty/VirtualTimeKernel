@@ -370,8 +370,7 @@ iperf_run_client(struct iperf_test * test)
 	memcpy(&read_set, &test->read_set, sizeof(fd_set));
 	memcpy(&write_set, &test->write_set, sizeof(fd_set));
 	(void) gettimeofday(&now, NULL);
-	timeout = tmr_timeout(&now);
-        /*printf("[run_client] will wait %6ld.%6ld for select()\n");*/
+	timeout = tmr_timeout(&now); 
 	result = select(test->max_fd + 1, &read_set, &write_set, NULL, timeout);
 	if (result < 0 && errno != EINTR) {
   	    i_errno = IESELECT;
@@ -411,7 +410,8 @@ iperf_run_client(struct iperf_test * test)
 	    }
 
             /* Run the timers. */
-            (void) gettimeofday(&now, NULL); 
+            (void) gettimeofday(&now, NULL);
+            printf("[client_run] timer value: %6ld.%6ld\n", now.tv_sec, now.tv_usec);
             if (tmr_run(&now)) {
                 printf("[client_run] %d sent before timeout\n", sent_cnt);
                 sent_cnt = 0;
