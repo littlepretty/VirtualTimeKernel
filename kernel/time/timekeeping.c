@@ -452,8 +452,8 @@ ktime_t ktime_get(void)
 
         do_virtual_time_keeping(&ts);
 
-        secs = ts.tv_sec + tomono->tv_sec;
-        nsecs = tv.tv_nsec + tomono->tv_nsec;
+        secs = ts.tv_sec + tomono.tv_sec;
+        nsecs = ts.tv_nsec + tomono.tv_nsec;
         /**
          * Usually tomono is negative, so 'nsecs' may be negative.
          * Make it positive by reducing 'secs'. Maybe overthingking?
