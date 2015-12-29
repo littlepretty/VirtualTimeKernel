@@ -37,7 +37,9 @@
 #include <linux/rbtree.h>
 #include <linux/workqueue.h>
 #include <linux/slab.h>
-#include <linux/time.h>
+#include <linux/rcupdate.h> // for accessing parent process
+#include <linux/sched.h> // for accessing current
+
 #include <net/netlink.h>
 #include <net/sch_generic.h>
 #include <net/pkt_sched.h>
@@ -98,6 +100,7 @@ struct htb_prio {
 struct htb_class {
 	struct Qdisc_class_common common;
 	struct psched_ratecfg	rate;
+	int dilation;
 	struct psched_ratecfg	ceil;
 	s64			buffer, cbuffer;/* token bucket depth/rate */
 	s64			mbuffer;	/* max wait time */
@@ -195,11 +198,11 @@ static inline struct htb_class *htb_find(u32 handle, struct Qdisc *sch)
  *
  * It returns NULL if the packet should be dropped or -1 if the packet
  * should be passed directly thru. In all other cases leaf class is returned.
- * We allow direct class selection by classid in priority. The we examine
+ * We allow direct class selection by classid in priority. Then we examine
  * filters in qdisc and in inner nodes (if higher filter points to the inner
  * node). If we end up with classid MAJOR:0 we enqueue the skb into special
  * internal fifo (direct). These packets then go directly thru. If we still
- * have no valid leaf we try to use MAJOR:default leaf. It still unsuccessful
+ * have no valid leaf we try to use MAJOR:default leaf. If still unsuccessful
  * then finish and return direct queue.
  */
 #define HTB_DIRECT ((struct htb_class *)-1L)
@@ -858,6 +861,17 @@ next:
 
 	} while (cl != start);
 
+	/**
+         * Polling host process about dilation info; update rate when necessary.
+	 * FIXME: still need to explore/validate this part --- Jiaqi
+	 */
+        if (current->dilation > 0 && current->dilation != cl->dilation) {
+		cl->dilation = current->dilation; /* update dilation */
+                psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
+                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n", 
+                                current->comm, current->pid, cl->dilation);
+	}
+
 	if (likely(skb != NULL)) {
 		bstats_update(&cl->bstats, skb);
 		cl->un.leaf.deficit[level] -= qdisc_pkt_len(skb);
@@ -896,15 +910,10 @@ ok:
 
 	if (!sch->q.qlen)
 		goto fin;
-	q->now = ktime_to_ns(ktime_get());
-	start_at = jiffies;
 
-        /**
-         * Subtract freozen duration
-         */
-        q->now -= current->freeze_past_nsec; 
-        printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n", 
-                        current->comm, current->pid, current->freeze_past_nsec);
+	q->now = ktime_to_ns(ktime_get());
+	printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000);
+	start_at = jiffies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
 
@@ -933,6 +942,7 @@ ok:
 				goto ok;
 		}
 	}
+
 	sch->qstats.overlimits++;
 	if (likely(next_event > q->now)) {
 		if (!test_bit(__QDISC_STATE_DEACTIVATED,
@@ -1064,7 +1074,7 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt)
 	if ((q->rate2quantum = gopt->rate2quantum) < 1)
 		q->rate2quantum = 1;
 	q->defcls = gopt->defcls;
-
+	
 	return 0;
 }
 
@@ -1120,6 +1130,7 @@ static int htb_dump_class(struct Qdisc *sch, unsigned long arg,
 	memset(&opt, 0, sizeof(opt));
 
 	psched_ratecfg_getrate(&opt.rate, &cl->rate);
+
 	opt.buffer = PSCHED_NS2TICKS(cl->buffer);
 	psched_ratecfg_getrate(&opt.ceil, &cl->ceil);
 	opt.cbuffer = PSCHED_NS2TICKS(cl->cbuffer);
@@ -1485,7 +1496,8 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 
 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
-	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);
+        /* See psched_ratecfg_precompute for dilation --- Jiaqi */
+	psched_ratecfg_precompute(&cl->rate, &hopt->rate, rate64);	
 	psched_ratecfg_precompute(&cl->ceil, &hopt->ceil, ceil64);
 
 	/* it used to be a nasty bug here, we have to check that node
