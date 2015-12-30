@@ -20,11 +20,13 @@ freeze_iperf() {
 }
 
 TIME=30
+NUM_PAUSE=5
+BEFORE_PAUSE=10
 rm Time${TIME}.client Time${TIME}.server
 
 tc qdisc add dev lo root handle 1: htb default 12
-tc class add dev lo parent 1:1 classid 1:12 htb rate 100mbit burst 15k
-tc qdisc add dev lo parent 1:12 netem delay 10us
+tc class add dev lo parent 1:1 classid 1:12 htb rate 100mbit burst 1k
+tc qdisc add dev lo parent 1:12 netem delay 10ms
 
 setsid iperf3 -s --logfile Time${TIME}.server &
 server_pid=$!
@@ -38,17 +40,12 @@ client_pid=$!
 # client enter virtual time
 echo "echo 1000 > /proc/$client_pid/dilation"
 echo 1000 > /proc/$client_pid/dilation
-sleep 20
+sleep $BEFORE_PAUSE
 
-freeze_iperf $server_pid $client_pid
-sleep 1
-freeze_iperf $server_pid $client_pid
-sleep 1
-freeze_iperf $server_pid $client_pid
-sleep 1
-freeze_iperf $server_pid $client_pid
-sleep 1
-freeze_iperf $server_pid $client_pid
+for ((i = 0; i < $NUM_PAUSE; ++i)) {
+        freeze_iperf $server_pid $client_pid
+        sleep 2
+}
 
 wait $client_pid
 kill -s SIGKILL $server_pid

@@ -34,16 +34,16 @@ client_pid=$!
 # client enter virtual time
 echo "echo 1000 > /proc/$client_pid/dilation"
 echo 1000 > /proc/$client_pid/dilation
-sleep 20
+sleep 10
 
 freeze_iperf $server_pid $client_pid
-sleep 1
+sleep 2 
 freeze_iperf $server_pid $client_pid
-sleep 1
+sleep 2
 freeze_iperf $server_pid $client_pid
-sleep 1
+sleep 2
 freeze_iperf $server_pid $client_pid
-sleep 1
+sleep 2
 freeze_iperf $server_pid $client_pid
 
 wait $client_pid

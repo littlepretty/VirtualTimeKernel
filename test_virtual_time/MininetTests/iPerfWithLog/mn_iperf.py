@@ -79,12 +79,11 @@ def test():
     # make sure server has started
     time.sleep(1)
     
-    # start = time.time()
-    # net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' \
-            # % (perf_time, file_out))
-    # baseline_runtime = time.time() - start
-    # print "Runtime of baseline iperf = %f" % baseline_runtime
-
+    start = time.time()
+    net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' \
+            % (perf_time, file_out))
+    baseline_runtime = time.time() - start
+    
     frozen_iperf = iperfThread(net, perf_time, file_out)
     frozen_iperf.start()
     time.sleep(1)
@@ -96,6 +95,8 @@ def test():
  
     frozen_iperf.join()
     frozen_runtime = time.time() - start
+    
+    print "Runtime of baseline iperf = %f" % baseline_runtime
     print "Runtime of frozen iperf = %f" % frozen_runtime
     net.stop()
 
