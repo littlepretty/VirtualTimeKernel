@@ -27,6 +27,7 @@ include/uapi/linux/sched.h	\
 include/linux/sched.h		\
 include/linux/init_task.h	\
 include/linux/time.h		\
+include/net/pkt_sched.h         \
 net/sched/sch_htb.c             \
 fs/proc/base.c			\
 Makefile			\

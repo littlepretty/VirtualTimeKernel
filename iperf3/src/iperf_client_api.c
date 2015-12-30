@@ -411,9 +411,10 @@ iperf_run_client(struct iperf_test * test)
 
             /* Run the timers. */
             (void) gettimeofday(&now, NULL);
-            printf("[client_run] timer value: %6ld.%6ld\n", now.tv_sec, now.tv_usec);
+
             if (tmr_run(&now)) {
                 printf("[client_run] %d sent before timeout\n", sent_cnt);
+                printf("[client_run] timer value: %6ld.%6ld\n", now.tv_sec, now.tv_usec);
                 sent_cnt = 0;
             } else {
                 ++sent_cnt;

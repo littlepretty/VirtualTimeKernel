@@ -902,9 +902,11 @@ ok:
         /**
          * Subtract freozen duration
          */
-        q->now -= current->freeze_past_nsec; 
-        printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n", 
-                        current->comm, current->pid, current->freeze_past_nsec);
+        if (current->freeze_past_nsec > 0) {
+                q->now -= current->freeze_past_nsec;
+                printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n",
+                                current->comm, current->pid, current->freeze_past_nsec);
+        }
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
 
