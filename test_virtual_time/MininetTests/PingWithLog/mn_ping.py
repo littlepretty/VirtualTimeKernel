@@ -22,8 +22,7 @@ def pidList(net):
     for s in net.switches :
         pIDS += ' %s' % s.pid
     for c in net.controllers:
-        pIDS += ' %s' %c.pid
-    pIDS += ' 1369 1370 1631 1632 '
+        pIDS += ' %s' %c.pid 
     return pIDS
 
 def pause():
@@ -39,7 +38,7 @@ class DssTopo(Topo):
         host2= self.addHost('h2')
 
         switchList=[]
-        link_opts=dict(bw=10, delay='%sms' % latency)
+        link_opts=dict(bw=10, delay='%sus' % latency)
         for i in range(num_sw):
             s = self.addSwitch('switch%s' % i)
             switchList.append(s)
@@ -56,8 +55,8 @@ class pingThread(threading.Thread):
         self.ping_cnt = ping_cnt
         self.file_name = file_name
     
-    def run(self):
-        self.net.get('h1').cmd('/home/kd/VirtualTimeKernel/iputils/ping -c %s 10.0.0.2 > %sVir.log &' % (self.ping_cnt, self.file_name))
+    def run(self): 
+        self.net.get('h1').cmd('sudo /home/kd/VirtualTimeKernel/iputils/ping -c %d 10.0.0.2 > %sVir.log' % (self.ping_cnt, self.file_name))
 
 def test():
     topo = DssTopo()
@@ -70,18 +69,15 @@ def test():
     global NRESUME
     NPAUSE = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -f -p %s' % pIDS
     NRESUME = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -u -p %s' % pIDS
-    
+    # skip ARP
     print(net.get('h1').cmd('ping -c 1 10.0.0.2'))
 
     info('\n*** Start baseline test ***\n')
-    # start = time.clock()
     net.get('h1').cmd('ping -c %s 10.0.0.2 > %sBsl.log' % (ping_count, file_out))
-    # print "Runtime of baseline = %f" % float(time.clock() - start)
-
+    
     info('\n*** Start freeze test ***\n')
     frozen_ping = pingThread(net, ping_count, file_out)
     frozen_ping.start()
-    # start = time.clock()
     
     print "Schedule %d freeze" % num_pause
     for x in range(0, num_pause):
@@ -89,8 +85,6 @@ def test():
         time.sleep(interval)
 
     frozen_ping.join()
-    # frozen_runtime = time.clock() - start
-    # print "Runtime of frozen ping = %f" % frozen_runtime
 
     net.stop()    
 
@@ -110,11 +104,12 @@ if __name__ == '__main__':
     latency = args.latency
     interval = args.interval
     
-    file_out = 'Sw%sLat%sFrz%sInt%s' % (num_sw, latency, duration, interval)
-    num_pause = int((ping_count * (num_sw + 1) * 2 * latency * 0.001 / interval)) - 1
-    if num_pause <= 0.0:
+    file_out = 'Sw%sLat%sFrz%sInt%s' % (num_sw, latency, duration, interval) 
+    num_pause = int((ping_count / interval)) - 1
+    if num_pause <= 0:
         print "Impossible to schedule any freeze"
         exit(1)
+    print "Schedule %d freeze" % num_pause
         
     setLogLevel('info')
     test()

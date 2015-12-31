@@ -812,7 +812,10 @@ void main_loop(int icmp_sock, __u8 *packet, int packlen)
 				}
 			} else {
 
-/*#ifdef SO_TIMESTAMP*/
+#ifdef SO_TIMESTAMP
+                                /**
+                                 * Don't use socket's timestamp to calculate round-trip time --- Jiaqi
+                                 */
 				/*for (c = CMSG_FIRSTHDR(&msg); c; c = CMSG_NXTHDR(&msg, c)) {*/
 					/*if (c->cmsg_level != SOL_SOCKET ||*/
 					    /*c->cmsg_type != SO_TIMESTAMP)*/
@@ -821,7 +824,7 @@ void main_loop(int icmp_sock, __u8 *packet, int packlen)
 						/*continue;*/
 					/*recv_timep = (struct timeval*)CMSG_DATA(c);*/
 				/*}*/
-/*#endif*/
+#endif
 
 				if ((options&F_LATENCY) || recv_timep == NULL) {
 					if ((options&F_LATENCY) ||
@@ -870,12 +873,12 @@ int gather_statistics(__u8 *icmph, int icmplen,
                 struct timeval try_tv;
                 gettimeofday(&try_tv, NULL);
 restamp:
-                printf("[gather_statistics] send_time[%ld.%6ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);
-                printf("[gather_statistics] recv_time[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);
-                printf("[gather_statistics] try_recv_time[%ld.%6ld]s\n", try_tv.tv_sec, try_tv.tv_usec);
+                /*printf("[gather_statistics] send_time[%ld.%6ld]s\n", tmp_tv.tv_sec, tmp_tv.tv_usec);*/
+                /*printf("[gather_statistics] recv_time[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);*/
+                /*printf("[gather_statistics] try_recv_time[%ld.%6ld]s\n", try_tv.tv_sec, try_tv.tv_usec);*/
 		tvsub(tv, &tmp_tv);
 		triptime = tv->tv_sec * 1000000 + tv->tv_usec;
-                printf("[gather_statistics] triptime[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);
+                /*printf("[gather_statistics] triptime[%ld.%6ld]s\n", tv->tv_sec, tv->tv_usec);*/
 		if (triptime < 0) {
 			fprintf(stderr, "Warning: time of day goes back (%ldus), taking countermeasures.\n", triptime);
 			triptime = 0;
