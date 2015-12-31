@@ -54,8 +54,8 @@ static inline psched_time_t psched_get_time(void)
          * Consider freezing
          */
         if (current->freeze_past_nsec > 0) {
-                s64 nsec = ktime_to_ns(ktime_get());
-                nsec -= current->freeze_past_nsec;
+                s64 nsecs = ktime_to_ns(ktime_get());
+                nsecs -= current->freeze_past_nsec;
                 printk("[psched_get_time] %s(%d) subtract %lld frozen duration\n",
                                 current->comm, current->pid, current->freeze_past_nsec);
                 return PSCHED_NS2TICKS(nsecs);

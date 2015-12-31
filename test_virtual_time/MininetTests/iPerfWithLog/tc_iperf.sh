@@ -26,7 +26,7 @@ rm Time${TIME}.client Time${TIME}.server
 
 tc qdisc add dev lo root handle 1: htb default 12
 tc class add dev lo parent 1:1 classid 1:12 htb rate 100mbit burst 1k
-tc qdisc add dev lo parent 1:12 netem delay 10ms
+tc qdisc add dev lo parent 1:12 netem delay 1ms
 
 setsid iperf3 -s --logfile Time${TIME}.server &
 server_pid=$!
@@ -35,7 +35,7 @@ echo "echo 1000 > /proc/$server_pid/dilation"
 echo 1000 > /proc/$server_pid/dilation
 sleep 1
 
-setsid iperf3 -c 127.0.0.1 -t $TIME --logfile Time${TIME}.client &
+setsid iperf3 -c 127.0.0.1 -t $TIME -b 100m --logfile Time${TIME}.client &
 client_pid=$!
 # client enter virtual time
 echo "echo 1000 > /proc/$client_pid/dilation"

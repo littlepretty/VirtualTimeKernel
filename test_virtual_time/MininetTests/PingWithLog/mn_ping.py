@@ -23,6 +23,7 @@ def pidList(net):
         pIDS += ' %s' % s.pid
     for c in net.controllers:
         pIDS += ' %s' %c.pid
+    pIDS += ' 1369 1370 1631 1632 '
     return pIDS
 
 def pause():
@@ -38,7 +39,7 @@ class DssTopo(Topo):
         host2= self.addHost('h2')
 
         switchList=[]
-        link_opts=dict(bw=10,delay='%sms' % latency)
+        link_opts=dict(bw=10, delay='%sms' % latency)
         for i in range(num_sw):
             s = self.addSwitch('switch%s' % i)
             switchList.append(s)
