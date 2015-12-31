@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SWs="1"
-PingCount=100
+PingCount=1000
 Latencies="10.0" # microseconds
 
 Durations="0.1" # seconds
@@ -20,7 +20,7 @@ do
                                 echo "***********************************************************"
                                 echo "******* Freeze ${dur}s for every ${int}s with ${delay}us link ******"
                                 echo "***********************************************************"
-                                #./mn_ping.py -n $n --ping_count $PingCount --latency $delay --duration $dur --interval $int
+                                ./mn_ping.py -n $n --ping_count $PingCount --latency $delay --duration $dur --interval $int
                                 #cat Sw${n}Lat${delay}Frz${dur}Int${int}Vir.log  
                                 
                                 ./parse_ping.pl Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.log > Sw${n}Lat${delay}Frz${dur}Int${int}Bsl.ping
