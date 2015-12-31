@@ -902,10 +902,10 @@ ok:
         /**
          * Subtract freozen duration
          */
-        if (current->freeze_past_nsec > 0) {
+        if (current && current->freeze_past_nsec) {
                 q->now -= current->freeze_past_nsec;
-                printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n",
-                                current->comm, current->pid, current->freeze_past_nsec);
+                /*printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n",*/
+                                /*current->comm, current->pid, current->freeze_past_nsec);*/
         }
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
@@ -1235,7 +1235,13 @@ static void htb_parent_to_leaf(struct htb_sched *q, struct htb_class *cl,
 	parent->un.leaf.q = new_q ? new_q : &noop_qdisc;
 	parent->tokens = parent->buffer;
 	parent->ctokens = parent->cbuffer;
-	parent->t_c = ktime_to_ns(ktime_get());
+        
+        s64 now = ktime_to_ns(ktime_get()); 
+        if (current && current->freeze_past_nsec) {
+                now -= current->freeze_past_nsec; 
+        }
+        parent->t_c = now;
+	/*parent->t_c = ktime_to_ns(ktime_get()); */
 	parent->cmode = HTB_CAN_SEND;
 }
 
@@ -1465,7 +1471,13 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 		cl->tokens = PSCHED_TICKS2NS(hopt->buffer);
 		cl->ctokens = PSCHED_TICKS2NS(hopt->cbuffer);
 		cl->mbuffer = 60ULL * NSEC_PER_SEC;	/* 1min */
-		cl->t_c = ktime_to_ns(ktime_get());
+                
+                s64 now = ktime_to_ns(ktime_get()); 
+                if (current && current->freeze_past_nsec) {
+                        now -= current->freeze_past_nsec; 
+                }
+		cl->t_c = now;
+                /*cl->t_c = ktime_to_ns(ktime_get());*/
 		cl->cmode = HTB_CAN_SEND;
 
 		/* attach to the hash list and parent's family */

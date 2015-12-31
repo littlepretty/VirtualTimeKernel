@@ -29,6 +29,7 @@ include/linux/init_task.h	\
 include/linux/time.h		\
 include/net/pkt_sched.h         \
 net/sched/sch_htb.c             \
+net/sched/sch_netem.c           \
 fs/proc/base.c			\
 Makefile			\
 build_all.sh"

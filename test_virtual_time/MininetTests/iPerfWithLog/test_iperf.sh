@@ -5,7 +5,7 @@ PerfTime=40
 BWs="100" # mb
 
 Durations="2.0" # seconds
-Intervals="1.0" # 0.5 0.1 0.05" # seconds
+Intervals="2.0" # 0.5 0.1 0.05" # seconds
 
 for bw in $BWs
 do

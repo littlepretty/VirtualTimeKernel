@@ -490,7 +490,12 @@ static int netem_enqueue(struct sk_buff *skb, struct Qdisc *sch)
 		delay = tabledist(q->latency, q->jitter,
 				  &q->delay_cor, q->delay_dist);
 
-		now = psched_get_time();
+		s64 nsecs = ktime_to_ns(ktime_get());
+                if (current && current->freeze_past_nsec) {
+                        nsecs -= current->freeze_past_nsec;
+                }
+                now = PSCHED_NS2TICKS(nsecs);
+                /*now = psched_get_time();*/
 
 		if (q->rate) {
 			struct sk_buff *last;
@@ -522,7 +527,13 @@ static int netem_enqueue(struct sk_buff *skb, struct Qdisc *sch)
 		 * Do re-ordering by putting one out of N packets at the front
 		 * of the queue.
 		 */
-		cb->time_to_send = psched_get_time();
+		s64 nsecs = ktime_to_ns(ktime_get());
+                if (current && current->freeze_past_nsec) {
+                        nsecs -= current->freeze_past_nsec;
+                }
+                psched_time_t now = PSCHED_NS2TICKS(nsecs);
+		cb->time_to_send = now;
+                /*cb->time_to_send = psched_get_time();*/
 		q->counter = 0;
 
 		__skb_queue_head(&sch->q, skb);
@@ -588,8 +599,16 @@ deliver:
 
 		/* if more time remaining? */
 		time_to_send = netem_skb_cb(skb)->time_to_send;
-		if (time_to_send <= psched_get_time()) {
-			rb_erase(p, &q->t_root);
+
+                s64 nsecs = ktime_to_ns(ktime_get());
+                if (current && current->freeze_past_nsec > 0) {
+                        nsecs -= current->freeze_past_nsec;
+                }
+                psched_time_t right_now = PSCHED_NS2TICKS(nsecs);
+                
+		if (time_to_send <= right_now) {
+                /*if (time_to_send <= psched_get_time()) {*/
+                        rb_erase(p, &q->t_root);
 
 			sch->q.qlen--;
 			skb->next = NULL;
