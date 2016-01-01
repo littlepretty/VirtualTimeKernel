@@ -49,6 +49,7 @@ do
         awk "$AwkScript" Sw${SWs}Bw${bw}Frz${dur}Int${int}Bsl.log > bsl_run_${i}.txt
         awk "$AwkScript" Sw${SWs}Bw${bw}Frz${dur}Int${int}Vir.log > vir_run_${i}.txt
 done
+python avg_plot.py iPerfAvgRate.eps
 
 #for dur in $Durations
 #do
