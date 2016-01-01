@@ -61,7 +61,7 @@ class iperfThread(threading.Thread):
         self.file_name = file_name
 
     def run(self):
-        self.net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s -b 95M > %sVir.log 2>&1' \
+        self.net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s -b 94M > %sVir.log 2>&1' \
                 % (self.perf_time, self.file_name))
         # self.net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sVir.log 2>&1' \
                 # % (self.perf_time, self.file_name))

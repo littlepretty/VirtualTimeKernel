@@ -8,7 +8,7 @@ from math import sqrt
 def plot_all(output_file):
     bsl = []
     vir = []
-    for i in range(0, 50):
+    for i in range(0, num_files):
         one_run = np.loadtxt("bsl_run_%d.txt" % i)
         bsl.append(one_run)
 
@@ -42,11 +42,11 @@ def plot_all(output_file):
     print x_data
 
     plt.figure()
-    plt.plot(x_data, bsl_avg, color='red', marker='s', markersize=8, linewidth=1.0, label='No Freeze')
-    plt.plot(x_data, vir_avg, color='blue', marker='v', markersize=8, linewidth=1.0, label='Freeze Duration=1s, Interval=1s')
+    plt.plot(x_data, bsl_avg, color='blue', marker='s', markersize=8, linewidth=1.0, label='No Freeze')
+    plt.plot(x_data, vir_avg, color='red', marker='v', markersize=8, linewidth=1.0, label='Freeze Duration=1s, Interval=1s')
 
-    plt.errorbar(x_data, bsl_avg, bsl_conf_int, color='red', ecolor='red')
-    plt.errorbar(x_data, vir_avg, vir_conf_int, color='blue', ecolor='blue')
+    plt.errorbar(x_data, bsl_avg, bsl_conf_int, color='blue', ecolor='blue')
+    plt.errorbar(x_data, vir_avg, vir_conf_int, color='red', ecolor='red')
     plt.grid(True)
     plt.legend(loc='lower right')
     plt.xlim([time_start, time_end-1])
@@ -59,5 +59,6 @@ def plot_all(output_file):
     plt.savefig(output_file, format='eps')
 
 if __name__ == '__main__':
-    plot_all(sys.argv[1])
+    num_files = int(sys.argv[1])
+    plot_all(sys.argv[2])
 
