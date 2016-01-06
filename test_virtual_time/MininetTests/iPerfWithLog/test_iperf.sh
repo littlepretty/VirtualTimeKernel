@@ -2,7 +2,7 @@
 
 SWs="1"
 PerfTime=30
-bw="100" # mb
+bw="800" # mb
 REPEAT=64
 
 Durations="1.0" # seconds
@@ -31,7 +31,7 @@ do
         ./parse_iperf.awk Sw${SWs}Bw${bw}Frz${dur}Int${int}Vir.log > vir_run_${i}.txt
 done
 
-python avg_plot.py $REPEAT iPerfAvgRate.eps
+python avg_plot.py $REPEAT iPerfAvgRate${bw}M.eps
 
 
 

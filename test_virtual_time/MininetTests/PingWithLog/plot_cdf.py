@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 import argparse
 
 def plot_err_cdf(data1, data2):
@@ -51,8 +52,8 @@ def plot_compare_cdf(data1, data2):
     p1 = plt.plot(bin_edges1[1:], cdf1, 'b', label=label1)
     p2 = plt.plot(bin_edges2[1:], cdf2, 'r', label=label2)
     plt.legend() #(loc='lower right')
-    plt.xlabel('PING RTT / Milliseconds')
-    plt.ylabel('Cumulative Distribution')
+    plt.xlabel('PING RTT / Milliseconds', fontsize=20)
+    plt.ylabel('Cumulative Distribution', fontsize=20)
     plt.grid(True)
     # plt.show()
     plt.savefig('cmp_%s_cdf.eps' % topic_name, format='eps')
@@ -72,8 +73,8 @@ def plot_variance_cdf(data):
     plt.xlim(0.99 * xlim_min, 1.02 * xlim_max)
     p = plt.plot(bin_edges[1:], cdf, 'b', label='Variance of GTOD')
     plt.legend(loc='lower right')
-    plt.xlabel('Absolute Variance / Microseconds')
-    plt.ylabel('Cumulative Distribution')
+    plt.xlabel('Absolute Variance / Microseconds', fontsize=22)
+    plt.ylabel('Cumulative Distribution', fontsize=22)
     plt.grid(True)
     #plt.show()
     plt.savefig('var_%s_cdf.eps' % topic_name, format='eps')
@@ -82,6 +83,9 @@ def main():
     """draw 2 cdf figures"""
     data1 = np.loadtxt(bsl_file)
     data2 = np.loadtxt(vir_file)
+    font = {'size':16}
+    matplotlib.rc('lines', lw=2)
+    matplotlib.rc('font', **font)
     plot_compare_cdf(data1, data2)
     plot_err_cdf(data1, data2)
 

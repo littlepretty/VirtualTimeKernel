@@ -38,7 +38,7 @@ class DssTopo(Topo):
         host2= self.addHost('h2')
 
         switchList=[]
-        link_opts=dict(bw=10, delay='%sus' % latency)
+        link_opts=dict(bw=1000, delay='%sus' % latency)
         for i in range(num_sw):
             s = self.addSwitch('switch%s' % i)
             switchList.append(s)
