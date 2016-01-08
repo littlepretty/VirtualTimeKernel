@@ -31,9 +31,7 @@ do
         ./parse_iperf.awk Sw${SWs}Bw${bw}Frz${dur}Int${int}Vir.log > vir_run_${i}.txt
 done
 
-python avg_plot.py $REPEAT iPerfAvgRate${bw}M.eps
-
-
+python avg_plot.py $REPEAT iPerfRateAvg${bw}M.eps
 
 #for dur in $Durations
 #do
