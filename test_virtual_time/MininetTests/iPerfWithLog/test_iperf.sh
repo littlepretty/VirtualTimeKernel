@@ -2,7 +2,7 @@
 
 SWs="1"
 PerfTime=30
-bw="800" # mb
+bw="400" # mb
 REPEAT=64
 
 Durations="1.0" # seconds
