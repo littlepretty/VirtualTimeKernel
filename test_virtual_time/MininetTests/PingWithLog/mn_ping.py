@@ -56,7 +56,7 @@ class pingThread(threading.Thread):
         self.file_name = file_name
     
     def run(self): 
-        self.net.get('h1').cmd('sudo /home/kd/VirtualTimeKernel/iputils/ping -c %d 10.0.0.2 > %sVir.log' % (self.ping_cnt, self.file_name))
+        self.net.get('h1').cmd('/home/kd/VirtualTimeKernel/iputils/ping -c %d 10.0.0.2 > %sVir.log' % (self.ping_cnt, self.file_name))
 
 def test():
     topo = DssTopo()

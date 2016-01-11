@@ -2,7 +2,7 @@
 
 SWs="1"
 PingCount=1000
-Latencies="100.0" # microseconds
+Latencies="1000.0" # microseconds
 
 Durations="0.1" # seconds
 Intervals="0.1" # seconds
