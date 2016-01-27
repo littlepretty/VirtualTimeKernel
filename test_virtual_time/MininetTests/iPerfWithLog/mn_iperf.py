@@ -27,7 +27,7 @@ def pidList(net):
     # pIDs += ' '
     return pIDs
 
-def pause(pIDs): 
+def pause(pIDs):
     NPAUSE = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -f -p %s' % pIDs
     NRESUME = 'sudo /home/kd/VirtualTimeKernel/test_virtual_time/freeze_all_procs -u -p %s' % pIDs
     output = subprocess.check_output(NPAUSE, shell=True)
@@ -63,8 +63,6 @@ class iperfThread(threading.Thread):
     def run(self):
         self.net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sVir.log 2>&1' \
                 % (self.perf_time, self.file_name))
-        # self.net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sVir.log 2>&1' \
-                # % (self.perf_time, self.file_name))
         return
 
 def test():
@@ -78,24 +76,24 @@ def test():
     net.get('h1').cmd('iperf3 -s > %sSrv.log &' % file_out)
     # make sure server has started
     time.sleep(1)
-    
+
     start = time.time()
     net.get('h2').cmd('iperf3 -c 10.0.0.1 -t %s > %sBsl.log 2>&1' \
             % (perf_time, file_out))
     baseline_runtime = time.time() - start
-    
+
     frozen_iperf = iperfThread(net, perf_time, file_out)
     frozen_iperf.start()
     time.sleep(1)
     start = time.time()
-    
+
     for x in range(0, num_pause):
         pause(pIDs)
         time.sleep(interval)
- 
+
     frozen_iperf.join()
     frozen_runtime = time.time() - start
-    
+
     print "Runtime of baseline iperf = %f" % baseline_runtime
     print "Runtime of frozen iperf = %f" % frozen_runtime
     net.stop()
@@ -122,4 +120,4 @@ if __name__ == '__main__':
     print "Schedule %d freeze operations" % num_pause
     setLogLevel('info')
     test()
- 
+
