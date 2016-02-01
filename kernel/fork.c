@@ -1836,13 +1836,15 @@ static int unshare_fd(unsigned long unshare_flags, struct files_struct **new_fdp
 
 static void unshare_virtual_time(unsigned long unshare_flags)
 {
-	/* if pack virtual time info into a struct "virtual_time"
-	 * then every process have a pointer to a NULL object
-	 * here we should allocate it, which may fail
-	 * also, init allocated object may fail due to "dilation"
+	/**
+         * If pack virtual time info into a struct "virtual_time"
+	 * then every process have a pointer to a NULL object.
+	 * Here we should allocate it, which may fail.
+	 * Also, init allocated object may fail due to "dilation"
 	 */
 	if (unshare_flags & CLONE_NEWTIME) {
-		init_virtual_start_time(current, 1000); // default TDF=1(actually, it is 1000)
+		/* default TDF = 1 (actually, it is 1000) */
+                init_virtual_start_time(current, 1000); 
 	}
 }
 
