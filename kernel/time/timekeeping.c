@@ -423,9 +423,8 @@ void getnstimeofday(struct timespec *ts)
 	WARN_ON(__getnstimeofday(ts));
         
         /**
-         * Keep __getnstimeofday() clean so that 
-         * we always have real wall clock time ts.
-         * Virtual timekeeping: freeze && dilate
+         * Keep __getnstimeofday() timekeeping clean so that 
+         * we always have real wall clock, e.g. undilated ts.
          */
 	do_virtual_time_keeping(ts);
 }
@@ -434,34 +433,34 @@ EXPORT_SYMBOL(getnstimeofday);
 ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
-	/*struct timespec ts, tomono;*/
         unsigned int seq;
-	s64 secs, nsecs;
-
+	/*s64 secs, nsecs;*/
+        struct timespec ts, tomono;
 	WARN_ON(timekeeping_suspended);
 
 	do {
-		seq = read_seqcount_begin(&timekeeper_seq);	
-                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
-                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
-                /*ts.tv_sec = tk->xtime_sec;*/
-                /*ts.tv_nsec = timekeeping_get_ns(tk);*/
-                /*tomono = tk->wall_to_monotonic;*/
+                seq = read_seqcount_begin(&timekeeper_seq);
+
+                /*secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;*/
+                /*nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;*/
+                ts.tv_sec = tk->xtime_sec;
+                ts.tv_nsec = timekeeping_get_ns(tk);
+                tomono = tk->wall_to_monotonic;
 
         } while (read_seqcount_retry(&timekeeper_seq, seq));
 
-        /*do_virtual_time_keeping(&ts);*/
+        do_virtual_time_keeping(&ts);
 
-        /*secs = ts.tv_sec + tomono.tv_sec;*/
-        /*nsecs = ts.tv_nsec + tomono.tv_nsec;*/
+        secs = ts.tv_sec + tomono.tv_sec;
+        nsecs = ts.tv_nsec + tomono.tv_nsec;
         /**
          * Usually tomono is negative, so 'nsecs' may be negative.
          * Make it positive by reducing 'secs'. Maybe overthingking?
          */
-        /*while (nsecs < 0 && secs > 0) {*/
-                /*--secs;*/
-                /*nsecs += NSEC_PER_SEC;*/
-        /*}*/
+        while (nsecs < 0 && secs > 0) {
+                --secs;
+                nsecs += NSEC_PER_SEC;
+        }
 
         /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
@@ -483,22 +482,25 @@ void ktime_get_ts(struct timespec *ts)
 {
 	struct timekeeper *tk = &timekeeper;
 	struct timespec tomono;
-	s64 nsec;
+        /*s64 nsec;*/
 	unsigned int seq;
 
 	WARN_ON(timekeeping_suspended);
 
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);
+
 		ts->tv_sec = tk->xtime_sec;
-		nsec = timekeeping_get_ns(tk);
+		ts->tv_nsec = timekeeping_get_ns(tk);
+                /*nsec = timekeeping_get_ns(tk);*/
 		tomono = tk->wall_to_monotonic;
 
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
+        do_virtual_time_keeping(ts);
+
 	ts->tv_sec += tomono.tv_sec;
-	ts->tv_nsec = 0;
-	timespec_add_ns(ts, nsec + tomono.tv_nsec);
+	timespec_add_ns(ts, tomono.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 
