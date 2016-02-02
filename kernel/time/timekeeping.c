@@ -434,7 +434,7 @@ ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
         unsigned int seq;
-	/*s64 secs, nsecs;*/
+        s64 secs, nsecs;
         struct timespec ts, tomono;
 	WARN_ON(timekeeping_suspended);
 
