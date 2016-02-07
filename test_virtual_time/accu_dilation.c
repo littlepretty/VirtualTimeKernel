@@ -45,7 +45,7 @@ void fill_dilated_elapsed(int dil, int duration)
                 gettimeofday(&prev, NULL);
                 usleep(duration);
                 /*for (j = 0; j < CNT_SLEEP * factor; ++j) {*/
-                        /*[>gettimeofday(&temp, NULL);<]*/
+                /*[>gettimeofday(&temp, NULL);<]*/
                 /*}*/
                 gettimeofday(&next, NULL);
                 timeval_substract(&diff, &next, &prev);
@@ -96,41 +96,37 @@ int main(int argc, char* const argv[])
         int err_usec = 900; // error bound in micro seconds
         char *output_filename;
         FILE *output_stream;
-        
-        do {
-                next_option = getopt(argc, argv, short_options);
+
+        while ((next_option = getopt_long(argc, argv, short_options, long_options, NULL)) != -1) {
                 switch(next_option) {
-                case 't':
-                        dilation = atoi(optarg);
-                        break;
-                case 'e':
-                        run_elapsed = 1;
-                        break;
-                case 'd':
-                        run_dilated = 1;
-                        break;
-                case 'p':
-                        if (run_elapsed == 1 && run_dilated == 1)
-                                print_dil = 1;
-                        break;
-                case 'u':
-                        duration = atoi(optarg);
-                        break;
-                case 'b':
-                        err_usec = atoi(optarg);
-                        break;
-                case 'o':
-                        output_filename = malloc(sizeof(optarg) + 1);
-                        strcpy(output_filename, optarg);
-                case -1:
-                        /*printf("invalid input parameters\n");*/
-                        break;
-                default:
-                        printf("Usage: accu_dilation -t tdf -u duration [-e] [-d] [-p]\n");
-                        exit(1);
+                        case 't':
+                                dilation = atoi(optarg);
+                                break;
+                        case 'e':
+                                run_elapsed = 1;
+                                break;
+                        case 'd':
+                                run_dilated = 1;
+                                break;
+                        case 'p':
+                                if (run_elapsed == 1 && run_dilated == 1)
+                                        print_dil = 1;
+                                break;
+                        case 'u':
+                                duration = atoi(optarg);
+                                break;
+                        case 'b':
+                                err_usec = atoi(optarg);
+                                break;
+                        case 'o':
+                                output_filename = malloc(sizeof(optarg) + 1);
+                                strcpy(output_filename, optarg);
+                        default:
+                                printf("Usage: accu_dilation -t tdf -u duration [-e] [-d] [-p]\n");
+                                exit(1);
                 }
-        } while(next_option != -1);
-        
+        }
+
         if (run_elapsed) fill_elapsed(duration);
         /*printf("Run fill_elapsed() parameters\n");  */
         if (run_dilated) fill_dilated_elapsed(dilation, duration);

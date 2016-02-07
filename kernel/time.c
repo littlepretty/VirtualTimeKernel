@@ -197,12 +197,6 @@ static void populate_frozen_time(struct task_struct *tsk)
         list_for_each(list, &(tsk->children)) {
                 child = list_entry(list, struct task_struct, sibling);
                 child->freeze_past_nsec = tsk->freeze_past_nsec;
-
-                /* Debug usage only */
-                /*get_task_comm(comm, child);*/
-                /*comm[TASK_COMM_LEN-1] = 0;*/
-                /*printk("[VT] %d populates %lldns frozen time to %d\n", tsk->pid, child->freeze_past_nsec, child->pid);*/
-
                 populate_frozen_time(child);
         }
 }
