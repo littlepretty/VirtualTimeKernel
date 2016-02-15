@@ -121,8 +121,9 @@ int main(int argc, char* const argv[])
                         case 'o':
                                 output_filename = malloc(sizeof(optarg) + 1);
                                 strcpy(output_filename, optarg);
+                                break;
                         default:
-                                printf("Usage: accu_dilation -t tdf -u duration [-e] [-d] [-p]\n");
+                                printf("Usage: accu_dilation -t tdf -u duration -o output_file [-e] [-d] [-p]\n");
                                 exit(1);
                 }
         }
