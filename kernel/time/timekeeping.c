@@ -304,7 +304,6 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 	delta_ppn = now;
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
-
         /**
          * substract freezed time
          */
@@ -349,29 +348,23 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 static void do_virtual_time_keeping(struct timespec* ts)
 {
 	struct timespec virtual_ts;
-	s64 virtual_now, now, delta_ppn;
+	s64 virtual_now, delta_ppn;
 	int tdf;
 
-	// make sure vt has been initialized
+	/* make sure vt has been initialized */
 	if (current->virtual_start_nsec > 0) {
-		/* if @current use virtual time */
 		tdf = current->dilation;
 		delta_ppn = update_physical_past_nsec(ts);
-
-		/* if tdf=1 @virtual_past_nsec almost = @physcial_past_nsec */
 		update_virtual_past_nsec(delta_ppn, tdf);
 
 		virtual_now = current->virtual_start_nsec +
 			current->virtual_past_nsec;
 		virtual_ts = ns_to_timespec(virtual_now);
-
 		/* for debug */
-                /*now = timespec_to_ns(ts);*/
+                /*s64 now = timespec_to_ns(ts);*/
                 /*printk("[VT-%s(%d)] FT=%lld us; RT=%lld us; VT=%lld us\n", */
                                 /*current->comm, current->pid, current->freeze_past_nsec / 1000, */
                                 /*now / 1000, virtual_now / 1000);*/
-
-		/* update __getnstimeofday's return value @ts */
 		ts->tv_sec = virtual_ts.tv_sec;
 		ts->tv_nsec = virtual_ts.tv_nsec;
 	}
@@ -435,33 +428,15 @@ ktime_t ktime_get(void)
 	struct timekeeper *tk = &timekeeper;
         unsigned int seq;
         s64 secs, nsecs;
-        struct timespec ts, tomono;
+
 	WARN_ON(timekeeping_suspended);
 
 	do {
                 seq = read_seqcount_begin(&timekeeper_seq);
-
-                /*secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;*/
-                /*nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;*/
-                ts.tv_sec = tk->xtime_sec;
-                ts.tv_nsec = timekeeping_get_ns(tk);
-                tomono = tk->wall_to_monotonic;
+                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
+                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
 
         } while (read_seqcount_retry(&timekeeper_seq, seq));
-
-        do_virtual_time_keeping(&ts);
-
-        secs = ts.tv_sec + tomono.tv_sec;
-        nsecs = ts.tv_nsec + tomono.tv_nsec;
-        /**
-         * Usually tomono is negative, so 'nsecs' may be negative.
-         * Make it positive by reducing 'secs'. Maybe overthingking?
-         */
-        while (nsecs < 0 && secs > 0) {
-                --secs;
-                nsecs += NSEC_PER_SEC;
-        }
-
         /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
@@ -482,25 +457,22 @@ void ktime_get_ts(struct timespec *ts)
 {
 	struct timekeeper *tk = &timekeeper;
 	struct timespec tomono;
-        /*s64 nsec;*/
+        s64 nsec;
 	unsigned int seq;
 
 	WARN_ON(timekeeping_suspended);
 
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);
-
 		ts->tv_sec = tk->xtime_sec;
-		ts->tv_nsec = timekeeping_get_ns(tk);
-                /*nsec = timekeeping_get_ns(tk);*/
+                nsec = timekeeping_get_ns(tk);
 		tomono = tk->wall_to_monotonic;
 
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
-        do_virtual_time_keeping(ts);
-
 	ts->tv_sec += tomono.tv_sec;
-	timespec_add_ns(ts, tomono.tv_nsec);
+        ts->tv_nsec = 0;
+	timespec_add_ns(ts, nsec + tomono.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 

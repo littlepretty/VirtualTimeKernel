@@ -1575,12 +1575,10 @@ void init_virtual_start_time(struct task_struct *tsk, int tdf)
 	s64 now;
 
 	if(tdf > 0) {
-		/* must make sure __getnstimeofday return original time */
-		// should be fine even without following assignment
-        	tsk->virtual_start_nsec = 0;
-		tsk->dilation = 0;
-
-		/* now = nano seconds since Epoch 1970 */
+		/** 
+                 * must make sure __getnstimeofday return original time 
+                 * now = nano seconds since Epoch 1970 
+                 */
 		__getnstimeofday(&ts);
 		now = timespec_to_ns(&ts);
 

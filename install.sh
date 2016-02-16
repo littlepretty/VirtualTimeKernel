@@ -10,7 +10,7 @@ if [ ! -e linux-3.16.3.tar.gz ]; then
         wget https://www.kernel.org/pub/linux/kernel/v3.0/linux-3.16.3.tar.gz
 fi
 echo "Step 0. Unpack kernel source"
-tar -xzvf linux-3.16.3.tar.gz
+tar -xzf linux-3.16.3.tar.gz
 mv linux-3.16.3 $DST
 
 # generate patch file
