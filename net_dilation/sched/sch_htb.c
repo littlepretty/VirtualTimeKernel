@@ -862,7 +862,7 @@ next:
 	} while (cl != start);
 
 	/**
-         * Polling host process about dilation info; update rate when necessary.
+         * Polling host process about dilation; update rate when necessary.
 	 * FIXME: still need to explore/validate this part --- Jiaqi
 	 */
         if (current->dilation > 0 && current->dilation != cl->dilation) {
@@ -1493,7 +1493,6 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 	}
 
 	rate64 = tb[TCA_HTB_RATE64] ? nla_get_u64(tb[TCA_HTB_RATE64]) : 0;
-
 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
         /* See psched_ratecfg_precompute for dilation --- Jiaqi */

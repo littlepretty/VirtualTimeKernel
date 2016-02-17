@@ -956,6 +956,10 @@ void psched_ratecfg_precompute(struct psched_ratecfg *r,
 }
 EXPORT_SYMBOL(psched_ratecfg_precompute);
 
+/**
+ * Proactively update rate when host process changes TDF
+ * Example: see in htb's htb_dequeue_tree
+ */
 void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation)
 {
 	if (r && dilation > 0) {

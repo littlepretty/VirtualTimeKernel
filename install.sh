@@ -28,11 +28,11 @@ include/linux/sched.h		\
 include/linux/init_task.h	\
 include/linux/time.h		\
 fs/proc/base.c			\
-Makefile			\
+include/net/sch_generic.h	\
+net_dilation/sched/sch_generic.c        \
+net_dilation/sched/sch_htb.c    \
+Makefile		        \
 build_all.sh"
-#include/net/sch_generic.h	\
-#net_dilation/sched/sch_generic.c       \
-#net_dilation/sched/sch_htb.c   \
 #net_dilation/core/dev.c        \
 
 echo "Step 1. Transfer modified kernel source"

@@ -702,10 +702,11 @@ static inline u64 psched_l2t_ns(const struct psched_ratecfg *r,
 	return ((u64)len * r->mult) >> r->shift;
 }
 
+/* Taking time dilation into consideration */
 void psched_ratecfg_precompute(struct psched_ratecfg *r,
 			       const struct tc_ratespec *conf,
 			       u64 rate64);
-
+/* For qdisc to update rate when TDF changes */
 void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation);
 
 static inline void psched_ratecfg_getrate(struct tc_ratespec *res,
@@ -718,18 +719,6 @@ static inline void psched_ratecfg_getrate(struct tc_ratespec *res,
 	 * in order to maintain compatibility.
 	 */
 	res->rate = min_t(u64, r->rate_bytes_ps, ~0U);
-
-	/*
-	if ( current ) {
-		if ( current->dilation > 0 ) {
-			// r->rate_bytes_ps = r->rate_bytes_ps / current->dilation * 1000;
-		}
-		printk("[info] in psched_ratecfg_getrate res->rate(%llu), r->rate_bytes_ps(%llu)\n", res->rate, r->rate_bytes_ps, current->dilation);
-	} else {
-		printk("[info] in psched_ratecfg_getrate current is NULL");
-	}
-	*/
-
 	res->overhead = r->overhead;
 	res->linklayer = (r->linklayer & TC_LINKLAYER_MASK);
 }
