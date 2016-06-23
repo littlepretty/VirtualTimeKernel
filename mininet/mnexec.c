@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <sys/mount.h>
 
-#include "vtutil.h"
+#include "vt/vtutil.h"
 
 #if !defined(VERSION)
 #define VERSION "(devel)"
@@ -34,7 +34,7 @@
 void usage(char *name)
 {
     printf("Execution utility for Mininet\n\n"
-           "Usage: %s [-cdnp] [-a pid] [-g group] [-r rtprio] cmd args...\n\n"
+           "Usage: %s [-cdnp] [-a pid] [-g group] [-r rtprio] [-t tdf] cmd args...\n\n"
            "Options:\n"
            "  -c: close all file descriptors except stdin/out/error\n"
            "  -d: detach from tty by calling setsid()\n"
@@ -43,6 +43,7 @@ void usage(char *name)
            "  -a pid: attach to pid's network and mount namespaces\n"
            "  -g group: add to cgroup\n"
            "  -r rtprio: run with SCHED_RR (usually requires -g)\n"
+           "  -t tdf: set hosts to a new time dilation factor\n"
            "  -v: print version\n",
            name);
 }
@@ -101,6 +102,7 @@ int main(int argc, char *argv[])
     char path[PATH_MAX];
     int nsid;
     int pid;
+    int tdf;
     char *cwd = get_current_dir_name();
 
     static struct sched_param sp;
@@ -128,8 +130,8 @@ int main(int argc, char *argv[])
             break;
         case 'n':
             /* run in network and mount namespaces */
-            if (virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS) == -1) {
-                perror("virtual_time_unshare");
+            if (unshare(CLONE_NEWNET|CLONE_NEWNS|CLONE_NEWTIME) == -1) {
+                perror("unshare with virtual time");
                 return 1;
             }
             /* mount sysfs to pick up the new network namespace */
@@ -182,6 +184,14 @@ int main(int argc, char *argv[])
             sp.sched_priority = atoi(optarg);
             if (sched_setscheduler(getpid(), SCHED_RR, &sp) < 0) {
                 perror("sched_setscheduler");
+                return 1;
+            }
+            break;
+        case 't':
+            tdf = atoi(optarg);
+            pid_t ppid = getppid();
+            if (set_new_dilation(ppid, tdf) <= 0) {
+                perror("set_new_dilation");
                 return 1;
             }
             break;
