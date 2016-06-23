@@ -19,6 +19,7 @@ import numpy
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
+import subprocess
 
 from mininet.net import Mininet
 from mininet.node import CPULimitedHost, OVSKernelSwitch
@@ -29,6 +30,7 @@ from mininet.util import irange, custom
 from mininet.link import TCLink
 from functools import partial
 from mininet.clean import cleanup
+from mininet.cli import CLI
 
 flush = sys.stdout.flush
 
@@ -79,10 +81,15 @@ def stringBandwidthTest(host_class, controller_class,
         net.dilate_all(tdf)
         net.ping( [src, dst] )
 
+    print '---------'
+    for host in net.hosts:
+    	subprocess.check_call('cat /proc/%s/dilation' % host.pid, shell=True)
+    print '---------'
+
     print "*** testing bandwidth\n"
-    num_rounds = 1
+    num_rounds = 3
     client_history = []
-    time = 8
+    time = 10
     for i in irange(1, num_rounds):
         # bandwidth = net.iperf( [src, dst], l4Type = 'UDP',
         # udpBw='%sM'%set_bw, format = 'm', time=20,
@@ -110,7 +117,10 @@ def stringBandwidthTest(host_class, controller_class,
     print "AVG = %f " % client_mean
     print "STD = %f " % client_stdev
     data_file.write('\n\n')
+    # CLI(net)
+
     net.stop()
+    cleanup()
     return client_mean, client_stdev
 
 def runTest(file_name, controller, tdf, size, set_cpu, set_bw, set_delay="10us"):
@@ -185,9 +195,9 @@ def drawData(output, AvgRates, StdRates, BWs):
 def main():
     AvgRates = []
     StdRates = []
-    TDFs = [6]
-    BWs = [8000]
-    size = 12
+    TDFs = [1, 4]
+    BWs = [4000, 8000, 10000]
+    size = 10
     for tdf in TDFs:
         avg_rates = []
         std_rates = []

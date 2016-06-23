@@ -503,18 +503,45 @@ class Mininet( object ):
 
     def dilate_all( self, tdf ):
         "Dilate all hosts to a time factor of tdf"
-        pids_str = ""
+        pids_str = ''
         pids_list = []
-        for h in self.hosts:
-            pids_str += " %d" % h.pid
-            pids_list.append(int(h.pid))
+        for host in self.hosts:
+            pids_str += ' %s' % host.pid
+            pids_list.append(int(host.pid))
         cmd_str = 'dilate_all_procs -t %d -p %s' % (tdf * 1000, pids_str)
-        print cmd_str
-        subprocess.call(cmd_str, shell=True)
-        print 'check dilate result'
+        subprocess.check_output(cmd_str, shell=True)
+        info( '*** Check dilate result:\n' )
         for pid in pids_list:
-            print 'cat /proc/%d/dilation' % pid
+            info( '> cat /proc/%d/dilation => ' % pid )
             subprocess.call('cat /proc/%d/dilation' % pid, shell=True)
+	info( '*** Dilate mininet with TDF %d\n' % tdf)
+
+    def freeze_all( self, op='freeze' ):
+        pids_str = ''
+        pids_list = []
+        for host in self.hosts:
+            pids_str += ' %s' % host.pid
+            pids_list.append(host.pid)
+        for sw in self.switches:
+            pids_str += ' %s' % sw.pid
+            pids_list.append(sw.pid)
+        for c in self.controllers:
+            pids_str += ' %s' % c.pid
+            pids_list.append(c.pid)
+        cmd_str = 'freeze_all_procs -p %s' % pids_str
+        conclusion = ''
+        if op == 'freeze':
+            cmd_str += ' -f'
+            conclusion += '*** Emulation is frozen\n'
+        else:
+            cmd_str += ' -u'
+            conclusion += '*** Emulation is unfrozen\n'
+        subprocess.check_output(cmd_str, shell=True)
+        info( '*** Check %s result\n' % op )
+        for pid in pids_list:
+            info( '> cat /proc/%d/freeze => ' % pid )
+            subprocess.call('cat /proc/%d/freeze' % pid, shell=True)
+        info( conclusion )
 
     def stop( self ):
         "Stop the controller(s), switches and hosts"
