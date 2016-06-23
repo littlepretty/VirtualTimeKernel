@@ -19,7 +19,8 @@
         CLONE_NEWUTS    |	\
         CLONE_NEWIPC    |	\
         CLONE_NEWPID    |	\
-        CLONE_NEWNET		\
+        CLONE_NEWNET	|       \
+        CLONE_NEWTIME           \
 )
 
 #define PID_MAX_LEN 8 
@@ -41,7 +42,7 @@ long int timeval_to_usec(struct timeval tv);
 int timeval_substract(struct timeval* result, struct timeval* x, struct timeval* y);
 
 /* dilation helpers */
-// int virtual_time_unshare(int flags); is deprecated, but kept in src file for reference
+//int virtual_time_unshare(int flags); // deprecated, but kept in src file for reference
 int set_new_dilation(pid_t pid, float tdf); // NOTICE: 0.001 <= tdf < 100
 int virtual_time_exit(pid_t pid);
 void* dilation_work(void *p);

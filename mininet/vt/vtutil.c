@@ -264,16 +264,19 @@ void* unfreeze_work(void *p)
 void kickoff_pthreads_dilate(pid_t* pid_list, size_t size, char *tdf, void *(* func)(void *))
 {
         pthread_t* threads;
+        struct dilation_data *procs;
         pthread_attr_t attr;
         int i, rc;
         void *status;
         
         threads = malloc(sizeof(pthread_t) * size);
+        procs = malloc(sizeof(procs) * size);
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
         for (i = 0; i < size; ++i) {
-                struct dilation_data data = {.pid = pid_list[i], .tdf_str = tdf};
-                if (pthread_create(&threads[i], NULL, func, (void *)(&data)) != 0) {
+                procs[i].pid = pid_list[i];
+                procs[i].tdf_str = tdf;
+                if (pthread_create(&threads[i], NULL, func, (void *)(&procs[i])) != 0) {
                         fprintf(stderr, "create pthread failed\n");
                         exit(-1);
                 }
