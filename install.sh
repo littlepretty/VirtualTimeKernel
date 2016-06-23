@@ -1,6 +1,14 @@
 #!/bin/bash
 
-DST=~/linux_kernel_src
+function usage() {
+        echo "Usage: $0 target"
+        echo "  target: either [dilation] or [freeze]"
+        exit 1
+}
+
+DST=~/build_kernel
+# either dilation or freeze
+TARGET=$1
 
 if [ -e $DST ]; then
         sudo rm -rf $DST
@@ -29,20 +37,25 @@ include/linux/init_task.h	\
 include/linux/time.h		\
 fs/proc/base.c			\
 include/net/sch_generic.h	\
-net_dilation/sched/sch_generic.c        \
-net_dilation/sched/sch_htb.c    \
 Makefile		        \
 build_all.sh"
 #net_dilation/core/dev.c        \
 
 echo "Step 1. Transfer modified kernel source"
 for f in $FILES; do
-    cp -v $f $DST/$f
+        cp -v $f $DST/$f
 done
+
+if [ $TARGET = "dilation" ]; then
+        cp -v net_dilation/sched/sch_generic.c $DST/net/sched/sch_generic.c
+        cp -v net_dilation/sched/sch_htb.c $DST/net/sched/sch_htb.c
+elif [ $TARGET = "freeze" ]; then
+        cp -v net_freeze/sched/sch_generic.c $DST/net/sched/sch_generic.c
+        cp -v net_freeze/sched/sch_htb.c $DST/net/sched/sch_generic.c
+else
+        usage
+fi
 
 echo "Step 2. Build new kernel"
 cd $DST
 sudo ./build_all.sh
-
-
-
