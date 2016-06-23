@@ -21,11 +21,11 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as pyplot
 
 from mininet.net import Mininet
-from mininet.node import *
+from mininet.node import CPULimitedHost, OVSKernelSwitch
+from mininet.node import DefaultController, RemoteController
 from mininet.topo import Topo
 from mininet.log import lg
 from mininet.util import irange, custom
-from mininet.node import CPULimitedHost
 from mininet.link import TCLink
 from functools import partial
 from mininet.clean import cleanup
@@ -34,9 +34,7 @@ flush = sys.stdout.flush
 
 class StringTestTopo(Topo):
     "Topology for a string of N switches and 2 hosts."
-
     def __init__(self, N, **params):
-
         # Initialize topology
         Topo.__init__( self, **params )
 
@@ -56,14 +54,13 @@ class StringTestTopo(Topo):
             last = switch
 
 
-def stringBandwidthTest(host_class, controller_class, link_class, size, tdf, data_file):
-
+def stringBandwidthTest(host_class, controller_class,
+                        link_class, size, tdf, data_file):
     "Check bandwidth at various lengths along a switch chain."
-
     topo_class = StringTestTopo(size)
-
-    net = Mininet(topo=topo_class, host=host_class, switch=OVSKernelSwitch, controller=controller_class, waitConnected=True, link=link_class)
-    # no tdf_adaptor to change TDF
+    net = Mininet(topo=topo_class, host=host_class,
+                  switch=OVSKernelSwitch, controller=controller_class,
+                  waitConnected=False, link=link_class)
     net.start()
 
     print "*** testing basic connectivity\n"
@@ -79,16 +76,20 @@ def stringBandwidthTest(host_class, controller_class, link_class, size, tdf, dat
             rttavg = ping_result[0][2][3]
         data_file.write( "RTT Avg = %s ms\n" % rttavg)
     else:
+        net.dilate_all(tdf)
         net.ping( [src, dst] )
 
     print "*** testing bandwidth\n"
-    num_rounds = 5
+    num_rounds = 1
     client_history = []
-    time = 16
-    omit = 1
+    time = 8
     for i in irange(1, num_rounds):
-        # bandwidth = net.iperf( [src, dst], l4Type = 'UDP', udpBw='%sM'%set_bw, format = 'm', time=20, clifile=data_file, serfile=data_file )
-        bandwidth = net.iperf( [src, dst], l4Type = 'TCP', format = 'm', time=time, omit=omit, clifile=data_file, serfile=data_file )
+        # bandwidth = net.iperf( [src, dst], l4Type = 'UDP',
+        # udpBw='%sM'%set_bw, format = 'm', time=20,
+        # clifile=data_file, serfile=data_file )
+        bandwidth = net.iperf( [src, dst], l4Type = 'TCP',
+                              fmt = 'm', seconds=time,
+                              clifile=data_file, serfile=data_file )
         flush()
         serout = bandwidth[0]
         cliout = bandwidth[1]
@@ -100,7 +101,7 @@ def stringBandwidthTest(host_class, controller_class, link_class, size, tdf, dat
             cliDataStr, unit = cliout.split(" ")
             cliData = float(cliDataStr)
             client_history.append(cliData)
-            data_file.write("%s\t%f\t%f\t%s\t%s\n" % (size, src.tdf, net.cpu_usage, serData, cliData))
+            data_file.write("%s\t%f\t%s\t%s\n" % (size, tdf, serData, cliData))
 
     client_mean = numpy.mean(client_history)
     client_stdev = numpy.std(client_history)
@@ -114,9 +115,6 @@ def stringBandwidthTest(host_class, controller_class, link_class, size, tdf, dat
 
 def runTest(file_name, controller, tdf, size, set_cpu, set_bw, set_delay="10us"):
     lg.setLogLevel( 'info' )
-
-    """in fact, Controller and Remotecontroller have no difference
-    all we need to do is start or not start POX in another shell"""
     if controller == "POX":
         controller = partial( RemoteController, ip = '127.0.0.1', port=6633 )
     else:
@@ -124,7 +122,8 @@ def runTest(file_name, controller, tdf, size, set_cpu, set_bw, set_delay="10us")
     link = partial( TCLink, bw=set_bw, delay=set_delay )
 
     """config host's cpu share and time dilation factor"""
-    host = custom(CPULimitedHost, sched='cfs', period_us=100000, cpu=set_cpu, tdf=tdf)
+    host = custom(CPULimitedHost, inNamespace=True,
+                  sched='cfs', period_us=100000, cpu=set_cpu)
 
     """with w option, it automatically overwrite everytime"""
     data_file = open('%s.log' % file_name, 'w')
@@ -134,7 +133,8 @@ def runTest(file_name, controller, tdf, size, set_cpu, set_bw, set_delay="10us")
 
     # seems mininet cannot handle more than 640 switches
     print "******* Running with %d switches, TDF = %d *******" % (size, tdf)
-    client_avg, client_stdev = stringBandwidthTest(host, controller, link, size, tdf, data_file)
+    client_avg, client_stdev = stringBandwidthTest(host, controller, link,
+                                                   size, tdf, data_file)
     cleanup()
     return client_avg, client_stdev
 
@@ -185,8 +185,8 @@ def drawData(output, AvgRates, StdRates, BWs):
 def main():
     AvgRates = []
     StdRates = []
-    TDFs = [1, 4]
-    BWs = [2000, 3000, 4000, 5000]
+    TDFs = [6]
+    BWs = [8000]
     size = 12
     for tdf in TDFs:
         avg_rates = []
@@ -211,8 +211,7 @@ def main():
     print AvgRates
     print StdRates
 
-    drawData('Perf%dSwDiffBw.eps' % size, AvgRates, StdRates, BWs)
+    # drawData('Perf%dSwDiffBw.eps' % size, AvgRates, StdRates, BWs)
 
 if __name__ == '__main__':
     main()
-
