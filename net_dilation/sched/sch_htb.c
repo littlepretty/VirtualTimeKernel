@@ -865,10 +865,11 @@ next:
          * Polling host process about dilation; update rate when necessary.
 	 * FIXME: still need to explore/validate this part --- Jiaqi
 	 */
-        if (current->dilation > 0 && current->dilation != cl->dilation) {
-		cl->dilation = current->dilation; /* update dilation */
+        if (current->dilation > 0) {
+                current->dilation = current->parent->dilation;
+                cl->dilation = current->dilation; /* update dilation */
                 psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
-                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n", 
+                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n",
                                 current->comm, current->pid, cl->dilation);
 	}
 
