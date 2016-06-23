@@ -43,11 +43,11 @@ slowtest: $(MININET)
 	mininet/test/test_walkthrough.py -v
 	mininet/examples/test/runner.py -v
 
-vtutil.o: vtutil.c
-	cc $(CFLAGS) $(LDFLAGS) -c $< -o $@
+vtutil: vt/vtutil.c
+	cd vt && $(MAKE) install
 
-mnexec: mnexec.c $(MN) mininet/net.py vtutil.o
-	cc $(CFLAGS) $(LDFLAGS) -DVERSION=\"`PYTHONPATH=. $(PYMN) --version`\" $< -pthread vtutil.o -o $@
+mnexec: mnexec.c $(MN) mininet/net.py vtutil
+	cc $(CFLAGS) $(LDFLAGS) -DVERSION=\"`PYTHONPATH=. $(PYMN) --version`\" $< -pthread vt/vtutil.o -o $@
 
 install: $(MNEXEC) $(MANPAGES)
 	install $(MNEXEC) $(BINDIR)
