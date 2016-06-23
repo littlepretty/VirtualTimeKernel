@@ -101,7 +101,6 @@ int main(int argc, char *argv[])
     char path[PATH_MAX];
     int nsid;
     int pid;
-    int tdf;
     char *cwd = get_current_dir_name();
 
     static struct sched_param sp;

@@ -91,6 +91,7 @@ import re
 import select
 import signal
 import random
+import subprocess
 
 from time import sleep
 from itertools import chain, groupby
@@ -500,6 +501,21 @@ class Mininet( object ):
         if self.waitConn:
             self.waitConnected()
 
+    def dilate_all( self, tdf ):
+        "Dilate all hosts to a time factor of tdf"
+        pids_str = ""
+        pids_list = []
+        for h in self.hosts:
+            pids_str += " %d" % h.pid
+            pids_list.append(int(h.pid))
+        cmd_str = 'dilate_all_procs -t %d -p %s' % (tdf * 1000, pids_str)
+        print cmd_str
+        subprocess.call(cmd_str, shell=True)
+        print 'check dilate result'
+        for pid in pids_list:
+            print 'cat /proc/%d/dilation' % pid
+            subprocess.call('cat /proc/%d/dilation' % pid, shell=True)
+
     def stop( self ):
         "Stop the controller(s), switches and hosts"
         info( '*** Stopping %i controllers\n' % len( self.controllers ) )
@@ -732,7 +748,7 @@ class Mininet( object ):
     # XXX This should be cleaned up
 
     def iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
-               seconds=5, port=5001):
+               seconds=5, port=5001, clifile=None, serfile=None):
         """Run iperf between two hosts.
            hosts: list of hosts; if None, uses first and last hosts
            l4Type: string, one of [ TCP, UDP ]
@@ -749,8 +765,8 @@ class Mininet( object ):
         client, server = hosts
         output( '*** Iperf: testing', l4Type, 'bandwidth between',
                 client, 'and', server, '\n' )
-        server.cmd( 'killall -9 iperf' )
-        iperfArgs = 'iperf -p %d ' % port
+        server.cmd( 'killall -9 iperf3' )
+        iperfArgs = 'iperf3 -p %d ' % port
         bwArgs = ''
         if l4Type == 'UDP':
             iperfArgs += '-u '
@@ -771,6 +787,9 @@ class Mininet( object ):
         servout = server.waitOutput()
         debug( 'Server output: %s\n' % servout )
         result = [ self._parseIperf( servout ), self._parseIperf( cliout ) ]
+        clifile.write(cliout)
+        serfile.write(servout)
+
         if l4Type == 'UDP':
             result.insert( 0, udpBw )
         output( '*** Results: %s\n' % result )
