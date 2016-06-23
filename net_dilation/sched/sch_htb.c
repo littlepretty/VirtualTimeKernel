@@ -913,7 +913,7 @@ ok:
 		goto fin;
 
 	q->now = ktime_to_ns(ktime_get());
-	printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000);
+	/* printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000); */
 	start_at = jiffies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
