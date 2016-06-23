@@ -34,7 +34,7 @@
 void usage(char *name)
 {
     printf("Execution utility for Mininet\n\n"
-           "Usage: %s [-cdnp] [-a pid] [-g group] [-r rtprio] [-t tdf] cmd args...\n\n"
+           "Usage: %s [-cdnp] [-a pid] [-g group] [-r rtprio] cmd args...\n\n"
            "Options:\n"
            "  -c: close all file descriptors except stdin/out/error\n"
            "  -d: detach from tty by calling setsid()\n"
@@ -43,7 +43,6 @@ void usage(char *name)
            "  -a pid: attach to pid's network and mount namespaces\n"
            "  -g group: add to cgroup\n"
            "  -r rtprio: run with SCHED_RR (usually requires -g)\n"
-           "  -t tdf: set hosts to a new time dilation factor\n"
            "  -v: print version\n",
            name);
 }
@@ -184,14 +183,6 @@ int main(int argc, char *argv[])
             sp.sched_priority = atoi(optarg);
             if (sched_setscheduler(getpid(), SCHED_RR, &sp) < 0) {
                 perror("sched_setscheduler");
-                return 1;
-            }
-            break;
-        case 't':
-            tdf = atoi(optarg);
-            pid_t ppid = getppid();
-            if (set_new_dilation(ppid, tdf) <= 0) {
-                perror("set_new_dilation");
                 return 1;
             }
             break;
