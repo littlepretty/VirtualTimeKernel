@@ -16,7 +16,7 @@ clocks inside emulated hosts/containers could be dilated/frozen/unfrozen.
 
 ## Installation
 ### Install Virtual Time Patch to Linux Kernel
-* First, `./install.sh` at the root directory of this repo, which will automatically:
+* First, run `./install.sh both` at the root directory of this repo, which will automatically:
     * Download and unpack Linux kernel version 3.16.3
     * Copy source files to the unpacked kernel
     * Build new kernel
@@ -24,8 +24,10 @@ clocks inside emulated hosts/containers could be dilated/frozen/unfrozen.
 * Configure GRUB so that you can select which kernel to boot
 ```
 sudo vim /etc/default/grub
+# edit following lines
 GRUB_HIDDEN_TIMEOUT=15
 GRUB_HIDDEN_TIMEOUT_QUIET=false
+# exit editing
 update-grub
 ```
 
@@ -39,6 +41,7 @@ sudo make clean
 sudo make install
 ```
 
+I will make a pull request to Mininet repo after more tests.
 
 ## What's New (Comparing to [VT-Mininet](https://github.com/littlepretty/VirtualTimeForMininet))
 * We implement a different interface via /proc virtual file system.
@@ -52,6 +55,8 @@ Two entries are added to each process: dilation and freeze.
     echo 1 > /proc/$PID/freeze # freeze/pause
     echo 0 > /proc/$PID/freeze # unfreeze/resume
     ```
+
+* In `mnexec.c`, starting a container will call `unshare` with 1 more flag `CLONE_NEWTIME`.
 
 * With the /proc interface, we can parallelize the operation of dilating/freeze a number of hosts in Mininet.
 Two utility programs, `dilate_all_proc` and `freeze_all_proc`, use pthread library to do "echoing" with multi-threads.
@@ -68,6 +73,10 @@ More tests are on the way:
 * `vtmn_freeze_ping.py`
 * `vtmn_scalability.py`
 
+## Known Issues
+* Sometimes, not all hosts `unshare` successfully with clock namespace.
+* iperf should be iperf3, instead of iperf2.
+* More tests on UDP.
 
 ## Acknowledge
 My implementation of virtual time is inspired by TimeKeeper wrote by Jeremy Lamps.

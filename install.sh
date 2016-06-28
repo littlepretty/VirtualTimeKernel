@@ -2,15 +2,15 @@
 
 function usage() {
         echo "Usage: $0 target"
-        echo "  target: either [dilation] or [freeze]"
+        echo "  target: either [dilation] or [freeze], default=both"
         exit 1
 }
 
 DST=~/build_kernel
-# either dilation or freeze
 TARGET=$1
 
 if [ -e $DST ]; then
+        echo "Clean up previous build"
         sudo rm -rf $DST
 fi
 
@@ -46,12 +46,15 @@ for f in $FILES; do
         cp -v $f $DST/$f
 done
 
-if [ $TARGET = "dilation" ]; then
+if [ "dilation" = $TARGET ]; then
         cp -v net_dilation/sched/sch_generic.c $DST/net/sched/sch_generic.c
         cp -v net_dilation/sched/sch_htb.c $DST/net/sched/sch_htb.c
-elif [ $TARGET = "freeze" ]; then
+elif [ "freeze" = $TARGET ]; then
         cp -v net_freeze/sched/sch_generic.c $DST/net/sched/sch_generic.c
-        cp -v net_freeze/sched/sch_htb.c $DST/net/sched/sch_generic.c
+        cp -v net_freeze/sched/sch_htb.c $DST/net/sched/sch_htb.c
+elif [ "both" = $TARGET ]; then
+        cp -v net_both/sched/sch_generic.c $DST/net/sched/sch_generic.c
+        cp -v net_both/sched/sch_htb.c $DST/net/sched/sch_htb.c
 else
         usage
 fi
