@@ -65,29 +65,27 @@ def stringBandwidthTest(host_class, controller_class,
                   waitConnected=False, link=link_class)
     net.start()
 
-    print "*** testing basic connectivity\n"
-    src, dst = net.hosts
-    if tdf == 1:
-        num_pings = 3
-        for i in irange(1, num_pings):
-            ping_result = list(net.pingFull( [ src, dst ] ))
-            # ping_result=[(host1), (host2)]
-            # host = (src, dst, data)
-            # data = (#sent, #received, rttmin, rttavg, rttmax, rttdev)
-            print "Ping avg rtt = %s\n" % ping_result[0][2][3]
-            rttavg = ping_result[0][2][3]
-        data_file.write( "RTT Avg = %s ms\n" % rttavg)
-    else:
+    if tdf != 1:
         net.dilate_all(tdf)
-        net.ping( [src, dst] )
-
     print '---------'
     for host in net.hosts:
     	subprocess.check_call('cat /proc/%s/dilation' % host.pid, shell=True)
     print '---------'
+    
+    print "*** testing basic connectivity\n"
+    src, dst = net.hosts
+    num_pings = 3
+    for i in irange(1, num_pings):
+        ping_result = list(net.pingFull( [ src, dst ] ))
+        # ping_result=[(host1), (host2)]
+        # host = (src, dst, data)
+        # data = (#sent, #received, rttmin, rttavg, rttmax, rttdev)
+        print "Ping avg rtt = %s\n" % ping_result[0][2][3]
+        rttavg = ping_result[0][2][3]
+    data_file.write( "RTT Avg = %s ms\n" % rttavg)
 
     print "*** testing bandwidth\n"
-    num_rounds = 3
+    num_rounds = 2
     client_history = []
     time = 10
     for i in irange(1, num_rounds):
