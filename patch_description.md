@@ -31,7 +31,7 @@ set_dilation changes the value of a process's (or its parent's) dilation. virtua
 
 Acknowledge
 ===========
-My implementation of virtual time is actually inspired by that of Jeremy Lamps, who is a PhD student at UIUC. Great thanks for sharing his source code and providing a very detailed documentation.
+My implementation of virtual time is actually inspired by that of Jeremy Lamps, who was a PhD student at UIUC. Great thanks for sharing his source code and providing a very detailed documentation.
 
 Application and Test
 ====================
@@ -40,5 +40,5 @@ I test this patch on my Dell XPS 8700 Desktop running on Ubuntu 14.04 LTS. We in
 Known Issues
 ============
 1. For now just __getnstimeofday invoke the dilation code, which means that only gettimeofday can return virtual time. The reason is that during our development, this works just fine.
-2. If the application inside container is at a very deep position of the process tree, set_dilation will need to do cascading operations so that the root process's dilation is properly changed. This is not implemented yet.
-3. Maybe merge virtualtime_unshare into unshare is better.
+2. If the application inside container is at a very deep position of the process tree, `set_dilation` will need to do cascading operations so that the root process's dilation is properly changed. This is not implemented yet.
+3. Maybe merge 'virtualtime_unshare' into unshare is better.
