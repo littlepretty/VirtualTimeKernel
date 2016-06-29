@@ -74,8 +74,8 @@ More tests are on the way:
 * `vtmn_scalability.py`
 
 ## Known Issues
-* Sometimes, not all hosts `unshare` successfully with clock namespace.
-* iperf should be iperf3, instead of iperf2.
+* Dilated host will accidentally exit clock namespace after iperf3 exits.
+* iperf2 is not tested yet.
 * More tests on UDP.
 
 ## Acknowledge

@@ -68,9 +68,9 @@ def test():
     start = time.time()
 
     for x in range(0, num_pause):
-        net.freeze_all('freeze')
+        net.freezeEmulation('freeze')
         time.sleep(interval)
-        net.freeze_all('unfreeze')
+        net.freezeEmulation('unfreeze')
         time.sleep(interval)
 
     frozen_iperf.join()

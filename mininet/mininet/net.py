@@ -501,7 +501,7 @@ class Mininet( object ):
         if self.waitConn:
             self.waitConnected()
 
-    def dilate_all( self, tdf ):
+    def dilateEmulation( self, tdf ):
         "Dilate all hosts to a time factor of tdf"
         pids_str = ''
         pids_list = []
@@ -516,7 +516,7 @@ class Mininet( object ):
             subprocess.call('cat /proc/%d/dilation' % pid, shell=True)
 	info( '*** Dilate mininet with TDF %d\n' % tdf)
 
-    def freeze_all( self, op='freeze' ):
+    def freezeEmulation( self, op='freeze' ):
         pids_str = ''
         pids_list = []
         for host in self.hosts:
@@ -542,6 +542,18 @@ class Mininet( object ):
             info( '> cat /proc/%d/freeze => ' % pid )
             subprocess.call('cat /proc/%d/freeze' % pid, shell=True)
         info( conclusion )
+
+    def showDilation( self ):
+        info( '*** Dilation * 1000 for network hosts\n' )
+        for host in self.hosts:
+            subprocess.check_call('cat /proc/%d/dilation' % host.pid, shell=True)
+        info('\n')
+    
+    def showFreezeStatus( self ):
+        info( '*** Freeze status for network hosts\n' )
+        for host in self.hosts:
+            subprocess.check_call('cat /proc/%d/freeze' % host.pid, shell=True)
+        info('\n')
 
     def stop( self ):
         "Stop the controller(s), switches and hosts"
@@ -794,15 +806,16 @@ class Mininet( object ):
                 client, 'and', server, '\n' )
         server.cmd( 'killall -9 iperf3' )
         iperfArgs = 'iperf3 -p %d ' % port
+        if fmt:
+            iperfArgs += '-f %s ' % fmt
+        server.sendCmd( iperfArgs + '-s' )
+        
         bwArgs = ''
         if l4Type == 'UDP':
             iperfArgs += '-u '
             bwArgs = '-b ' + udpBw + ' '
         elif l4Type != 'TCP':
             raise Exception( 'Unexpected l4 type: %s' % l4Type )
-        if fmt:
-            iperfArgs += '-f %s ' % fmt
-        server.sendCmd( iperfArgs + '-s' )
         if l4Type == 'TCP':
             if not waitListening( client, server.IP(), port ):
                 raise Exception( 'Could not connect to iperf on port %d'
