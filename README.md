@@ -56,10 +56,12 @@ Two entries are added to each process: dilation and freeze.
     echo 0 > /proc/$PID/freeze # unfreeze/resume
     ```
 
-* In `mnexec.c`, starting a container will call `unshare` with 1 more flag `CLONE_NEWTIME`.
+* In `mnexec.c`, starting a container will call `unshare` with an extra flag `CLONE_NEWTIME`.
 
 * With the /proc interface, we can parallelize the operation of dilating/freeze a number of hosts in Mininet.
 Two utility programs, `dilate_all_proc` and `freeze_all_proc`, use pthread library to do "echoing" with multi-threads.
+
+* In `net.py` I added two new method: `dilateEmulation(self, tdf)` and `freezeEmulation(self, op='freeze')`. Mininet users can use them to dilate/freeze emulation.
 
 
 ## Experiments with Virtual Time
