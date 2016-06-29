@@ -65,7 +65,8 @@ Two utility programs, `dilate_all_proc` and `freeze_all_proc`, use pthread libra
 ## Experiments with Virtual Time
 Under `test_vtmininet` there are two experiments using [iperf3](https://github.com/esnet/iperf):
 
-* `vtmn_fidelity.py` will run a network with string topology and test TCP throughput between 2 hosts.
+* `vtmn_fidelity_tcp.py` will run a network with string topology and test TCP throughput between 2 hosts.
+* `vtmn_fidelity_udp.py` will run a network with string topology and test UDP throughput between 2 hosts.
 * `vtmn_freeze_iperf.py` runs similar string-topo network and freeze emulation periodically.
 
 More tests are on the way:
@@ -76,7 +77,6 @@ More tests are on the way:
 ## Known Issues
 * Dilated host will accidentally exit clock namespace after iperf3 exits.
 * iperf2 is not tested yet.
-* More tests on UDP.
 
 ## Acknowledge
 My implementation of virtual time is inspired by TimeKeeper wrote by Jeremy Lamps.
