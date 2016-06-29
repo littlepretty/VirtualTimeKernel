@@ -922,7 +922,7 @@ void psched_ratecfg_precompute(struct psched_ratecfg *r,
 
         if (current->dilation > 0) {
 		r->rate_bytes_ps = r->undilated_rate_bytes_ps * 1000 / current->dilation;
-		printk("[psched_ratecfg_precompute]: %s(%d) rate dilated(%d) from (%llu) to (%llu)\n",
+		printk_once("[psched_ratecfg_precompute]: %s(%d) rate dilated(%d) from (%llu) to (%llu)\n",
                                 current->comm, current->pid, current->dilation,
                                 r->undilated_rate_bytes_ps, r->rate_bytes_ps);
 	}
@@ -964,7 +964,7 @@ void psched_ratecfg_dilate(struct psched_ratecfg *r, int dilation)
 {
 	if (r && dilation > 0) {
 		r->rate_bytes_ps = r->undilated_rate_bytes_ps * 1000 / dilation;
-		printk("[psched_ratecfg_dilate] %s(%d) change rate to %llu due to change of TDF(%d)\n",
+		printk_once("[psched_ratecfg_dilate] %s(%d) change rate to %llu due to change of TDF(%d)\n",
                                 current->comm, current->pid, r->rate_bytes_ps, dilation);
                 /**
                  * FIXME: not sure what this code does,

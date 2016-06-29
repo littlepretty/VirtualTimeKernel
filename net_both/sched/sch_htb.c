@@ -869,7 +869,7 @@ next:
                 current->dilation = current->parent->dilation;
                 cl->dilation = current->dilation; /* update dilation */
                 psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
-                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n",
+                printk_once("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n",
                                 current->comm, current->pid, cl->dilation);
 	}
 
@@ -920,7 +920,7 @@ ok:
 	 * Subtract frozen duration
 	 */
 	q->now -= current->freeze_past_nsec;
-	printk("[htb_dequeue] %s(%d) subtract %lld frozen time\n",
+	printk_once("[htb_dequeue] %s(%d) subtract %lld frozen time\n",
 			current->comm, current->pid, current->freeze_past_nsec);
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;

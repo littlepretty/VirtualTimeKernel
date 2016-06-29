@@ -55,6 +55,11 @@ class StringTestTopo(Topo):
                 self.addLink(last, switch)
             last = switch
 
+def showDilation(net):
+    print '---------'
+    for host in net.hosts:
+    	subprocess.check_call('cat /proc/%s/dilation' % host.pid, shell=True)
+    print '---------'
 
 def stringBandwidthTest(host_class, controller_class,
                         link_class, size, tdf, data_file):
@@ -67,10 +72,6 @@ def stringBandwidthTest(host_class, controller_class,
 
     if tdf != 1:
         net.dilate_all(tdf)
-    print '---------'
-    for host in net.hosts:
-    	subprocess.check_call('cat /proc/%s/dilation' % host.pid, shell=True)
-    print '---------'
     
     print "*** testing basic connectivity\n"
     src, dst = net.hosts
@@ -92,6 +93,7 @@ def stringBandwidthTest(host_class, controller_class,
         # bandwidth = net.iperf( [src, dst], l4Type = 'UDP',
         # udpBw='%sM'%set_bw, format = 'm', time=20,
         # clifile=data_file, serfile=data_file )
+        showDilation(net)
         bandwidth = net.iperf( [src, dst], l4Type = 'TCP',
                               fmt = 'm', seconds=time,
                               clifile=data_file, serfile=data_file )
@@ -193,7 +195,7 @@ def drawData(output, AvgRates, StdRates, BWs):
 def main():
     AvgRates = []
     StdRates = []
-    TDFs = [1, 4]
+    TDFs = [4]
     BWs = [4000, 8000, 10000]
     size = 10
     for tdf in TDFs:
