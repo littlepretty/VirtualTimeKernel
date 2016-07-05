@@ -865,7 +865,7 @@ next:
          * Polling host process about dilation; update rate when necessary.
 	 * FIXME: still need to explore/validate this part --- Jiaqi
 	 */
-        if (current->dilation > 0) {
+        if (current->dilation > 0 && current->parent->dilation > 0) {
                 current->dilation = current->parent->dilation;
                 cl->dilation = current->dilation; /* update dilation */
                 psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
