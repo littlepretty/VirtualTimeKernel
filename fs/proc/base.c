@@ -1474,7 +1474,7 @@ static const struct file_operations proc_pid_set_freeze_operations = {
 };
 
 /**
- * Handle virtual time dilation IO under /proc/$pid/tdf
+ * Handle virtual time dilation IO under /proc/$pid/dilation
  **/
 #undef TDF_LEN
 #define TDF_LEN 8

@@ -25,7 +25,7 @@
 #include <ctype.h>
 #include <sys/mount.h>
 
-#include "vtutil.h"
+#include "vt/vtutil.h"
 
 #if !defined(VERSION)
 #define VERSION "(devel)"
@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
             break;
         case 'n':
             /* run in network and mount namespaces */
-            if (virtual_time_unshare(CLONE_NEWNET|CLONE_NEWNS) == -1) {
-                perror("virtual_time_unshare");
+            if (unshare(CLONE_NEWNET|CLONE_NEWNS|CLONE_NEWTIME) == -1) {
+                perror("unshare with virtual time");
                 return 1;
             }
             /* mount sysfs to pick up the new network namespace */

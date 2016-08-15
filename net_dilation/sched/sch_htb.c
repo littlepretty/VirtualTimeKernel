@@ -862,13 +862,14 @@ next:
 	} while (cl != start);
 
 	/**
-         * Polling host process about dilation info; update rate when necessary.
+         * Polling host process about dilation; update rate when necessary.
 	 * FIXME: still need to explore/validate this part --- Jiaqi
 	 */
-        if (current->dilation > 0 && current->dilation != cl->dilation) {
-		cl->dilation = current->dilation; /* update dilation */
+        if (current->dilation > 0) {
+                current->dilation = current->parent->dilation;
+                cl->dilation = current->dilation; /* update dilation */
                 psched_ratecfg_dilate(&cl->rate, cl->dilation); /* update rate */
-                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n", 
+                printk("[htb_dequeue_tree]: update TDF for %s(%d) to %d\n",
                                 current->comm, current->pid, cl->dilation);
 	}
 
@@ -912,7 +913,7 @@ ok:
 		goto fin;
 
 	q->now = ktime_to_ns(ktime_get());
-	printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000);
+	/* printk("[htb_dequeue] q->now: %lldus\n", q->now / 1000); */
 	start_at = jiffies;
 
 	next_event = q->now + 5LLU * NSEC_PER_SEC;
@@ -1074,7 +1075,7 @@ static int htb_init(struct Qdisc *sch, struct nlattr *opt)
 	if ((q->rate2quantum = gopt->rate2quantum) < 1)
 		q->rate2quantum = 1;
 	q->defcls = gopt->defcls;
-	
+
 	return 0;
 }
 
@@ -1493,7 +1494,6 @@ static int htb_change_class(struct Qdisc *sch, u32 classid,
 	}
 
 	rate64 = tb[TCA_HTB_RATE64] ? nla_get_u64(tb[TCA_HTB_RATE64]) : 0;
-
 	ceil64 = tb[TCA_HTB_CEIL64] ? nla_get_u64(tb[TCA_HTB_CEIL64]) : 0;
 
         /* See psched_ratecfg_precompute for dilation --- Jiaqi */

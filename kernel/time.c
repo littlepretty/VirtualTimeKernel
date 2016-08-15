@@ -135,18 +135,14 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 	vsn = tsk->virtual_start_nsec;
 	if (old_tdf == new_tdf) { /* no need to do anything */
 		return 0;
-	}
-        if (old_tdf == 0) { /* enter virtual time */
+	} else if (old_tdf == 0) { /* enter virtual time */
 		init_virtual_start_time(tsk, new_tdf);
 	} else if (new_tdf == 0) { /* exit virtual time */
 		tsk->dilation = 0;
 		tsk->virtual_start_nsec = 0;
 		tsk->virtual_past_nsec = 0;	
 	} else if (old_tdf != 0 && new_tdf > 0) { /* already in virtual time */
-		/* reset virtual_start so that we can get original time */
-		tsk->dilation = 0;
-		tsk->virtual_start_nsec = 0;
-
+		/* get original wall clock time */
 		__getnstimeofday(&ts);
 		now = timespec_to_ns(&ts);
 		

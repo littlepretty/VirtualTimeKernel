@@ -4,13 +4,9 @@ function err_dilation {
         dil=$1
         dur=$2
         echo "Test accuracy of dilation = ${dil}, duration = ${dur}"
-        #./accu_dilation -t $dil -u $dur -e -d -p -o "AccuDil${dil}Dur${dur}.log"
+        ./accu_dilation -t $dil -u $dur -e -d -p -o "AccuDil${dil}Dur${dur}.log"
         
         awk "$AwkScriptVariable" AccuDil${dil}Dur${dur}.log >> AvgDil${dil}.log
-
-        #if [ "$dil" -eq "1" ]
-        #then
-        #fi
 }
 
 make accu_dilation
@@ -33,8 +29,10 @@ END {
 }
 EOF
 
-dilations="1 10 20 50"
-durations="100 200 400 800 1000 10000 40000 80000 100000 400000 800000 1000000 4000000 8000000 10000000" # in microseconds
+#dilations="1 10 20 50"
+#durations="100 200 400 800 1000 10000 40000 80000 100000 400000 800000 1000000 4000000 8000000 10000000" # in microseconds
+dilations="4"
+durations="400000"
 
 for dil in $dilations
 do
@@ -48,5 +46,4 @@ done
 
 # ./plot_cdf.py --input "accu_dilation_${dil}.log" --dilation $dil -l1 'No dilation' -l2 "Dilation=${dil}" --topic "accu_dilation_${dil}"
 
-rm accu_dilation
 

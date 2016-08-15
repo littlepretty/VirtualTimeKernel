@@ -91,6 +91,7 @@ import re
 import select
 import signal
 import random
+import subprocess
 
 from time import sleep
 from itertools import chain, groupby
@@ -500,6 +501,60 @@ class Mininet( object ):
         if self.waitConn:
             self.waitConnected()
 
+    def dilateEmulation( self, tdf ):
+        "Dilate all hosts to a time factor of tdf"
+        pids_str = ''
+        pids_list = []
+        for host in self.hosts:
+            pids_str += ' %s' % host.pid
+            pids_list.append(int(host.pid))
+        cmd_str = 'dilate_all_procs -t %d -p %s' % (tdf * 1000, pids_str)
+        subprocess.check_output(cmd_str, shell=True)
+        info( '*** Check dilate result:\n' )
+        for pid in pids_list:
+            info( '> cat /proc/%d/dilation => ' % pid )
+            subprocess.call('cat /proc/%d/dilation' % pid, shell=True)
+	info( '*** Dilate mininet with TDF %d\n' % tdf)
+
+    def freezeEmulation( self, op='freeze' ):
+        pids_str = ''
+        pids_list = []
+        for host in self.hosts:
+            pids_str += ' %s' % host.pid
+            pids_list.append(host.pid)
+        for sw in self.switches:
+            pids_str += ' %s' % sw.pid
+            pids_list.append(sw.pid)
+        for c in self.controllers:
+            pids_str += ' %s' % c.pid
+            pids_list.append(c.pid)
+        cmd_str = 'freeze_all_procs -p %s' % pids_str
+        conclusion = ''
+        if op == 'freeze':
+            cmd_str += ' -f'
+            conclusion += '*** Emulation is frozen\n'
+        else:
+            cmd_str += ' -u'
+            conclusion += '*** Emulation is unfrozen\n'
+        subprocess.check_output(cmd_str, shell=True)
+        info( '*** Check %s result\n' % op )
+        for pid in pids_list:
+            info( '> cat /proc/%d/freeze => ' % pid )
+            subprocess.call('cat /proc/%d/freeze' % pid, shell=True)
+        info( conclusion )
+
+    def showDilation( self ):
+        info( '*** Dilation * 1000 for network hosts\n' )
+        for host in self.hosts:
+            subprocess.check_call('cat /proc/%d/dilation' % host.pid, shell=True)
+        info('\n')
+    
+    def showFreezeStatus( self ):
+        info( '*** Freeze status for network hosts\n' )
+        for host in self.hosts:
+            subprocess.check_call('cat /proc/%d/freeze' % host.pid, shell=True)
+        info('\n')
+
     def stop( self ):
         "Stop the controller(s), switches and hosts"
         info( '*** Stopping %i controllers\n' % len( self.controllers ) )
@@ -732,7 +787,7 @@ class Mininet( object ):
     # XXX This should be cleaned up
 
     def iperf( self, hosts=None, l4Type='TCP', udpBw='10M', fmt=None,
-               seconds=5, port=5001):
+               seconds=5, port=5001, clifile=None, serfile=None):
         """Run iperf between two hosts.
            hosts: list of hosts; if None, uses first and last hosts
            l4Type: string, one of [ TCP, UDP ]
@@ -749,17 +804,18 @@ class Mininet( object ):
         client, server = hosts
         output( '*** Iperf: testing', l4Type, 'bandwidth between',
                 client, 'and', server, '\n' )
-        server.cmd( 'killall -9 iperf' )
-        iperfArgs = 'iperf -p %d ' % port
+        server.cmd( 'killall -9 iperf3' )
+        iperfArgs = 'iperf3 -p %d ' % port
+        if fmt:
+            iperfArgs += '-f %s ' % fmt
+        server.sendCmd( iperfArgs + '-s' )
+        
         bwArgs = ''
         if l4Type == 'UDP':
             iperfArgs += '-u '
             bwArgs = '-b ' + udpBw + ' '
         elif l4Type != 'TCP':
             raise Exception( 'Unexpected l4 type: %s' % l4Type )
-        if fmt:
-            iperfArgs += '-f %s ' % fmt
-        server.sendCmd( iperfArgs + '-s' )
         if l4Type == 'TCP':
             if not waitListening( client, server.IP(), port ):
                 raise Exception( 'Could not connect to iperf on port %d'
@@ -771,6 +827,9 @@ class Mininet( object ):
         servout = server.waitOutput()
         debug( 'Server output: %s\n' % servout )
         result = [ self._parseIperf( servout ), self._parseIperf( cliout ) ]
+        clifile.write(cliout)
+        serfile.write(servout)
+
         if l4Type == 'UDP':
             result.insert( 0, udpBw )
         output( '*** Results: %s\n' % result )

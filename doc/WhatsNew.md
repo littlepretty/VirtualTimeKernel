@@ -14,11 +14,13 @@
 
 4. Implementation of virtual time system
         * Where to modify?
-                * ktime() family, monotonic time since boot (still needs working)
+                * ktime() family, monotonic time since boot (not 100% complete)
                 * gettimeofday() family, EPOCH time since 1970
         * Dilation: change TDF without pausing emulation
         * Freeze/unfreeze: signal based implementation
-        * Mininet Integration: add new feature to _Host_ and _Mininet_ class (needs working)
+        * Mininet Integration
+                * Re-implement setTDF() for _Mininet_ class(not done yet)
+                * Keep setTDF() feature/implementation in _Node_ class for possible multiple TDF in one experiment, but deprecate it
 
 5. Auxiliary changes for transparency
         * Traffic control __tc__, htb and netem
@@ -30,10 +32,12 @@
         * Error of dilation of 1 10 20 50 with different durations
         * Hard to evaluate error of freeze
         * Overhead of freeze
-        * Mininet experiments: freeze ping and iperf
+        * Mininet experiments:
+                * freeze ping and iperf
+                * dilate link latency (not done yet)
 
 7. User land utilities
-        * Command line tool: freeze\_all\_proc, dilate\_all\_proc
+        * Command line tool: freeze\_all\_proc, dilate\_all\_proc(not implemented yet)
         * Take advantage of parallelism using pthread
 
 8. Clock namespace, haven't got time to work on...

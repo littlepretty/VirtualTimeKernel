@@ -37,8 +37,8 @@ def plot_all():
     plt.figure()
     font = {'size':'15'}
     matplotlib.rc('font', **font)
-    plt.plot(x_data, bsl_avg, color='blue', marker='s', markersize=8, linewidth=1.0, label='No Freeze %d Mbps Links' % bw)
-    plt.plot(x_data, vir_avg, color='red', marker='v', markersize=8, linewidth=1.0, label='Freeze Duration=1s, Interval=1s')
+    plt.plot(x_data, bsl_avg, color='blue', marker='s', markersize=8, linewidth=1.0, label='No Freeze')
+    plt.plot(x_data, vir_avg, color='red', marker='v', markersize=8, linewidth=1.0, label='Freeze Duration=1 s, Interval=1 s')
 
     plt.errorbar(x_data, bsl_avg, bsl_conf_int, color='blue', ecolor='blue')
     plt.errorbar(x_data, vir_avg, vir_conf_int, color='red', ecolor='red')
@@ -49,7 +49,7 @@ def plot_all():
     plt.yticks(range(int(0.25*bw), int(bw) + 1, 100))
 
     plt.ylim([0.25*bw, bw])
-    plt.xlabel('Time Series (Seconds)', fontsize=20)
+    plt.xlabel('Time (Seconds)', fontsize=20)
     plt.ylabel('iperf Throughput (Mbps)', fontsize=20)
     plt.savefig(output_file, format='eps')
 
