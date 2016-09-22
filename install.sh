@@ -2,7 +2,7 @@
 
 function usage() {
         echo "Usage: $0 target"
-        echo "  target: either [dilation] or [freeze], default=both"
+        echo "  target: either [dilation] or [freeze], default=[both]"
         exit 1
 }
 

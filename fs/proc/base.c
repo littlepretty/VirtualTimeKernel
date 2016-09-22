@@ -1452,9 +1452,10 @@ static int freeze_show(struct seq_file *m, void *v)
 
 	task_lock(p);
 	freezed = (p->freeze_start_nsec != 0);
-	task_unlock(p);
-	seq_printf(m, "%d\n", freezed);
-
+        if (freezed) seq_printf(m, "F\n");
+        else seq_printf(m, "U\n");
+	
+        task_unlock(p);
 	put_task_struct(p);
 
 	return 0;
@@ -1471,6 +1472,48 @@ static const struct file_operations proc_pid_set_freeze_operations = {
 	.write		= freeze_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
+};
+
+static int fpt_show(struct seq_file *m, void *v)
+{
+        struct inode *inode = m->private;
+        struct task_struct *p;
+        s64 fpt;
+
+        p = get_proc_task(inode);
+        if (!p) return -ESRCH;
+
+        task_lock(p);
+        fpt = p->freeze_past_nsec;
+        task_unlock(p);
+        put_task_struct(p);
+
+        if (fpt > 1000000000) {
+                s64 seconds = fpt / 1000000000;
+                seq_printf(m, "%llds\n", seconds);
+        } else if (fpt > 1000000) {
+                s64 milliseconds = fpt / 1000000;
+                seq_printf(m, "%lldms\n", milliseconds);
+        } else if (fpt > 1000) {
+                s64 microseconds = fpt / 1000;
+                seq_printf(m, "%lldus\n", microseconds);
+        } else {
+                seq_printf(m, "%lldns\n", fpt);
+        }
+
+        return 0;
+}
+
+static int fpt_open(struct inode *inode, struct file *filp)
+{
+        return single_open(filp, fpt_show, inode);
+}
+
+static const struct file_operations proc_pid_get_fpt_operations = {
+        .open           = fpt_open,
+        .read           = seq_read,
+        .llseek         = seq_lseek,
+        .release        = single_release,
 };
 
 /**
@@ -1519,10 +1562,11 @@ static int dilation_show(struct seq_file *m, void *v)
 	}
 
 	task_lock(p);
-	tdf = p->dilation;
-	task_unlock(p);
+	
+        tdf = p->dilation;
 	seq_printf(m, "%d\n", tdf);
 
+        task_unlock(p);
 	put_task_struct(p);
 
 	return 0;
@@ -1539,6 +1583,48 @@ static const struct file_operations proc_pid_set_dilation_operations = {
 	.write		= dilation_write,
 	.llseek		= seq_lseek,
 	.release	= single_release,
+};
+
+static int vpt_show(struct seq_file *m, void *v)
+{
+        struct inode *inode = m->private;
+        struct task_struct *p;
+        s64 vpt;
+
+        p = get_proc_task(inode);
+        if (!p) return -ESRCH;
+
+        task_lock(p);
+        vpt = p->virtual_past_nsec;
+        task_unlock(p);
+        put_task_struct(p);
+        
+        if (vpt > 1000000000) {
+                s64 seconds = vpt / 1000000000;
+                seq_printf(m, "%llds\n", seconds);
+        } else if (vpt > 1000000) {
+                s64 milliseconds = vpt / 1000000;
+                seq_printf(m, "%lldms\n", milliseconds);
+        } else if (vpt > 1000) {
+                s64 microseconds = vpt / 1000;
+                seq_printf(m, "%lldus\n", microseconds);
+        } else {
+                seq_printf(m, "%lldns\n", vpt);
+        }
+
+        return 0;
+}
+
+static int vpt_open(struct inode *inode, struct file *filp)
+{
+        return single_open(filp, vpt_show, inode);
+}
+
+static const struct file_operations proc_pid_get_vpt_operations = {
+        .open           = vpt_open,
+        .read           = seq_read,
+        .llseek         = seq_lseek,
+        .release        = single_release,
 };
 
 static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
@@ -2704,6 +2790,8 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
 	REG("freeze",	S_IRUGO|S_IWUSR, proc_pid_set_freeze_operations),
 	REG("dilation",	S_IRUGO|S_IWUSR, proc_pid_set_dilation_operations),
+        REG("fpt",      S_IRUGO, proc_pid_get_fpt_operations),
+        REG("vpt",      S_IRUGO, proc_pid_get_vpt_operations),
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
 	INF("syscall",    S_IRUSR, proc_pid_syscall),
 #endif
