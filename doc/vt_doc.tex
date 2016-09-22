@@ -539,7 +539,7 @@ From the consideration of scalability, synchronizing emulation with simulation s
 For frequent synchronizations, non-blocking global event queue should be used.
 %Otherwise when there are too much coming request for synchronizing, the virtual time system may work terrible.
 Probably by introducing a synchronizing window, we may both free our implementation from the above messy situation and improve the scalability/overhead of frequent synchronization request.
-\fi
+
 
 \section{Conclusions}
 TODO
