@@ -124,7 +124,7 @@ SYSCALL_DEFINE2(gettimeofday, struct timeval __user *, tv,
 int set_dilation(struct task_struct *tsk, int new_tdf)
 {
 	struct timespec ts;
-	s64 now, delta_ppn, delta_vpn, vsn;
+	s64 now, delta_ppn, delta_vpn;
         s32 rem;
 	int old_tdf;
         struct list_head *list;
@@ -132,39 +132,50 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 	
         /* save anything we may need */
 	old_tdf = tsk->dilation;
-	vsn = tsk->virtual_start_nsec;
 	if (old_tdf == new_tdf) { /* no need to do anything */
 		return 0;
 	} else if (old_tdf == 0) { /* enter virtual time */
 		init_virtual_start_time(tsk, new_tdf);
 	} else if (new_tdf == 0) { /* exit virtual time */
 		tsk->dilation = 0;
+                /* Forget any_past_nsec */
 		tsk->virtual_start_nsec = 0;
-		tsk->virtual_past_nsec = 0;	
-	} else if (old_tdf != 0 && new_tdf > 0) { /* already in virtual time */
-		/* get original wall clock time */
+		tsk->virtual_past_nsec = 0;
+                tsk->physical_start_nsec = 0;
+                tsk->physical_past_nsec = 0;
+                tsk->freeze_start_nsec = 0;
+                tsk->freeze_past_nsec = 0;
+        } else if (old_tdf != 0 && new_tdf > 0) { /* already in virtual time */
+		/**
+                 * @now is the moment we change TDF,
+                 * get it by calling original wall clock time
+                 */
 		__getnstimeofday(&ts);
 		now = timespec_to_ns(&ts);
 		
-		/* virtual_start_nsec remains the same */
-		tsk->virtual_start_nsec = vsn;
-
-		/* advance virtual_past_nsec */
+		/**
+                 * advance virtual_past_nsec, e.g. add delta_vpn
+                 * from last calculation to right now
+                 */
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
 		delta_ppn -= tsk->physical_start_nsec;
-
                 /* tsk's freeze_past_nsec is either its own or populated */
                 delta_ppn -= tsk->freeze_past_nsec;
-		
                 delta_vpn = div_s64_rem(delta_ppn * 1000, old_tdf, &rem);
 		tsk->virtual_past_nsec += delta_vpn;
+		
+                /* reset virtual_start_nsec as now */
+		tsk->virtual_start_nsec = now;
 
-		/* new physcial_start_nsec from now on */
+		/**
+                 * New physcial_start_nsec from now on
+                 * No need to substract frozen time since
+                 * we do it in update_physical_past_nsec
+                 **/
 		tsk->physical_start_nsec = now;	
-		tsk->physical_start_nsec -= tsk->freeze_past_nsec;
-                
                 tsk->physical_past_nsec = 0;
+
 		tsk->dilation = new_tdf;
 	} else {
 		return -EINVAL;
@@ -193,13 +204,17 @@ static void populate_frozen_time(struct task_struct *tsk)
         list_for_each(list, &(tsk->children)) {
                 child = list_entry(list, struct task_struct, sibling);
                 child->freeze_past_nsec = tsk->freeze_past_nsec;
+                child->freeze_start_nsec = tsk->freeze_start_nsec;
                 populate_frozen_time(child);
         }
 }
 
 /**
  * Freeze a group of processes, only call on group leader
- **/
+ * This is a "last freeze count" implementation. If you call
+ * F -> F -> F -> U, tsk->freeze_past_nsec will be the duration
+ * from the U to last F
+ */
 void freeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
@@ -209,13 +224,20 @@ void freeze_time(struct task_struct *tsk)
 	kill_pgrp(task_pid(tsk), SIGSTOP, 1);
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
+        /**
+         * freeze_past_nsec is accumulated frozen duration,
+         * so we MUST NOT zero it here
+         */
 	tsk->freeze_start_nsec = now;
 }
 EXPORT_SYMBOL(freeze_time);
 
 /**
- * Unfreeze a group of processes, only call on group leader
- **/
+ * Unfreeze a group of processes, only call on group leader.
+ * This is a last unfreeze count implementation. If you call
+ * F -> U -> U -> U, tsk->freeze_past_nsec will be the duration
+ * from the last U to F
+ */
 void unfreeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
@@ -224,7 +246,8 @@ void unfreeze_time(struct task_struct *tsk)
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
 	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
-	tsk->freeze_start_nsec = 0;
+        /* current unfreeze may not be the last one */
+	tsk->freeze_start_nsec = now;
         populate_frozen_time(tsk);
 
         /* signal CONTINUE to unfreeze @tsk's children after timekeeping */

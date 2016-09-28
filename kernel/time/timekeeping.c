@@ -305,7 +305,7 @@ static s64 update_physical_past_nsec(struct timespec *ts)
 	delta_ppn -= current->physical_past_nsec;
 	delta_ppn -= current->physical_start_nsec;
         /**
-         * substract freezed time
+         * substract frozen duration
          */
 	delta_ppn -= current->freeze_past_nsec;
 	current->physical_past_nsec += delta_ppn;
@@ -413,8 +413,7 @@ EXPORT_SYMBOL(__getnstimeofday);
  */
 void getnstimeofday(struct timespec *ts)
 {
-	WARN_ON(__getnstimeofday(ts));
-        
+	WARN_ON(__getnstimeofday(ts)); 
         /**
          * Keep __getnstimeofday() timekeeping clean so that 
          * we always have real wall clock, e.g. undilated ts.

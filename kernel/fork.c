@@ -1566,7 +1566,7 @@ struct task_struct *fork_idle(int cpu)
 	return task;
 }
 
-/*
+/**
  * Initialize virtual start time as this moment
  */
 void init_virtual_start_time(struct task_struct *tsk, int tdf)
@@ -1576,8 +1576,9 @@ void init_virtual_start_time(struct task_struct *tsk, int tdf)
 
 	if(tdf > 0) {
 		/** 
-                 * must make sure __getnstimeofday return original time 
-                 * now = nano seconds since Epoch 1970 
+                 * must make sure __getnstimeofday return wall-clock time 
+                 * now = nano seconds since Epoch 1970
+                 * as well as all the xxx_nsec variables in tsk
                  */
 		__getnstimeofday(&ts);
 		now = timespec_to_ns(&ts);
@@ -1587,6 +1588,8 @@ void init_virtual_start_time(struct task_struct *tsk, int tdf)
 		tsk->virtual_past_nsec = 0;
 		tsk->physical_start_nsec = now;
 		tsk->physical_past_nsec = 0;
+                tsk->freeze_start_nsec = 0;
+                tsk->freeze_past_nsec = 0;
 		tsk->dilation = tdf;
         }
 }
