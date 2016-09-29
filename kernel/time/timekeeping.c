@@ -1626,7 +1626,10 @@ EXPORT_SYMBOL(get_seconds);
 struct timespec __current_kernel_time(void)
 {
 	struct timekeeper *tk = &timekeeper;
-
+        /**
+         * Same as current_kernel_time but does not take xtime_lock.
+         * For now don't go through virtual time path.
+         */
 	return tk_xtime(tk);
 }
 
@@ -1641,7 +1644,10 @@ struct timespec current_kernel_time(void)
 
 		now = tk_xtime(tk);
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
-
+        /**
+         * Virtualize realtime clock
+         */
+        do_virtual_time_keeping(now);
 	return now;
 }
 EXPORT_SYMBOL(current_kernel_time);
