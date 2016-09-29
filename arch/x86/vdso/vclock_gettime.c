@@ -291,6 +291,12 @@ notrace static void do_monotonic_coarse(struct timespec *ts)
 
 notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
 {
+	/**
+         * Bypass vdso and always fall back to
+         * normal clock_gettime system call
+         */
+        return vdso_fallback_gettime(clock, ts);
+        /*
 	switch (clock) {
 	case CLOCK_REALTIME:
 		if (do_realtime(ts) == VCLOCK_NONE)
@@ -313,15 +319,18 @@ notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
 	return 0;
 fallback:
 	return vdso_fallback_gettime(clock, ts);
+        */
 }
 int clock_gettime(clockid_t, struct timespec *)
 	__attribute__((weak, alias("__vdso_clock_gettime")));
 
 notrace int __vdso_gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-	// bypass vdso && always fall back to normal gettimeofday
+	/**
+         * Bypass vdso and always fall back to
+         * normal gettimeofday system call
+         */
 	return vdso_fallback_gtod(tv, tz);
-
 	/*
 	if (likely(tv != NULL)) {
 		if (unlikely(do_realtime((struct timespec *)tv) == VCLOCK_NONE))
