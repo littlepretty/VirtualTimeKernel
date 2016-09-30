@@ -1488,14 +1488,18 @@ static int fpt_show(struct seq_file *m, void *v)
         task_unlock(p);
         put_task_struct(p);
 
-        if (fpt > 1000000000) {
-                s64 seconds = fpt / 1000000000;
+        if (fpt > 1000 * NSEC_PER_SEC) {
+                s64 kseconds = fpt / NSEC_PERC_SEC;
+                kseconds /= 1000;
+                seq_printf(m, "%lldks\n", kseconds);
+        } else if (fpt > NSEC_PER_SEC) {
+                s64 seconds = fpt / NSEC_PER_SEC;
                 seq_printf(m, "%llds\n", seconds);
-        } else if (fpt > 1000000) {
-                s64 milliseconds = fpt / 1000000;
+        } else if (fpt > NSEC_PER_MSEC) {
+                s64 milliseconds = fpt / NSEC_PER_MSEC;
                 seq_printf(m, "%lldms\n", milliseconds);
-        } else if (fpt > 1000) {
-                s64 microseconds = fpt / 1000;
+        } else if (fpt > NSEC_PER_USEC) {
+                s64 microseconds = fpt / NSEC_PER_USEC;
                 seq_printf(m, "%lldus\n", microseconds);
         } else {
                 seq_printf(m, "%lldns\n", fpt);
@@ -1598,15 +1602,19 @@ static int vpt_show(struct seq_file *m, void *v)
         vpt = p->virtual_past_nsec;
         task_unlock(p);
         put_task_struct(p);
-        
-        if (vpt > 1000000000) {
-                s64 seconds = vpt / 1000000000;
+
+        if (vpt > 1000 * NSEC_PER_SEC) {
+                s64 kseconds = vpt / NSEC_PER_SEC;
+                kseconds /= 1000;
+                seq_printf(m, "%lldks\n", kseconds);
+        } if (vpt > NSEC_PER_SEC) {
+                s64 seconds = vpt / NSEC_PER_SEC;
                 seq_printf(m, "%llds\n", seconds);
-        } else if (vpt > 1000000) {
-                s64 milliseconds = vpt / 1000000;
+        } else if (vpt > NSEC_PER_MSEC) {
+                s64 milliseconds = vpt / NSEC_PER_MSEC;
                 seq_printf(m, "%lldms\n", milliseconds);
-        } else if (vpt > 1000) {
-                s64 microseconds = vpt / 1000;
+        } else if (vpt > NSEC_PER_USEC) {
+                s64 microseconds = vpt / NSEC_PER_USEC;
                 seq_printf(m, "%lldus\n", microseconds);
         } else {
                 seq_printf(m, "%lldns\n", vpt);
@@ -1626,6 +1634,52 @@ static const struct file_operations proc_pid_get_vpt_operations = {
         .llseek         = seq_lseek,
         .release        = single_release,
 };
+
+static int ppt_show(struct seq_file *m, void *v)
+{
+        struct inode *inode = m->private;
+        struct task_struct *p;
+        s64 ppt;
+
+        p = get_proc_task(inode);
+        if (!p) return -ESRCH;
+
+        task_lock(p);
+        ppt = p->physical_past_nsec;
+        task_unlock(p);
+        put_task_struct(p);
+        
+        if (ppt > 1000 * NSEC_PER_SEC) {
+                s64 kseconds = ppt / NSEC_PER_SEC;
+                kseconds /= 1000;
+                seq_printf(m, "%lldks\n", kseconds);
+        } if (ppt > NSEC_PER_SEC) {
+                s64 seconds = ppt / NSEC_PER_SEC;
+                seq_printf(m, "%llds\n", seconds);
+        } else if (ppt > NSEC_PER_MSEC) {
+                s64 milliseconds = ppt / NSEC_PER_MSEC;
+                seq_printf(m, "%lldms\n", milliseconds);
+        } else if (ppt > NSEC_PER_USEC) {
+                s64 microseconds = ppt / NSEC_PER_USEC;
+                seq_printf(m, "%lldus\n", microseconds);
+        } else {
+                seq_printf(m, "%lldns\n", ppt);
+        }
+
+        return 0;
+}
+
+static int ppt_open(struct inode *inode, struct file *filp)
+{
+        return single_open(filp, ppt_show, inode);
+}
+
+static const struct file_operations proc_pid_get_ppt_operations = {
+        .open           = ppt_open,
+        .read           = seq_read,
+        .llseek         = seq_lseek,
+        .release        = single_release,
+}
 
 static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
 {
@@ -2792,6 +2846,7 @@ static const struct pid_entry tgid_base_stuff[] = {
 	REG("dilation",	S_IRUGO|S_IWUSR, proc_pid_set_dilation_operations),
         REG("fpt",      S_IRUGO, proc_pid_get_fpt_operations),
         REG("vpt",      S_IRUGO, proc_pid_get_vpt_operations),
+        REG("ppt",      S_IRUGO, proc_pid_get_ppt_operations),
 #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
 	INF("syscall",    S_IRUSR, proc_pid_syscall),
 #endif
