@@ -1489,7 +1489,7 @@ static int fpt_show(struct seq_file *m, void *v)
         put_task_struct(p);
 
         if (fpt > 1000 * NSEC_PER_SEC) {
-                s64 kseconds = fpt / NSEC_PERC_SEC;
+                s64 kseconds = fpt / NSEC_PER_SEC;
                 kseconds /= 1000;
                 seq_printf(m, "%lldks\n", kseconds);
         } else if (fpt > NSEC_PER_SEC) {
@@ -1679,7 +1679,7 @@ static const struct file_operations proc_pid_get_ppt_operations = {
         .read           = seq_read,
         .llseek         = seq_lseek,
         .release        = single_release,
-}
+};
 
 static int proc_exe_link(struct dentry *dentry, struct path *exe_path)
 {
