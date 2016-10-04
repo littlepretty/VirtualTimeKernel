@@ -425,6 +425,7 @@ EXPORT_SYMBOL(getnstimeofday);
 ktime_t ktime_get(void)
 {
 	struct timekeeper *tk = &timekeeper;
+        struct timespec now, tomono;
         unsigned int seq;
         s64 secs, nsecs;
 
@@ -432,15 +433,27 @@ ktime_t ktime_get(void)
 
 	do {
                 seq = read_seqcount_begin(&timekeeper_seq);
-                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
-                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
+                secs = tk->xtime_sec;
+                nsecs = timekeeping_get_ns(tk);
+                tomono.tv_sec = tk->wall_to_monotonic.tv_sec;
+                tomono.tv_nsec = tk->wall_to_monotonic.tv_nsec;
 
         } while (read_seqcount_retry(&timekeeper_seq, seq));
+        /**
+         * Virtualize realtime clock
+         */
+        set_normalized_timespec(&now, secs, nsecs);
+        do_virtual_time_keeping(&now);
+        /**
+         * Convert to monotonic clock
+         */
+        now.tv_sec += tomono.tv_sec;
+        timespec_add_ns(&now, tomono.tv_nsec);
         /*
 	 * Use ktime_set/ktime_add_ns to create a proper ktime on
 	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
 	 */
-	return ktime_add_ns(ktime_set(secs, 0), nsecs);
+        return ktime_add_ns(ktime_set(now.tv_sec, 0), now.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get);
 
@@ -468,10 +481,16 @@ void ktime_get_ts(struct timespec *ts)
 		tomono = tk->wall_to_monotonic;
 
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
-
+        /**
+         * Virtualize realtime clock
+         */
+        set_normalized_timespec(ts, ts->tv_sec, nsec);
+        do_virtual_time_keeping(ts);
+        /**
+         * Convert to monotonic clock
+         */
 	ts->tv_sec += tomono.tv_sec;
-        ts->tv_nsec = 0;
-	timespec_add_ns(ts, nsec + tomono.tv_nsec);
+        timespec_add_ns(ts, tomono.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 
@@ -1641,13 +1660,12 @@ struct timespec current_kernel_time(void)
 
 	do {
 		seq = read_seqcount_begin(&timekeeper_seq);
-
 		now = tk_xtime(tk);
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
         /**
          * Virtualize realtime clock
          */
-        do_virtual_time_keeping(now);
+        do_virtual_time_keeping(&now);
 	return now;
 }
 EXPORT_SYMBOL(current_kernel_time);
@@ -1664,7 +1682,13 @@ struct timespec get_monotonic_coarse(void)
 		now = tk_xtime(tk);
 		mono = tk->wall_to_monotonic;
 	} while (read_seqcount_retry(&timekeeper_seq, seq));
-
+        /**
+         * Virtualize realtime clock
+         */
+        do_virtual_time_keeping(&now);
+        /**
+         * Convert to monotonic clock
+         */
 	set_normalized_timespec(&now, now.tv_sec + mono.tv_sec,
 			now.tv_nsec + mono.tv_nsec);
 	return now;
