@@ -213,44 +213,47 @@ static void populate_frozen_time(struct task_struct *tsk)
  * Freeze a group of processes, only call on group leader
  * This is a "last freeze count" implementation. If you call
  * F -> F -> F -> U, tsk->freeze_past_nsec will be the duration
- * from the U to last F
+ * from the first F to U
  */
 void freeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
 	s64 now;
-        
+
+        if (tsk->freeze_start_nsec > 0) return;
+
         /* signal STOP to freeze this @tsk's children */;
-	kill_pgrp(task_pid(tsk), SIGSTOP, 1);
-	__getnstimeofday(&ts);
-	now = timespec_to_ns(&ts);
+        kill_pgrp(task_pid(tsk), SIGSTOP, 1);
+        __getnstimeofday(&ts);
+        now = timespec_to_ns(&ts);
         /**
          * freeze_past_nsec is accumulated frozen duration,
          * so we MUST NOT zero it here
          */
-	tsk->freeze_start_nsec = now;
+        tsk->freeze_start_nsec = now;
 }
 EXPORT_SYMBOL(freeze_time);
 
 /**
  * Unfreeze a group of processes, only call on group leader.
  * This is a last unfreeze count implementation. If you call
- * F -> U -> U -> U, tsk->freeze_past_nsec will be the duration
- * from the last U to F
+ * F -> U -> U -> U, the tsk->freeze_past_nsec will be
+ * the duration from F to the first U
  */
 void unfreeze_time(struct task_struct *tsk)
 {
 	struct timespec ts;
 	s64 now;
+        
+        if (tsk->freeze_start_nsec == 0) return;
 
 	__getnstimeofday(&ts);
 	now = timespec_to_ns(&ts);
 	tsk->freeze_past_nsec += (now - tsk->freeze_start_nsec);
-        /* current unfreeze may not be the last one */
-	tsk->freeze_start_nsec = now;
-        populate_frozen_time(tsk);
 
-        /* signal CONTINUE to unfreeze @tsk's children after timekeeping */
+	tsk->freeze_start_nsec = 0;
+        populate_frozen_time(tsk);
+        /* signal CONT to unfreeze @tsk's children after timekeeping */
 	kill_pgrp(task_pid(tsk), SIGCONT, 1);
 }
 EXPORT_SYMBOL(unfreeze_time);
