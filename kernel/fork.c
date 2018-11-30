@@ -1572,19 +1572,26 @@ struct task_struct *fork_idle(int cpu)
 void init_virtual_start_time(struct task_struct *tsk, int tdf)
 {
 	struct timespec ts;
-	s64 now;
+	s64 now, virtual_now;
 
 	if(tdf > 0) {
 		/** 
-                 * must make sure __getnstimeofday return wall-clock time 
-                 * now = nano seconds since Epoch 1970
-                 * as well as all the xxx_nsec variables in tsk
+                 * Must make sure __getnstimeofday return wall-clock time 
+                 * now = nano seconds since Epoch 1970,
+                 * as well as all the xxx_nsec variables in tsk.
                  */
 		__getnstimeofday(&ts);
-		now = timespec_to_ns(&ts);
+                now = timespec_to_ns(&ts);
+
+                /**
+                 * If tsk is the root of the container,
+                 * now and virtual_now should be identical.
+                 */
+                getnstimeofday(&ts);
+                virtual_now = timespec_to_ns(&ts);
 
 		/* initialize fields of nsec */
-		tsk->virtual_start_nsec = now;
+		tsk->virtual_start_nsec = virtual_now;
 		tsk->virtual_past_nsec = 0;
 		tsk->physical_start_nsec = now;
 		tsk->physical_past_nsec = 0;
