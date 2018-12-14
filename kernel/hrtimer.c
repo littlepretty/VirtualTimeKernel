@@ -49,6 +49,7 @@
 #include <linux/sched/deadline.h>
 #include <linux/timer.h>
 #include <linux/freezer.h>
+#include <linux/math64.h>
 
 #include <asm/uaccess.h>
 
@@ -1657,7 +1658,7 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 		struct timespec __user *, rmtp)
 {
 	struct timespec tu, dilated_tu;
-	s64 req_ns
+	s64 req_ns;
 	s32 reminder;
 
 	if (copy_from_user(&tu, rqtp, sizeof(tu)))
