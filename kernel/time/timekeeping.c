@@ -341,6 +341,28 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
                 }
         }
 }
+
+/**
+ * Print debug msg based on undilated @ts and dilated @virtual_ts.
+ */
+static void printk_virtual_time(struct timespec* virtual_ts, struct timespec* ts)
+{
+        s64 now = timespec_to_ns(ts);
+        s64 virtual_now = timespec_to_ns(ts);
+        int ns2ms = 1000000;
+        printk("[VT(%d)-%s(pid=%d)] [Clock] real=%lldms, virtual=%lldms ",
+                        current->dilation, current->comm, current->pid,
+                        div_s64(now, ns2ms), div_s64(virtual_now, ns2ms));
+        printk(KERN_CONT "[Start] phy=%lldms, vir=%lldms, frz=%lldms ",
+                        div_s64(current->physical_start_nsec, ns2ms),
+                        div_s64(current->virtual_start_nsec, ns2ms),
+                        div_s64(current->freeze_start_nsec , ns2ms));
+        printk(KERN_CONT "[Past]  phy=%lldms, vir=%lldms, frz=%lldms\n",
+                        div_s64(current->physical_past_nsec, ns2ms),
+                        div_s64(current->virtual_past_nsec, ns2ms),
+                        div_s64(current->freeze_past_nsec , ns2ms));
+}
+
 /**
  * Maintain process's @virtual_past_nsec and @virtual_start_nsec
  * in the context of freeze and time dilation
@@ -360,11 +382,7 @@ static void do_virtual_time_keeping(struct timespec* ts)
                 virtual_now = current->virtual_start_nsec +
                         current->virtual_past_nsec;
                 virtual_ts = ns_to_timespec(virtual_now);
-                /* for debug */
-                /*s64 now = timespec_to_ns(ts);*/
-                /*printk("[VT-%s(%d)] FT=%lld us; RT=%lld us; VT=%lld us\n", */
-                /*current->comm, current->pid, current->freeze_past_nsec / 1000, */
-                /*now / 1000, virtual_now / 1000);*/
+                // printk_virtual_time(&virtual_ts, ts);
                 ts->tv_sec = virtual_ts.tv_sec;
                 ts->tv_nsec = virtual_ts.tv_nsec;
         }
@@ -454,7 +472,7 @@ EXPORT_SYMBOL_GPL(ktime_get);
 void ktime_get_ts(struct timespec *ts)
 {
         struct timekeeper *tk = &timekeeper;
-        struct timespec tomono;
+        struct timespec tomono, undilated_ts;
         s64 nsec;
         unsigned int seq;
 
@@ -471,6 +489,12 @@ void ktime_get_ts(struct timespec *ts)
         ts->tv_sec += tomono.tv_sec;
         ts->tv_nsec = 0;
         timespec_add_ns(ts, nsec + tomono.tv_nsec);
+
+        undilated_ts.tv_sec = ts->tv_sec;
+        undilated_ts.tv_nsec = ts->tv_nsec;
+        do_virtual_time_keeping(ts);
+        if (current->virtual_start_nsec > 0)
+                printk_virtual_time(ts, &undilated_ts);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 
