@@ -8,7 +8,7 @@ check_err() {
         then
                 keyword=error
                 grep $keyword $ERR > /dev/null
-                if [ $? -eq 0 ]; 
+                if [ $? -eq 0 ];
                 then
                         # found error in err file
                         echo "build stop during $1"
@@ -20,7 +20,7 @@ check_err() {
 
 make_kernel() {
         echo "step 1. make src code for kernel and module"
-        if [ ! -f .config ]; 
+        if [ ! -f .config ];
         then
                 cp -vi /boot/config-`uname -r` .config
                 yes "" | make oldconfig
@@ -80,7 +80,7 @@ usage() {
         echo "		-k: make kernel"
         echo "		-m: -k + make modules"
         echo "		-i: -m + install modules and kernel"
-        echo "		-g: just update GRUB" 
+        echo "		-g: just update GRUB"
         exit 0
 }
 
@@ -110,6 +110,3 @@ else
         done
         shift $(($OPTIND - 1))
 fi
-
-
-
