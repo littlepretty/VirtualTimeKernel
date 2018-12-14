@@ -33,12 +33,22 @@ update-grub
 
 * Reboot and select the newly built kernel image in grub menu.
 
+### Install Virtual Time Userspace Utilities
+Install a couple virtual time userspace commands:
+```
+cd vt_userspace
+make
+sudo make install
+cd ../
+```
+
 ### Install VT-Mininet
 You can install by rebuild Mininet:
 ```
 cd mininet # enter the mininet dir inside this repo
 sudo make clean
 sudo make install
+cd ../
 ```
 
 I will make a pull request to Mininet repo after more tests.
