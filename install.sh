@@ -27,20 +27,21 @@ echo "        Patch file written to ${PATCH}"
 diff -rup $DST ./ > ${PATCH}
 echo ""
 
-FILES="kernel/fork.c		        \
-kernel/time.c			        \
+FILES="kernel/fork.c                    \
+kernel/time.c                           \
+kernel/hrtimer.c                        \
 kernel/posix-timers.c                   \
-kernel/time/timekeeping.c	        \
-arch/x86/vdso/vclock_gettime.c	        \
-include/uapi/linux/sched.h	        \
-include/linux/sched.h		        \
-include/linux/init_task.h	        \
-include/linux/time.h		        \
+kernel/time/timekeeping.c               \
+arch/x86/vdso/vclock_gettime.c          \
+include/uapi/linux/sched.h              \
+include/linux/sched.h                   \
+include/linux/init_task.h               \
+include/linux/time.h                    \
 include/linux/ktime.h                   \
 include/linux/timekeeper_internal.h     \
-fs/proc/base.c			        \
-include/net/sch_generic.h	        \
-Makefile		                \
+fs/proc/base.c                          \
+include/net/sch_generic.h               \
+Makefile                                \
 build_all.sh"
 #net_dilation/core/dev.c                \
 

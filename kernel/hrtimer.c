@@ -1656,13 +1656,21 @@ out:
 SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 		struct timespec __user *, rmtp)
 {
-	struct timespec tu;
+	struct timespec tu, dilated_tu;
+	s64 req_ns
+	s32 reminder;
 
 	if (copy_from_user(&tu, rqtp, sizeof(tu)))
-		return -EFAULT;
+                return -EFAULT;
 
 	if (!timespec_valid(&tu))
 		return -EINVAL;
+
+	if (current->dilation > 0 && current->dilation != 1000) {
+		req_ns = timespec_to_ns(tu);
+		req_ns = div_s64_rem(req_ns * tdf, 1000, &reminder);
+		tu = ns_to_timespec(req_ns);
+	}
 
 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
 }

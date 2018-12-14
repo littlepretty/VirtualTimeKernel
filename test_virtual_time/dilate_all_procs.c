@@ -45,11 +45,11 @@ int main(int argc, char** argv)
                                 optind = index - 1;
                                 break;
                         default:
-                                print_usage(argv[0]);        
+                                print_usage(argv[0]);
                                 exit(EXIT_FAILURE);
                 }
         }
-        
+
         if (pid_size > 0) {
                 for (i = 0; i < pid_size; ++i) {
                      printf("pid_list[%d] = %d\n", i, pid_list[i]);
@@ -64,5 +64,3 @@ int main(int argc, char** argv)
         }
         return 0;
 }
-
-

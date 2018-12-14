@@ -322,27 +322,27 @@ static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
         s32 rem;
         s64 delta_vpn; // delta virtual_past_nsec
 
-        /** 
+        /**
          * Actual dilation in the range of (0,100], but "1000==1".
          * Go through following calculations even if TDF=1.
          */
-        if (tdf > 0 && tdf <= 100000) {	
+        if (tdf > 0 && tdf <= 100000) {
                 if (tdf == 1000) { /* optimized for freeze */
                         current->virtual_past_nsec += delta_ppn;
                 } else {
-                        /** 
+                        /**
                          * Accuracy of s64 for nanoseconds:
                          * 2^63ns > 9*10^18ns => 9*10^9s
                          * To guarantee (physical_past_nsec * 1000) won't overflow:
                          * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
                          */
-                        delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);	
+                        delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
                         current->virtual_past_nsec += delta_vpn;
                 }
         }
 }
 /**
- * Maintain process's @virtual_past_nsec and @virtual_start_nsec 
+ * Maintain process's @virtual_past_nsec and @virtual_start_nsec
  * in the context of freeze and time dilation
  */
 static void do_virtual_time_keeping(struct timespec* ts)
@@ -412,9 +412,9 @@ EXPORT_SYMBOL(__getnstimeofday);
  */
 void getnstimeofday(struct timespec *ts)
 {
-        WARN_ON(__getnstimeofday(ts)); 
+        WARN_ON(__getnstimeofday(ts));
         /**
-         * Keep __getnstimeofday() timekeeping clean so that 
+         * Keep __getnstimeofday() timekeeping clean so that
          * we always have real wall clock, e.g. undilated ts.
          */
         do_virtual_time_keeping(ts);
