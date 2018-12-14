@@ -1668,7 +1668,7 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 
 	if (current->dilation > 0 && current->dilation != 1000) {
 		req_ns = timespec_to_ns(tu);
-		req_ns = div_s64_rem(req_ns * tdf, 1000, &reminder);
+		req_ns = div_s64_rem(req_ns * current->dilation, 1000, &reminder);
 		tu = ns_to_timespec(req_ns);
 	}
 
