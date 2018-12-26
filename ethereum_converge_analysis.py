@@ -16,8 +16,9 @@ matplotlib.rcParams["figure.figsize"] = [14, 10]
 def combinedAnalysis(numIters, hashRate, initDifficulty, tdf=1.0):
     D = [initDifficulty]
     BN = [1]
+    T, runningT = [0], [0]
     alpha1 = 1 + 1 / 2**11
-    beta = -1 / (2048 * 10 * hashRate * tdf)
+    beta = -1 / (2048 * 10 * hashRate)
     alpha2 = (1 - 99 / 2048)
     monoThreshold = -1 * alpha1 / (2 * beta)
     caseDividing = 1009 * hashRate
@@ -29,6 +30,9 @@ def combinedAnalysis(numIters, hashRate, initDifficulty, tdf=1.0):
     log.info(f'Initial state = {state}')
     for i in range(numIters):
         BN.append(int(2**(i // 1e5 - 2)))
+        blockInterval = D[-1] / hashRate
+        T.append(T[-1] + blockInterval)
+        runningT.append(runningT[-1] + blockInterval * tdf)
         if 1 - D[-1] // (10 * hashRate) >= -99:
             newD = D[-1] * alpha1 + D[-1] * D[-1] * beta
             if state == 2:
@@ -45,27 +49,56 @@ def combinedAnalysis(numIters, hashRate, initDifficulty, tdf=1.0):
     log.info(f'Min D - Threshold D = {np.min(D) - monoThreshold}')
     log.info(f'Min D - Converged D = {np.min(D) - convergedD}')
     log.info(f'Max D - Converged D = {np.max(D) - convergedD}')
-    return D
+    return D, T, runningT
+
+def plotConvergeSpeed(numIters=20000, initRatio=8):
+    tdf = 0.1
+    hashRate = (2**26) * tdf
+    D, T, RT = combinedAnalysis(
+        numIters=numIters,
+        hashRate=hashRate,
+        initDifficulty=initRatio*hashRate,
+        tdf=tdf)
+    plt.figure()
+    plt.loglog(RT, D, 'r--', lw=4.0,
+               label='Initial Difficulty $D_0=%dHR^{VT}$, TDF=0.1' % initRatio)
+
+    hashRate = 2**26
+    D, T, RT = combinedAnalysis(
+        numIters=numIters,
+        hashRate=hashRate,
+        initDifficulty=initRatio*hashRate*tdf,
+        tdf=1)
+    plt.loglog(RT, D, 'b-.', lw=4.0,
+               label='Initial Difficulty $D_0=%dHR^{VT}$, TDF=1.0' % initRatio)
+
+    plt.xlabel('Emulation Running Time (s) / Log Scale')
+    plt.ylabel('Ehtereum Difficulty / Log Scale')
+    plt.grid(ls='-.')
+    plt.subplots_adjust(left=0.12, bottom=0.12, right=0.96, top=0.97)
+    plt.legend()
+    plt.savefig('ConvergeNoFloorSpeedInit%d.pdf' % initRatio, fmt='pdf')
+    plt.show()
 
 
 def plotConvergenceWithoutFloor(tdf=1.0):
-    hashRate = 2**26
-    numIters=20000
+    hashRate = (2**26) * tdf
+    numIters = 20000
     # <codecell>
-    smallInitD = combinedAnalysis(
+    smallInitD, T, RT = combinedAnalysis(
         numIters=numIters,
         hashRate=hashRate,
-        initDifficulty=8 * hashRate * tdf,
+        initDifficulty=8 * hashRate,
         tdf=tdf)
-    mediumInitD = combinedAnalysis(
+    mediumInitD, T, RT = combinedAnalysis(
         numIters=numIters,
         hashRate=hashRate,
-        initDifficulty=80 * hashRate * tdf,
+        initDifficulty=80 * hashRate,
         tdf=tdf)
-    largeInitD = combinedAnalysis(
+    largeInitD, T, RT = combinedAnalysis(
         numIters=numIters,
         hashRate=hashRate,
-        initDifficulty=1800 * hashRate * tdf,
+        initDifficulty=1800 * hashRate,
         tdf=tdf)
 
     # <codecell>
@@ -107,7 +140,7 @@ def genDiffAndBlockInterval(numIters, hashRate, initDifficulty=1048576, tdf=1.0)
     hashRateFactor = 1.0
     D = [initDifficulty]  #[0x400000000]
     BN = [1]
-    T, emuT = [], []
+    T, runningT = [0], [0]
     noiseFactor = 0.1
     explicitHP = 1009 * hashRate
     implicitHP = 10 * hashRate
@@ -132,8 +165,8 @@ def genDiffAndBlockInterval(numIters, hashRate, initDifficulty=1048576, tdf=1.0)
                 log.info(f'State transition from 1 to 2 at step {i}')
                 state = 2
 
-        T.append(newT / tdf)
-        emuT.append(newT)
+        T.append(T[-1] + newT)
+        runningT.append(runningT[-1] + newT * tdf)
         newD = D[-1] + D[-1] // 2048 * max(1 - (D[-1] / hashRate) // 10, -99)
         BN.append(int(2**(i // 1e5 - 2)))
         D.append(newD)
@@ -142,11 +175,11 @@ def genDiffAndBlockInterval(numIters, hashRate, initDifficulty=1048576, tdf=1.0)
     log.info(f'HP_I = {implicitHP}')
     log.debug(f'Min D - HP_I = {np.min(D) - implicitHP}')
     log.debug(f'Max D - HP_I = {np.max(D) - implicitHP}')
-    return D, T, emuT
+    return D, T, runningT
 
 
 def plotConvergenceWithFloor(tdf=1.0):
-    hashRate = 2**26
+    hashRate = (2**26) * tdf
     numIters=3000
 
     # <codecell>
@@ -205,7 +238,9 @@ def plotConvergenceWithFloor(tdf=1.0):
     plt.savefig('ConvergeFloorTdf%s.pdf' % tdf, fmt='pdf')
 
 if __name__ == '__main__':
-    plotConvergenceWithoutFloor(tdf=0.1)
-    plotConvergenceWithFloor(tdf=0.1)
-    plotConvergenceWithoutFloor(tdf=1.0)
-    plotConvergenceWithFloor(tdf=1.0)
+    plotConvergeSpeed(initRatio=8)
+    plotConvergeSpeed(initRatio=160)
+    # plotConvergenceWithoutFloor(tdf=0.1)
+    # plotConvergenceWithoutFloor(tdf=1.0)
+    # plotConvergenceWithFloor(tdf=0.1)
+    # plotConvergenceWithFloor(tdf=1.0)
