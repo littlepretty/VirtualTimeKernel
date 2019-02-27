@@ -32,6 +32,7 @@ kernel/time.c                           \
 kernel/hrtimer.c                        \
 kernel/posix-timers.c                   \
 kernel/time/timekeeping.c               \
+kernel/futex.c                          \
 arch/x86/vdso/vclock_gettime.c          \
 include/uapi/linux/sched.h              \
 include/linux/sched.h                   \
