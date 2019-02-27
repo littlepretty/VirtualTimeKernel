@@ -2,7 +2,7 @@
 
 function usage() {
         echo "Usage: $0 target"
-        echo "  target: either [dilation] or [freeze], default=[both]"
+        echo "where target: either [dilation], [freeze], or [both]"
         exit 1
 }
 
@@ -67,3 +67,4 @@ fi
 echo "Step 2. Build new kernel"
 cd $DST
 sudo ./build_all.sh
+

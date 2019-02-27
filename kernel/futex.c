@@ -2995,6 +2995,14 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
 	return -ENOSYS;
 }
 
+static inline ktime_t dilate_request_wait_time(ktime_t t) {
+        s64 tns = ktime_to_ns(t);
+        printk("[VT(%d)-%s(pid=%d)] [Futex] real=%lld, ",
+                        current->dilation, current->comm, current->pid, tns);
+        tns = div_s64(tns * 1000, current->dilation);
+        printk(KERN_CONT "virtual=%lld\n", tns);
+        return ns_to_ktime(tns);
+}
 
 SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 		struct timespec __user *, utime, u32 __user *, uaddr2,
@@ -3014,8 +3022,11 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 			return -EINVAL;
 
 		t = timespec_to_ktime(ts);
-		if (cmd == FUTEX_WAIT)
-			t = ktime_add_safe(ktime_get(), t);
+		if (cmd == FUTEX_WAIT) {
+                        if (current->dilation > 0)
+                                t = dilate_request_wait_time(t);
+                        t = ktime_add_safe(ktime_get(), t);
+                }
 		tp = &t;
 	}
 	/*
