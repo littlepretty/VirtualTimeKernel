@@ -2999,7 +2999,8 @@ static inline ktime_t dilate_request_wait_time(ktime_t t) {
         s64 tns = ktime_to_ns(t);
         printk("[VT(%d)-%s(pid=%d)] [Futex] real=%lld, ",
                         current->dilation, current->comm, current->pid, tns);
-        tns = div_s64(tns * 1000, current->dilation);
+        /* Walkaround for float point multiplication. */
+        tns = div_s64(tns * current->dilation, 1000);
         printk(KERN_CONT "virtual=%lld\n", tns);
         return ns_to_ktime(tns);
 }
