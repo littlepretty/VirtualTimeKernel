@@ -472,29 +472,23 @@ EXPORT_SYMBOL_GPL(ktime_get);
 void ktime_get_ts(struct timespec *ts)
 {
         struct timekeeper *tk = &timekeeper;
-        struct timespec tomono, undilated_ts;
-        s64 nsec;
-        unsigned int seq;
+	struct timespec tomono;
+	s64 nsec;
+	unsigned int seq;
 
-        WARN_ON(timekeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-        do {
-                seq = read_seqcount_begin(&timekeeper_seq);
-                ts->tv_sec = tk->xtime_sec;
-                nsec = timekeeping_get_ns(tk);
-                tomono = tk->wall_to_monotonic;
+	do {
+		seq = read_seqcount_begin(&timekeeper_seq);
+		ts->tv_sec = tk->xtime_sec;
+		nsec = timekeeping_get_ns(tk);
+		tomono = tk->wall_to_monotonic;
 
-        } while (read_seqcount_retry(&timekeeper_seq, seq));
+	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
-        ts->tv_sec += tomono.tv_sec;
-        ts->tv_nsec = 0;
-        timespec_add_ns(ts, nsec + tomono.tv_nsec);
-
-        undilated_ts.tv_sec = ts->tv_sec;
-        undilated_ts.tv_nsec = ts->tv_nsec;
-        do_virtual_time_keeping(ts);
-        if (current->virtual_start_nsec > 0)
-                printk_virtual_time(ts, &undilated_ts);
+	ts->tv_sec += tomono.tv_sec;
+	ts->tv_nsec = 0;
+	timespec_add_ns(ts, nsec + tomono.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 
