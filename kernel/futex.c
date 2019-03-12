@@ -2996,12 +2996,14 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
 }
 
 static inline ktime_t dilate_request_wait_time(ktime_t t) {
+        if (current->dilation == 0 || current->dilation == 1000)
+            return t;
+
         s64 tns = ktime_to_ns(t);
-        printk("[VT(%d)-%s(pid=%d)] [Futex] real=%lld, ",
-                        current->dilation, current->comm, current->pid, tns);
+        // printk("[VT(%d)-%s(pid=%d)] [drwt] real=%lld, ", current->dilation, current->comm, current->pid, tns);
         /* Walkaround for float point multiplication. */
         tns = div_s64(tns * current->dilation, 1000);
-        printk(KERN_CONT "virtual=%lld\n", tns);
+        // printk(KERN_CONT "virtual=%lld\n", tns);
         return ns_to_ktime(tns);
 }
 
@@ -3024,10 +3026,17 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 
 		t = timespec_to_ktime(ts);
 		if (cmd == FUTEX_WAIT) {
-                        if (current->dilation > 0)
-                                t = dilate_request_wait_time(t);
-                        t = ktime_add_safe(ktime_get(), t);
-                }
+            /* Dilate requested sleep time to virtual time. */
+            t = dilate_request_wait_time(t);
+            /**
+             * Disable VT to get real time via ktime_get() since
+             * we assume hrtimer will run in real time.
+             **/
+            int dilation = current->dilation;
+            current->dilation = 0;
+            t = ktime_add_safe(ktime_get(), t);
+            current->dilation = dilation; 
+        }
 		tp = &t;
 	}
 	/*
