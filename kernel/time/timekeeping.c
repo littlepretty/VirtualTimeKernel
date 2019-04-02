@@ -444,28 +444,21 @@ ktime_t ktime_get(void)
 {
         struct timekeeper *tk = &timekeeper;
         unsigned int seq;
-        struct timespec now, tomono; // Extract time from tk.
         s64 secs, nsecs;
 
         WARN_ON(timekeeping_suspended);
 
         do {
                 seq = read_seqcount_begin(&timekeeper_seq);
-                now.tv_sec = tk->xtime_sec;
-                now.tv_nsec = timekeeping_get_ns(tk);
-                tomono = tk->wall_to_monotonic;
+                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
+                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
 
         } while (read_seqcount_retry(&timekeeper_seq, seq));
-        /* Dilate wall clock if necessary. */
-        do_virtual_time_keeping(&now);
-        /* Convert (dilated) wall clock to monotonic clock. */
-        now.tv_sec += tomono.tv_sec;
-        timespec_add_ns(&now, tomono.tv_nsec);
         /*
          * Use ktime_set/ktime_add_ns to create a proper ktime on
          * 32-bit architectures without CONFIG_KTIME_SCALAR.
          */
-        return ktime_add_ns(ktime_set(now.tv_sec, 0), now.tv_nsec);
+        return ktime_add_ns(ktime_set(secs, 0), nsecs);
 }
 EXPORT_SYMBOL_GPL(ktime_get);
 
@@ -483,23 +476,20 @@ void ktime_get_ts(struct timespec *ts)
         struct timespec tomono;
         s64 nsec;
         unsigned int seq;
-        
+
         WARN_ON(timekeeping_suspended);
-        
+
         do {
                 seq = read_seqcount_begin(&timekeeper_seq);
                 ts->tv_sec = tk->xtime_sec;
                 nsec = timekeeping_get_ns(tk);
                 tomono = tk->wall_to_monotonic;
-        
+
         } while (read_seqcount_retry(&timekeeper_seq, seq)); 
-        /* Dilate wall clock time */
-        ts->tv_nsec = 0;
-        timespec_add_ns(ts, nsec);
-        do_virtual_time_keeping(ts);
-        /* Convert to monotonic time */
+
         ts->tv_sec += tomono.tv_sec;
-        timespec_add_ns(ts, tomono.tv_nsec);
+        ts->tv_nsec = 0;
+        timespec_add_ns(ts, nsec + tomono.tv_nsec);
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 

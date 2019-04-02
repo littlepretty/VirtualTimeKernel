@@ -3024,19 +3024,16 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 		if (!timespec_valid(&ts))
 			return -EINVAL;
 
-		t = timespec_to_ktime(ts);
-		if (cmd == FUTEX_WAIT) {
-            /* Dilate requested sleep time to virtual time. */
-            t = dilate_request_wait_time(t);
-            /**
-             * Disable VT to get real time via ktime_get() since
-             * we assume hrtimer will run in real time.
-             **/
-            int dilation = current->dilation;
-            current->dilation = 0;
-            t = ktime_add_safe(ktime_get(), t);
-            current->dilation = dilation; 
-        }
+                t = timespec_to_ktime(ts);
+	        if (cmd == FUTEX_WAIT) {
+                        /* Dilate requested sleep time to virtual time. */
+                        t = dilate_request_wait_time(t);
+                        /**
+                         * Disable VT to get real time via ktime_get() since
+                         * we assume hrtimer will run in real time.
+                         */
+                        t = ktime_add_safe(ktime_get(), t);
+                }
 		tp = &t;
 	}
 	/*
