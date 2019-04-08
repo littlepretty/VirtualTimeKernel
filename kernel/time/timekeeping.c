@@ -293,24 +293,24 @@ static void timekeeping_forward_now(struct timekeeper *tk)
 }
 
 /**
- * Add support of freeze
+ * Adjustment for freeze duration is count as physical time.
  */
 static s64 update_physical_past_nsec(struct timespec *ts)
 {
-        s64 now;
-        s64 delta_ppn; /* delta physical_past_nsec */
+	s64 now;
+	s64 delta_ppn; /* delta physical_past_nsec */
 
-        now = timespec_to_ns(ts);
-        delta_ppn = now;
-        delta_ppn -= current->physical_past_nsec;
-        delta_ppn -= current->physical_start_nsec;
-        /**
-         * substract frozen duration
-         */
-        delta_ppn -= current->freeze_past_nsec;
-        current->physical_past_nsec += delta_ppn;
+	now = timespec_to_ns(ts);
+	delta_ppn = now;
+	delta_ppn -= current->physical_past_nsec;
+	delta_ppn -= current->physical_start_nsec;
+	/**
+	 * Substract frozen duration.
+	 */
+	delta_ppn -= current->freeze_past_nsec;
+	current->physical_past_nsec += delta_ppn;
 
-        return delta_ppn;
+	return delta_ppn;
 }
 
 /**
@@ -319,49 +319,73 @@ static s64 update_physical_past_nsec(struct timespec *ts)
  */
 static void update_virtual_past_nsec(s64 delta_ppn, int tdf)
 {
-        s32 rem;
-        s64 delta_vpn; // delta virtual_past_nsec
+	s32 rem;
+	s64 delta_vpn; // delta virtual_past_nsec
 
-        /**
-         * Actual dilation in the range of (0,100], but "1000 == 1".
-         * Go through following calculations even if TDF=1.
-         */
-        if (tdf <= 100000) {
-                if (tdf == 1000) {
-                        /* optimized for freeze */
-                        current->virtual_past_nsec += delta_ppn;
-                } else {
-                        /**
-                         * Accuracy of s64 for nanoseconds:
-                         * 2^63ns > 9*10^18ns => 9*10^9s
-                         * To guarantee (physical_past_nsec * 1000) won't overflow:
-                         * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
-                         */
-                        delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
-                        current->virtual_past_nsec += delta_vpn;
-                }
-        }
+	/**
+	 * Actual dilation in the range of (0,100], but "1000 == 1".
+	 * Go through following calculations even if TDF=1.
+	 */
+	if (tdf <= 100000) {
+		if (tdf == 1000) {
+			/* optimized for freeze */
+			current->virtual_past_nsec += delta_ppn;
+		} else {
+			/**
+			 * Accuracy of s64 for nanoseconds:
+			 * 2^63ns > 9*10^18ns => 9*10^9s
+			 * To guarantee (physical_past_nsec * 1000) won't overflow:
+			 * 9*10^9s / 1000 = 9*10^6s => 2500h > 104d
+			 */
+			delta_vpn = div_s64_rem(delta_ppn * 1000, tdf, &rem);
+			current->virtual_past_nsec += delta_vpn;
+		}
+	}
 }
 
 /**
  * Print debug msg based on undilated @ts and dilated @virtual_ts.
  */
-static void printk_virtual_time(struct timespec* virtual_ts, struct timespec* ts)
+static void printk_virtual_time(struct timespec *virtual_ts, struct timespec *ts)
 {
-        s64 now = timespec_to_ns(ts);
-        s64 virtual_now = timespec_to_ns(ts);
-        int ns2ms = 1000000;
-        printk("[VT(%d)-%s(pid=%d)] [Clock] real=%lldms, virtual=%lldms ",
-                        current->dilation, current->comm, current->pid,
-                        div_s64(now, ns2ms), div_s64(virtual_now, ns2ms));
-        printk(KERN_CONT "[Start] phy=%lldms, vir=%lldms, frz=%lldms ",
-                        div_s64(current->physical_start_nsec, ns2ms),
-                        div_s64(current->virtual_start_nsec, ns2ms),
-                        div_s64(current->freeze_start_nsec , ns2ms));
-        printk(KERN_CONT "[Past]  phy=%lldms, vir=%lldms, frz=%lldms\n",
-                        div_s64(current->physical_past_nsec, ns2ms),
-                        div_s64(current->virtual_past_nsec, ns2ms),
-                        div_s64(current->freeze_past_nsec , ns2ms));
+	s64 now = timespec_to_ns(ts);
+	s64 virtual_now = timespec_to_ns(ts);
+	int ns2ms = 1000000;
+	printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [Clock] real=%lldms, virtual=%lldms ",
+			current->dilation, current->comm, current->pid,
+			div_s64(now, ns2ms), div_s64(virtual_now, ns2ms));
+	printk(KERN_CONT "[Start] phy=%lldms, vir=%lldms, frz=%lldms ",
+			div_s64(current->physical_start_nsec, ns2ms),
+			div_s64(current->virtual_start_nsec, ns2ms),
+			div_s64(current->freeze_start_nsec , ns2ms));
+	printk(KERN_CONT "[Past]  phy=%lldms, vir=%lldms, frz=%lldms\n",
+			div_s64(current->physical_past_nsec, ns2ms),
+			div_s64(current->virtual_past_nsec, ns2ms),
+			div_s64(current->freeze_past_nsec , ns2ms));
+}
+
+/**
+ * Print virtual time vs undilated time.
+ * Use @func_name to specify printk issued from which function.
+ */
+static void printk_virtual_timespec(struct timespec *virtual_ts, struct timespec *ts, char *func_name)
+{
+	if (current->dilation == 0 ) return; 
+	printk(KERN_DEBUG "[VT(%d)-%s(pid=%d) [%s] real=%ld s, %ld us, ",
+			current->dilation, current->comm, current->pid,
+			func_name, ts->tv_sec, ts->tv_nsec);
+	printk(KERN_CONT "virtual=%ld s, %ld us\n",
+			virtual_ts->tv_sec, virtual_ts->tv_nsec);
+}
+
+/**
+ * Print virtual time vs undilated monotonic time.
+ */
+static void printk_virtual_ktime(ktime_t *virtual_kt, ktime_t *kt)
+{
+	struct timespec virtual_ts = ktime_to_timespec(*virtual_kt);
+	struct timespec ts = ktime_to_timespec(*kt);
+	printk_virtual_timespec(&virtual_ts, &ts, "ktime_get");
 }
 
 /**
@@ -370,23 +394,24 @@ static void printk_virtual_time(struct timespec* virtual_ts, struct timespec* ts
  */
 static void do_virtual_time_keeping(struct timespec* ts)
 {
-        struct timespec virtual_ts;
-        s64 virtual_now, delta_ppn;
-        int tdf;
+	struct timespec virtual_ts;
+	s64 virtual_now, delta_ppn;
+	int tdf;
 
-        /* make sure vt has been initialized */
-        if (current->dilation > 0 && current->virtual_start_nsec > 0) {
-                tdf = current->dilation;
-                delta_ppn = update_physical_past_nsec(ts);
-                update_virtual_past_nsec(delta_ppn, tdf);
+	/* make sure vt has been initialized */
+	if (current->dilation > 0 && current->virtual_start_nsec > 0) {
+		tdf = current->dilation;
+		delta_ppn = update_physical_past_nsec(ts);
+		update_virtual_past_nsec(delta_ppn, tdf);
 
-                virtual_now = current->virtual_start_nsec +
-                        current->virtual_past_nsec;
-                virtual_ts = ns_to_timespec(virtual_now);
-                // printk_virtual_time(&virtual_ts, ts);
-                ts->tv_sec = virtual_ts.tv_sec;
-                ts->tv_nsec = virtual_ts.tv_nsec;
-        }
+		virtual_now = current->virtual_start_nsec + current->virtual_past_nsec;
+		virtual_ts = ns_to_timespec(virtual_now);
+
+		printk_virtual_time(&virtual_ts, ts);
+
+		ts->tv_sec = virtual_ts.tv_sec;
+		ts->tv_nsec = virtual_ts.tv_nsec;
+	}
 }
 
 /**
@@ -442,23 +467,42 @@ EXPORT_SYMBOL(getnstimeofday);
 
 ktime_t ktime_get(void)
 {
-        struct timekeeper *tk = &timekeeper;
-        unsigned int seq;
-        s64 secs, nsecs;
+	struct timekeeper *tk = &timekeeper;
+	unsigned int seq;
+	/* Extract xtime and wall_to_monotonic from timekeeper. */
+	struct timespec now, tomono;
+	s64 secs, nsecs;
 
-        WARN_ON(timekeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-        do {
-                seq = read_seqcount_begin(&timekeeper_seq);
-                secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
-                nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
+	do {
+		seq = read_seqcount_begin(&timekeeper_seq);
+		now.tv_sec = tk->xtime_sec;
+		now.tv_nsec = timekeeping_get_ns(tk);
+		tomono = tk->wall_to_monotonic;
 
-        } while (read_seqcount_retry(&timekeeper_seq, seq));
-        /*
-         * Use ktime_set/ktime_add_ns to create a proper ktime on
-         * 32-bit architectures without CONFIG_KTIME_SCALAR.
-         */
-        return ktime_add_ns(ktime_set(secs, 0), nsecs);
+		secs = tk->xtime_sec + tk->wall_to_monotonic.tv_sec;
+		nsecs = timekeeping_get_ns(tk) + tk->wall_to_monotonic.tv_nsec;
+
+	} while (read_seqcount_retry(&timekeeper_seq, seq));
+
+	/* Undilated monotonic time. */
+	ktime_t kt = ktime_add_ns(ktime_set(secs, 0), nsecs);
+
+	/* Dilate epoch time. */
+	do_virtual_time_keeping(&now);
+
+	/* Convert (may be dilated) epoch time to monotonic time. */
+	now.tv_sec += tomono.tv_sec;
+	timespec_add_ns(&now, tomono.tv_nsec); 
+	/*
+	 * Use ktime_set/ktime_add_ns to create a proper ktime on
+	 * 32-bit architectures without CONFIG_KTIME_SCALAR.
+	 */
+	ktime_t virtual_kt = ktime_add_ns(ktime_set(now.tv_sec, 0), now.tv_nsec);
+	printk_virtual_ktime(&virtual_kt, &kt);
+
+	return virtual_kt;
 }
 EXPORT_SYMBOL_GPL(ktime_get);
 
@@ -472,24 +516,41 @@ EXPORT_SYMBOL_GPL(ktime_get);
  */
 void ktime_get_ts(struct timespec *ts)
 {
-        struct timekeeper *tk = &timekeeper;
-        struct timespec tomono;
-        s64 nsec;
-        unsigned int seq;
+	struct timekeeper *tk = &timekeeper;
+	struct timespec tomono, undilated_ts;
+	s64 nsec;
+	unsigned int seq;
 
-        WARN_ON(timekeeping_suspended);
+	WARN_ON(timekeeping_suspended);
 
-        do {
-                seq = read_seqcount_begin(&timekeeper_seq);
-                ts->tv_sec = tk->xtime_sec;
-                nsec = timekeeping_get_ns(tk);
-                tomono = tk->wall_to_monotonic;
+	do {
+		seq = read_seqcount_begin(&timekeeper_seq);
+		ts->tv_sec = tk->xtime_sec;
+		nsec = timekeeping_get_ns(tk);
+		tomono = tk->wall_to_monotonic;
 
-        } while (read_seqcount_retry(&timekeeper_seq, seq)); 
+	} while (read_seqcount_retry(&timekeeper_seq, seq));
 
-        ts->tv_sec += tomono.tv_sec;
-        ts->tv_nsec = 0;
-        timespec_add_ns(ts, nsec + tomono.tv_nsec);
+	/* Set nanoseconds in ts. */
+	ts->tv_nsec = 0;
+	timespec_add_ns(ts, nsec);
+	/**
+	 * Unnecessary if not for printing debug msg:
+	 * get undilated time and convert to monotonic time.
+	 */
+	undilated_ts.tv_sec = ts->tv_sec;
+	undilated_ts.tv_nsec = ts->tv_nsec;
+	undilated_ts.tv_sec += tomono.tv_sec;
+	timespec_add_ns(&undilated_ts, tomono.tv_nsec);
+
+	/* Dilate epoch time. */
+	do_virtual_time_keeping(ts);
+
+	/* Convert epoch time to monotonic time. */
+	ts->tv_sec += tomono.tv_sec;
+	timespec_add_ns(ts, tomono.tv_nsec);
+
+	printk_virtual_timespec(ts, &undilated_ts, "ktime_get_ts");
 }
 EXPORT_SYMBOL_GPL(ktime_get_ts);
 

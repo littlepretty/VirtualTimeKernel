@@ -1553,26 +1553,28 @@ static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mod
 
 	do {
 		set_current_state(TASK_INTERRUPTIBLE);
+
+		/* Prevent hrtimer from getting virtual time. */
+		int tdf = current->dilation;
+		current->dilation = 0;
 		hrtimer_start_expires(&t->timer, mode);
+		current->dilation = tdf;
+
+		if (current->dilation > 0) {
+			struct timespec expire = ktime_to_timespec(t->timer._softexpires);
+			printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [do_nanosleep] expire = %lld s %lld ns",
+				current->dilation, current->comm, current->pid,
+				expire.tv_sec, expire.tv_nsec);
+		}
+
 		if (!hrtimer_active(&t->timer))
 			t->task = NULL;
 
 		if (likely(t->task))
 			freezable_schedule();
-        
-        if (current->dilation > 0) {
-                printk("[VT(%d)-%s(pid=%d)] [do_nanosleep] start cancel\n",
-                        current->dilation, current->comm, current->pid);
-        }
 
 		hrtimer_cancel(&t->timer);
 		mode = HRTIMER_MODE_ABS;
-        
-        if (current->dilation > 0) {
-                printk("[VT(%d)-%s(pid=%d)] [do_nanosleep] finish cancel, ",
-                        current->dilation, current->comm, current->pid);
-                printk(KERN_CONT "t->task == NULL? %d", t->task == NULL);
-        }
 
 	} while (t->task && !signal_pending(current));
 
@@ -1639,12 +1641,6 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
 	hrtimer_init_on_stack(&t.timer, clockid, mode);
 	hrtimer_set_expires_range_ns(&t.timer, timespec_to_ktime(*rqtp), slack);
 
-    if (current->dilation > 0) {
-        printk("[VT(%d)-%s(pid=%d)] [hrtimer_nanosleep] start {%lld, %lld}\n",
-                current->dilation, current->comm, current->pid,
-                rqtp->tv_sec, rqtp->tv_nsec);
-    }
-
 	if (do_nanosleep(&t, mode))
 		goto out;
 
@@ -1653,11 +1649,6 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
 		ret = -ERESTARTNOHAND;
 		goto out;
 	}
-
-    if (current->dilation > 0) { 
-        printk("[VT(%d)-%s(pid=%d)] [hrtimer_nanosleep] finished\n",
-                current->dilation, current->comm, current->pid);
-    }
 
 	if (rmtp) {
 		ret = update_rmtp(&t.timer, rmtp);
@@ -1681,21 +1672,21 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 		struct timespec __user *, rmtp)
 {
 	struct timespec tu;
-	s64 req_ns;
+	s64 tns;
 
 	if (copy_from_user(&tu, rqtp, sizeof(tu)))
                 return -EFAULT;
 
 	if (!timespec_valid(&tu))
 		return -EINVAL;
-	
-    if (current->dilation > 0) {
+
+	if (current->dilation > 0) {
 		req_ns = timespec_to_ns(&tu);
-		req_ns = div_s64(req_ns * current->dilation, 1000);
+		printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [nanosleep] request=%lld, ",
+			current->dilation, current->comm, current->pid, tns);
+			tns = div_s64(tns * current->dilation, 1000);
+		printk(KERN_CONT "virtual=%lld\n", tns);
 		tu = ns_to_timespec(req_ns);
-        printk("[VT(%d)-%s(pid=%d)] [nanosleep] dilated tu = {%lld, %lld}\n",
-                current->dilation, current->comm, current->pid,
-                tu.tv_sec, tu.tv_nsec);
 	}
 
 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);

@@ -1582,7 +1582,6 @@ void init_virtual_start_time(struct task_struct *tsk, int tdf)
                  */
 		__getnstimeofday(&ts);
                 now = timespec_to_ns(&ts);
-
                 /**
                  * If tsk is the root of the container,
                  * now and virtual_now should be identical.
