@@ -184,9 +184,14 @@ extern void timekeeping_clocktai(struct timespec *ts);
 struct tms;
 extern void do_sys_times(struct tms *);
 
+/**
+ * Virtual time system related internal functions.
+ */
 extern int set_dilation(struct task_struct *tsk, int new_tdf);
 extern void freeze_time(struct task_struct *group_leader);
 extern void unfreeze_time(struct task_struct *group_leader);
+extern void real_virtual_timekeeping(struct timespec* ts);
+extern void monotonic_virtual_timekeeping(struct timespec* ts);
 
 /*
  * Similar to the struct tm in userspace <time.h>, but it needs to be here so

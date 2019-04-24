@@ -32,6 +32,8 @@ kernel/time.c                           \
 kernel/hrtimer.c                        \
 kernel/posix-timers.c                   \
 kernel/time/timekeeping.c               \
+kernel/time/clockevents.c		\
+kernel/time/tick-sched.c		\
 kernel/futex.c                          \
 arch/x86/vdso/vclock_gettime.c          \
 include/uapi/linux/sched.h              \
@@ -41,6 +43,8 @@ include/linux/time.h                    \
 include/linux/ktime.h                   \
 include/linux/timekeeper_internal.h     \
 fs/proc/base.c                          \
+fs/eventpoll.c				\
+fs/select.c				\
 include/net/sch_generic.h               \
 Makefile                                \
 build_all.sh"

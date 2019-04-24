@@ -130,23 +130,26 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 	struct list_head *list;
 	struct task_struct *child;
 
-	/* Save anything we may need. */
 	old_tdf = tsk->dilation;
 	if (old_tdf == new_tdf) {
 		return 0;
-	} else if (old_tdf == 0) { /* Enter virtual time. */
+	} else if (old_tdf == 0) {
+		/* Enter virtual time. */
 		init_virtual_start_time(tsk, new_tdf);
-	} else if (new_tdf == 0) { /* Exit virtual time. */
+	} else if (new_tdf == 0) {
+		/**
+		 * Exit VT: forget dilation and *_[past|start]_nsec.
+		 */
 		tsk->dilation = 0;
-		/* Forget any_past_nsec */
 		tsk->virtual_start_nsec = 0;
 		tsk->virtual_past_nsec = 0;
 		tsk->physical_start_nsec = 0;
 		tsk->physical_past_nsec = 0;
 		tsk->freeze_start_nsec = 0;
 		tsk->freeze_past_nsec = 0;
-	} else if (old_tdf != 0 && new_tdf > 0) { /* Already in virtual time. */
+	} else if (old_tdf != 0 && new_tdf > 0) {
 		/**
+		 * Already in virtual time.
 		 * @now is the moment we change TDF,
 		 * get it by calling original wall clock time
 		 */
@@ -159,13 +162,13 @@ int set_dilation(struct task_struct *tsk, int new_tdf)
 		delta_ppn = now;
 		delta_ppn -= tsk->physical_past_nsec;
 		delta_ppn -= tsk->physical_start_nsec;
-
-		/* @tsk's freeze_past_nsec is either its own or populated. */
+		/**
+		 * @tsk's freeze_past_nsec is either its own or populated.
+		 */
 		delta_ppn -= tsk->freeze_past_nsec;
 		delta_vpn = div_s64_rem(delta_ppn * 1000, old_tdf, &rem);
 		tsk->virtual_past_nsec += delta_vpn;
-
-		/* reset virtual_start_nsec as now */
+		/* Reset virtual_start_nsec as now. */
 		tsk->virtual_start_nsec = now;
 		/**
 		 * New physcial_start_nsec from now on.

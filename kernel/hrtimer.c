@@ -1553,20 +1553,7 @@ static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mod
 
 	do {
 		set_current_state(TASK_INTERRUPTIBLE);
-
-		/* Prevent hrtimer from getting virtual time. */
-		int tdf = current->dilation;
-		current->dilation = 0;
 		hrtimer_start_expires(&t->timer, mode);
-		current->dilation = tdf;
-
-		if (current->dilation > 0) {
-			struct timespec expire = ktime_to_timespec(t->timer._softexpires);
-			printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [do_nanosleep] expire = %lld s %lld ns",
-				current->dilation, current->comm, current->pid,
-				expire.tv_sec, expire.tv_nsec);
-		}
-
 		if (!hrtimer_active(&t->timer))
 			t->task = NULL;
 
@@ -1681,12 +1668,12 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
 		return -EINVAL;
 
 	if (current->dilation > 0) {
-		req_ns = timespec_to_ns(&tu);
+		tns = timespec_to_ns(&tu);
 		printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [nanosleep] request=%lld, ",
 			current->dilation, current->comm, current->pid, tns);
 			tns = div_s64(tns * current->dilation, 1000);
 		printk(KERN_CONT "virtual=%lld\n", tns);
-		tu = ns_to_timespec(req_ns);
+		tu = ns_to_timespec(tns);
 	}
 
 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);

@@ -1026,6 +1026,16 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
 
 	error = kc->clock_get(which_clock, &kernel_tp);
 
+	/**
+	 * For REALTIME clock, as gettimeofday needs to be virtualized in parallel,
+	 *   we leave its virtual timekeeping there.
+	 * For MONOTONIC clock, reuse the realtime virtual timekeeping but
+	 *   it needs the REAL-MONOTONIC conversion back and forth.
+	 * For BOOTTIME and TAI, virtual time is disabled (or not implememted).
+	 */
+	if (which_clock == CLOCK_MONOTONIC)
+		monotonic_virtual_timekeeping(&kernel_tp);
+
 	if (!error && copy_to_user(tp, &kernel_tp, sizeof (kernel_tp)))
 		error = -EFAULT;
 

@@ -2999,10 +2999,16 @@ long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
  * Dilate requested sleep duration by multiply TDF.
  */
 static inline ktime_t dilate_request_wait_time(ktime_t t) {
-	if (current->dilation == 0 || current->dilation == 1000) return t;
-	s64 tns = ktime_to_ns(t);
+	s64 tns;
+
+	if (current->dilation == 0 || current->dilation == 1000)
+		return t;
+	tns = ktime_to_ns(t);
+	if (tns < 1000000000LL)
+		return t; // Skip for < 1s timeout
+
 	printk(KERN_DEBUG "[VT(%d)-%s(pid=%d)] [drwt] real=%lld, ",
-		current->dilation, current->comm, current->pid, tns);
+			current->dilation, current->comm, current->pid, tns);
 	tns = div_s64(tns * current->dilation, 1000);
 	printk(KERN_CONT "virtual=%lld\n", tns);
 	return ns_to_ktime(tns);
@@ -3032,14 +3038,7 @@ SYSCALL_DEFINE6(futex, u32 __user *, uaddr, int, op, u32, val,
 			 * Wait until here.
 			 */
 			t = dilate_request_wait_time(t);
-			/**
-			 * Disable VT to get real time via ktime_get() since
-			 * we assume hrtimer always runs in wall clock time.
-			 */
-			int tdf = current->dilation;
-			current->dilation = 0;
 			t = ktime_add_safe(ktime_get(), t);
-			current->dilation = tdf;
 		}
 		tp = &t;
 	}
